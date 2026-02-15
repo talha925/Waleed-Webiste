@@ -1,0 +1,777 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-background text-foreground;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .border-border {
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--border));
+  }
+}
+
+/* Custom CSS for clipping */
+.clip-path-custom {
+  clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+/* Global cursor styles for better UX */
+@layer base {
+
+  /* Ensure proper cursor behavior for interactive elements */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* Disabled elements should show not-allowed cursor */
+  button:disabled,
+  [role="button"]:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Text inputs should show text cursor */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="url"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="number"],
+  textarea {
+    cursor: text;
+  }
+
+  /* File inputs should show pointer cursor */
+  input[type="file"] {
+    cursor: pointer;
+  }
+
+  /* Select elements should show pointer cursor */
+  select {
+    cursor: pointer;
+  }
+
+  /* Labels should show pointer cursor */
+  label {
+    cursor: pointer;
+  }
+
+  /* Checkboxes and radio buttons should show pointer cursor */
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
+  /* Links should show pointer cursor */
+  a {
+    cursor: pointer;
+  }
+
+  :root {
+    /* Modern Attractive Background System - Enhanced with vibrant tones */
+    --background: 210 40% 98%;
+    /* Soft blue-white background #FAFBFF */
+    --background-secondary: 220 60% 97%;
+    /* Light blue-grey background #F1F5FF */
+    --background-tertiary: 230 35% 94%;
+    /* Subtle blue-grey background #EBEEFF */
+    --background-elevated: 0 0% 100%;
+    /* Pure white for cards */
+
+    /* Text Colors with Proper Contrast - Updated to specified colors */
+    --foreground: 222 84% 5%;
+    /* Dark gray #111827 */
+    --foreground-secondary: 220 9% 46%;
+    /* Softer gray #6B7280 */
+    --foreground-tertiary: 220 13% 69%;
+    /* Muted gray #9CA3AF */
+    --foreground-muted: 220 14% 74%;
+    /* Light muted gray #BDBDBD */
+
+    /* Surface Colors (Cards, Panels) */
+    --card: 0 0% 100%;
+    /* Pure white */
+    --card-foreground: 0 0% 13%;
+    /* Grey-900 */
+    --card-hover: 0 0% 96%;
+    /* Grey-100 for hover states */
+
+    /* Popover/Modal Colors */
+    --popover: 0 0% 100%;
+    /* Pure white */
+    --popover-foreground: 0 0% 13%;
+    /* Grey-900 */
+
+    /* Primary Colors (Preserving existing button colors) */
+    --primary: 220 91% 34%;
+    /* Blue-800 #1E40AF for primary actions */
+    --primary-foreground: 0 0% 100%;
+    /* White text on primary */
+
+    /* Secondary Colors */
+    --secondary: 0 0% 96%;
+    /* Grey-100 #F5F5F5 */
+    --secondary-foreground: 0 0% 13%;
+    /* Grey-900 */
+
+    /* Muted Colors */
+    --muted: 0 0% 96%;
+    /* Grey-100 #F5F5F5 */
+    --muted-foreground: 0 0% 46%;
+    /* Grey-600 #757575 */
+
+    /* Accent Colors */
+    --accent: 0 0% 96%;
+    /* Grey-100 #F5F5F5 */
+    --accent-foreground: 0 0% 13%;
+    /* Grey-900 */
+
+    /* State Colors */
+    --destructive: 0 84% 60%;
+    /* Red-500 #EF4444 */
+    --destructive-foreground: 0 0% 98%;
+    /* White */
+    --success: 160 84% 39%;
+    /* Emerald-500 #10B981 */
+    --success-foreground: 0 0% 98%;
+    /* White */
+    --warning: 25 95% 53%;
+    /* Orange-500 #F97316 */
+    --warning-foreground: 0 0% 98%;
+    /* White */
+
+    /* Border Colors */
+    --border: 0 0% 89%;
+    /* Grey-200 #EEEEEE */
+    --border-medium: 0 0% 88%;
+    /* Grey-300 #E0E0E0 */
+    --border-strong: 0 0% 74%;
+    /* Grey-400 #BDBDBD */
+
+    /* Input Colors */
+    --input: 0 0% 89%;
+    /* Grey-200 #EEEEEE */
+    --input-focus: 217 91% 60%;
+    /* Blue-500 #3B82F6 */
+
+    /* Focus Ring */
+    --ring: 217 91% 60%;
+    /* Blue-500 #3B82F6 */
+
+    /* Button Color Variables (Preserving existing design) */
+    --button-orange: 25 95% 53%;
+    /* Orange-500 #F97316 */
+    --button-orange-hover: 20 91% 48%;
+    /* Orange-600 #EA580C */
+    --button-blue: 217 91% 60%;
+    /* Blue-500 #3B82F6 */
+    --button-blue-hover: 220 91% 54%;
+    /* Blue-600 #2563EB */
+    --button-green: 160 84% 39%;
+    /* Emerald-500 #10B981 */
+    --button-green-hover: 158 64% 52%;
+    /* Emerald-600 #059669 */
+
+    /* Gradient Variables (Preserving existing gradients) */
+    --gradient-black-to-blue-from: 0 0% 0%;
+    /* Black */
+    --gradient-black-to-blue-to: 220 91% 34%;
+    /* Blue-800 */
+    --gradient-blue-to-purple-from: 220 91% 54%;
+    /* Blue-600 */
+    --gradient-blue-to-purple-to: 271 81% 56%;
+    /* Purple-600 */
+    --gradient-cyan-to-purple-from: 188 94% 43%;
+    /* Cyan-500 */
+    --gradient-cyan-to-purple-via: 220 91% 54%;
+    /* Blue-600 */
+    --gradient-cyan-to-purple-to: 271 81% 56%;
+    /* Purple-600 */
+
+    /* Chart Colors */
+    --chart-1: 12 76% 61%;
+    /* Orange */
+    --chart-2: 173 58% 39%;
+    /* Teal */
+    --chart-3: 197 37% 24%;
+    /* Blue-grey */
+    --chart-4: 43 74% 66%;
+    /* Yellow */
+    --chart-5: 27 87% 67%;
+    /* Red-orange */
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    --radius-sm: 0.25rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+
+    /* Shadows for Depth */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+
+
+  /* Apply Global Styles with Modern Theme */
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enhanced focus styles for accessibility */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Smooth transitions for theme changes */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  /* CLS Prevention Optimizations */
+  /* Prevent layout shifts from images */
+  img {
+    height: auto;
+    max-width: 100%;
+  }
+
+  /* Stable dimensions for common elements */
+  .stable-header {
+    min-height: 4rem;
+    /* 64px */
+  }
+
+  .stable-nav {
+    min-height: 3rem;
+    /* 48px */
+  }
+
+  /* Prevent font loading shifts */
+  .font-display-swap {
+    font-display: swap;
+  }
+
+  /* Skeleton loading states */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Prevent content jumping during hydration */
+  .hydration-safe {
+    min-height: 1px;
+  }
+
+  /* Stable button dimensions */
+  .btn-stable {
+    min-height: 2.5rem;
+    /* 40px */
+    min-width: 4rem;
+    /* 64px */
+  }
+
+  /* Prevent layout shifts from dynamic content */
+  .content-container {
+    contain: layout style;
+  }
+
+  /* Optimize for Core Web Vitals */
+  .performance-optimized {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+
+  /* Prevent shifts from loading states */
+  .loading-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Stable grid layouts */
+  .stable-grid {
+    grid-template-rows: masonry;
+  }
+
+  /* Prevent text reflow */
+  .text-stable {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+/* =========================================
+   PREMIUM BLOG SPECIFIC STYLES
+   ========================================= */
+
+/* Smooth Scroll Behavior */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+  /* Account for fixed header and progress bar */
+}
+
+/* Enhanced Text Selection */
+::selection {
+  background-color: rgba(59, 130, 246, 0.25);
+  /* Blue-500 with opacity - more vibrant */
+  color: inherit;
+}
+
+/* Premium Blog Content Styles */
+.blog-content {
+  /* Enhanced Typography - Standardized */
+  font-size: 1rem;
+  /* 16px Base */
+  line-height: 1.75;
+  color: #374151;
+  /* Gray-700 */
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 768px) {
+  .blog-content {
+    font-size: 1.125rem;
+    /* 18px Desktop - Reduced from 20px */
+  }
+}
+
+/* Blog Content Headings */
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4,
+.blog-content h5,
+.blog-content h6 {
+  font-weight: 700;
+  color: #111827;
+  /* Gray-900 */
+  scroll-margin-top: 6rem;
+  position: relative;
+}
+
+.blog-content h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.blog-content h2 {
+  font-size: 1.75rem;
+  line-height: 1.3;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  /* Removed border-bottom */
+}
+
+.blog-content h3 {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.blog-content h4 {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  margin-top: 1.5rem;
+  margin-bottom: 0.875rem;
+}
+
+/* Blog Content Paragraphs */
+.blog-content p {
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+  color: #374151;
+  /* Gray-700 */
+}
+
+/* Blog Content Links */
+.blog-content a {
+  color: #2563EB;
+  /* Blue-600 - more vibrant */
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.blog-content a:hover {
+  color: #1D4ED8;
+  /* Blue-700 */
+  text-decoration: underline;
+}
+
+/* Blog Content Lists */
+.blog-content ul,
+.blog-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.75rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.75rem;
+  line-height: 1.75;
+  color: #374151;
+  /* Gray-700 */
+}
+
+.blog-content li::marker {
+  color: #111827;
+  /* Gray-900 (Black-ish) */
+  font-weight: 600;
+}
+
+/* Blog Content Blockquotes */
+.blog-content blockquote {
+  margin: 2rem 0;
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  /* Blue-50 gradient - more vibrant */
+  border-left: 4px solid #3B82F6;
+  /* Blue-500 */
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: italic;
+  color: #1E40AF;
+  /* Blue-800 */
+  position: relative;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+}
+
+.blog-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.blog-content blockquote::before {
+  content: '"';
+  font-size: 4rem;
+  line-height: 1;
+  color: #3B82F6;
+  opacity: 0.15;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  font-family: Georgia, serif;
+}
+
+/* Blog Content Code Blocks */
+.blog-content code {
+  background-color: #FEF3C7;
+  /* Amber-100 - warmer, more vibrant */
+  color: #D97706;
+  /* Amber-600 */
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.blog-content pre {
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  /* Slate gradient - more depth */
+  color: #F1F5F9;
+  /* Slate-100 - brighter text */
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin: 2rem 0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  position: relative;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.blog-content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Blog Content Images */
+.blog-content img {
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  margin: 2.5rem auto;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Blog Content Tables */
+.blog-content table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.blog-content th,
+.blog-content td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+  /* Gray-200 */
+}
+
+.blog-content th {
+  background-color: #F9FAFB;
+  /* Gray-50 */
+  font-weight: 600;
+  color: #111827;
+  /* Gray-900 */
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.blog-content tbody tr:hover {
+  background-color: #F9FAFB;
+  /* Gray-50 */
+  transition: background-color 0.2s ease;
+}
+
+/* Blog Content Strong/Bold */
+.blog-content strong,
+.blog-content b {
+  font-weight: 700;
+  color: #111827;
+  /* Gray-900 */
+}
+
+/* Blog Content Em/Italic */
+.blog-content em,
+.blog-content i {
+  font-style: italic;
+  color: #374151;
+  /* Gray-700 */
+}
+
+/* Blog Content Horizontal Rule */
+.blog-content hr {
+  margin: 3rem 0;
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #D1D5DB, transparent);
+}
+
+/* Drop Cap (First Letter - Optional Premium Touch) - Removed as per user request */
+/* 
+.blog-content>p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.5rem;
+  line-height: 0.9;
+  margin: 0.1rem 0.5rem 0 0;
+  font-weight: 700;
+  color: #3B82F6;
+}
+*/
+
+
+/* Back to Top Button */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  /* Blue gradient - more vibrant */
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  z-index: 40;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  /* Darker on hover */
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Sticky Sidebar with Better Shadow */
+.sticky-sidebar {
+  position: sticky;
+  top: 6rem;
+  max-height: calc(100vh - 8rem);
+  overflow-y: auto;
+}
+
+/* Custom Scrollbar for Sidebars */
+.sticky-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sticky-sidebar::-webkit-scrollbar-track {
+  background: #F3F4F6;
+  border-radius: 3px;
+}
+
+.sticky-sidebar::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+.sticky-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Print Styles for Blog */
+@media print {
+  .blog-content {
+    font-size: 12pt;
+    line-height: 1.6;
+    color: #000;
+  }
+
+  .blog-content a {
+    text-decoration: underline;
+    color: #000;
+  }
+
+  .blog-content pre,
+  .blog-content blockquote {
+    page-break-inside: avoid;
+  }
+
+  .back-to-top,
+  .sticky-sidebar {
+    display: none;
+  }
+}
+
+/* Focus Visible Enhancements for Accessibility */
+.blog-content a:focus-visible,
+.blog-content button:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .blog-content {
+    font-size: 1rem;
+    /* 16px on mobile */
+  }
+
+  .blog-content h1 {
+    font-size: 1.875rem;
+    /* 30px */
+  }
+
+  .blog-content h2 {
+    font-size: 1.5rem;
+    /* 24px */
+  }
+
+  .blog-content h3 {
+    font-size: 1.25rem;
+    /* 20px */
+  }
+
+  .blog-content pre {
+    padding: 1rem;
+    font-size: 0.75rem;
+  }
+
+  /* Removed mobile drop cap */
+  /*
+  .blog-content>p:first-of-type::first-letter {
+    font-size: 2.5rem;
+  }
+  */
+
+
+  .back-to-top {
+    bottom: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}

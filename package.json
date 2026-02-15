@@ -1,0 +1,19 @@
+{
+    "name": "waleed-website-root",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "Frontend",
+        "Backend"
+    ],
+    "scripts": {
+        "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm start --workspace=backend\"",
+        "build": "npm run build --workspaces",
+        "start": "npm start --workspaces",
+        "test": "npm test --workspaces",
+        "lint": "npm run lint --workspaces"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
