@@ -1,11 +1,10 @@
-const Category = require('../models/categoryModel');
 const categoryService = require('../services/categoryService');
 const AppError = require('../errors/AppError');
 
 // Get all categories
 exports.getCategories = async (req, res, next) => {
     try {
-        const result = await categoryService.getCategories(req.query);
+        const result = await categoryService.getCategories(req.models, req.query);
         res.status(200).json({
             status: 'success',
             data: {
@@ -21,68 +20,41 @@ exports.getCategories = async (req, res, next) => {
 };
 
 // Create a new category
-exports.createCategory = async (req, res) => {
-    const { name } = req.body;
-
-    if (!name) {
-        return res.status(400).json({ status: 'error', message: 'Category name is required' });
-    }
-
+exports.createCategory = async (req, res, next) => {
     try {
-        const newCategory = await Category.create({ name });
-        res.status(201).json({ status: 'success', data: { id: newCategory._id, name: newCategory.name } });
+        const newCategory = await categoryService.createCategory(req.models, req.body);
+        res.status(201).json({ status: 'success', data: newCategory });
     } catch (error) {
-        if (error.code === 11000) {
-            res.status(409).json({ status: 'error', message: 'Category name must be unique' });
-        } else {
-            res.status(500).json({ status: 'error', message: 'Error creating category', error: error.message });
-        }
+        next(new AppError(error.message || 'Error creating category', error.statusCode || 500));
     }
 };
 
-
 // Get a category by ID
-exports.getCategoryById = async (req, res) => {
+exports.getCategoryById = async (req, res, next) => {
     try {
-        const category = await Category.findById(req.params.id).select('-__v');
-        if (!category) {
-            return res.status(404).json({ status: 'error', message: 'Category not found' });
-        }
+        const category = await categoryService.getCategoryById(req.models, req.params.id);
         res.status(200).json({ status: 'success', data: category });
     } catch (error) {
-        console.error('Error fetching category:', error);
-        res.status(500).json({ status: 'error', message: 'Error fetching category', error: error.message });
+        next(new AppError(error.message || 'Error fetching category', error.statusCode || 500));
     }
 };
 
 // Update a category
-exports.updateCategory = async (req, res) => {
-    const { name } = req.body;
-    if (!name) {
-        return res.status(400).json({ status: 'error', message: 'Category name is required' });
-    }
+exports.updateCategory = async (req, res, next) => {
     try {
-        const updatedCategory = await Category.findByIdAndUpdate(req.params.id, { name }, { new: true }).select('-__v');
-        if (!updatedCategory) {
-            return res.status(404).json({ status: 'error', message: 'Category not found' });
-        }
+        const updatedCategory = await categoryService.updateCategory(req.models, req.params.id, req.body);
         res.status(200).json({ status: 'success', data: updatedCategory });
     } catch (error) {
-        console.error('Error updating category:', error);
-        res.status(500).json({ status: 'error', message: 'Error updating category', error: error.message });
+        next(new AppError(error.message || 'Error updating category', error.statusCode || 500));
     }
 };
 
 // Delete a category
-exports.deleteCategory = async (req, res) => {
+exports.deleteCategory = async (req, res, next) => {
     try {
-        const deletedCategory = await Category.findByIdAndDelete(req.params.id);
-        if (!deletedCategory) {
-            return res.status(404).json({ status: 'error', message: 'Category not found' });
-        }
+        await categoryService.deleteCategory(req.models, req.params.id);
         res.status(200).json({ status: 'success', message: 'Category deleted successfully' });
     } catch (error) {
-        console.error('Error deleting category:', error);
-        res.status(500).json({ status: 'error', message: 'Error deleting category', error: error.message });
+        next(new AppError(error.message || 'Error deleting category', error.statusCode || 500));
     }
 };

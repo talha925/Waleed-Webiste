@@ -3,7 +3,7 @@ import { getBrandConfig } from '@config/index';
 
 export default function robots(): MetadataRoute.Robots {
     const brand = getBrandConfig();
-    const siteUrl = brand?.siteUrl || 'https://www.pennyscroll.com';
+    const siteUrl = brand.siteUrl;
 
     return {
         rules: {

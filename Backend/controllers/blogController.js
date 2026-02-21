@@ -3,7 +3,7 @@ const AppError = require('../errors/AppError');
 const { catchAsync } = require('../utils/errorUtils');
 
 exports.getBlogs = catchAsync(async (req, res) => {
-  const result = await BlogService.findAll(req.query);
+  const result = await BlogService.findAll(req.models, req.query);
 
   res.status(200).json({
     success: true,
@@ -13,21 +13,17 @@ exports.getBlogs = catchAsync(async (req, res) => {
 });
 
 exports.getBlogById = catchAsync(async (req, res) => {
-  // PERFORMANCE: Parallel execution for blog and related data
-  const blog = await BlogService.findById(req.params.id);
-  // Note: relatedPosts are already fetched inside findById, so we don't need to fetch them separately here if findById does it.
-  // However, looking at the service, findById returns { ...blog, relatedPosts }.
-  // So we can just use the result directly.
+  const blog = await BlogService.findById(req.models, req.params.id);
 
   res.status(200).json({
     success: true,
     message: 'Blog post retrieved successfully',
-    data: blog // blog object already contains relatedPosts from findById
+    data: blog
   });
 });
 
 exports.createBlog = catchAsync(async (req, res) => {
-  const blog = await BlogService.create(req.body);
+  const blog = await BlogService.create(req.models, req.body);
 
   res.status(201).json({
     success: true,
@@ -37,7 +33,7 @@ exports.createBlog = catchAsync(async (req, res) => {
 });
 
 exports.updateBlog = catchAsync(async (req, res) => {
-  const blog = await BlogService.update(req.params.id, req.body);
+  const blog = await BlogService.update(req.models, req.params.id, req.body);
 
   res.status(200).json({
     success: true,
@@ -47,7 +43,7 @@ exports.updateBlog = catchAsync(async (req, res) => {
 });
 
 exports.deleteBlog = catchAsync(async (req, res) => {
-  await BlogService.delete(req.params.id);
+  await BlogService.delete(req.models, req.params.id);
 
   res.status(200).json({
     success: true,
@@ -60,6 +56,7 @@ exports.deleteBlog = catchAsync(async (req, res) => {
 exports.getRelatedPosts = catchAsync(async (req, res) => {
   const { categoryId, storeId, limit } = req.query;
   const relatedPosts = await BlogService.getRelatedPosts(
+    req.models,
     categoryId,
     storeId,
     req.params.id,
@@ -75,6 +72,7 @@ exports.getRelatedPosts = catchAsync(async (req, res) => {
 
 exports.updateEngagement = catchAsync(async (req, res) => {
   const blog = await BlogService.updateEngagementMetrics(
+    req.models,
     req.params.id,
     req.body
   );

@@ -2,8 +2,8 @@ const blogCategoryService = require('../services/blogCategoryService');
 const { catchAsync } = require('../utils/errorUtils');
 
 exports.getAllCategories = catchAsync(async (req, res) => {
-    const categories = await blogCategoryService.findAll();
-    
+    const categories = await blogCategoryService.findAll(req.models, req.query);
+
     res.status(200).json({
         success: true,
         message: 'Blog categories retrieved successfully',
@@ -12,8 +12,8 @@ exports.getAllCategories = catchAsync(async (req, res) => {
 });
 
 exports.getCategory = catchAsync(async (req, res) => {
-    const category = await blogCategoryService.findById(req.params.id);
-    
+    const category = await blogCategoryService.findById(req.models, req.params.id);
+
     res.status(200).json({
         success: true,
         message: 'Blog category retrieved successfully',
@@ -22,8 +22,8 @@ exports.getCategory = catchAsync(async (req, res) => {
 });
 
 exports.createCategory = catchAsync(async (req, res) => {
-    const category = await blogCategoryService.create(req.body);
-    
+    const category = await blogCategoryService.create(req.models, req.body);
+
     res.status(201).json({
         success: true,
         message: 'Blog category created successfully',
@@ -32,8 +32,8 @@ exports.createCategory = catchAsync(async (req, res) => {
 });
 
 exports.updateCategory = catchAsync(async (req, res) => {
-    const category = await blogCategoryService.update(req.params.id, req.body);
-    
+    const category = await blogCategoryService.update(req.models, req.params.id, req.body);
+
     res.status(200).json({
         success: true,
         message: 'Blog category updated successfully',
@@ -42,8 +42,8 @@ exports.updateCategory = catchAsync(async (req, res) => {
 });
 
 exports.deleteCategory = catchAsync(async (req, res) => {
-    await blogCategoryService.delete(req.params.id);
-    
+    await blogCategoryService.delete(req.models, req.params.id);
+
     res.status(200).json({
         success: true,
         message: 'Blog category deleted successfully',

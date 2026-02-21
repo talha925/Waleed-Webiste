@@ -1,38 +1,42 @@
 const mongoose = require('mongoose');
-const Category = require('../models/categoryModel');
 const AppError = require('../errors/AppError');
 const cacheService = require('./cacheService');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
 /**
  * Get all categories with pagination
+ * @param {Object} models - Tenant models
  * @param {Object} queryParams - Query parameters
  * @returns {Object} Categories with pagination info
  */
-exports.getCategories = async (queryParams) => {
+exports.getCategories = async (models, queryParams) => {
+    const { Category, brandId } = models;
     try {
-        const { page = 1, limit = 50, active } = queryParams;
+        const cacheKey = cacheService.generateKey('categories', { ...queryParams, brandId });
+        const cached = await cacheService.get(cacheKey);
+        if (cached) return cached;
 
-        // Build query based on parameters
+        const { page = 1, limit = 50, active } = queryParams;
         const query = {};
         if (active !== undefined) query.active = active === 'true';
 
-        // Execute query with pagination
         const categories = await Category.find(query)
             .skip((parseInt(page) - 1) * parseInt(limit))
             .limit(parseInt(limit))
             .sort({ name: 1 })
             .lean();
 
-        // Get total count for pagination
         const totalCategories = await Category.countDocuments(query);
 
-        return {
+        const result = {
             categories,
             totalPages: Math.ceil(totalCategories / parseInt(limit)),
             currentPage: parseInt(page),
             totalCategories
         };
+
+        await cacheService.set(cacheKey, result, 3600);
+        return result;
     } catch (error) {
         console.error('Error in categoryService.getCategories:', error);
         throw error;
@@ -41,127 +45,80 @@ exports.getCategories = async (queryParams) => {
 
 /**
  * Get category by ID
- * @param {String} id - Category ID
- * @returns {Object} Category
  */
-exports.getCategoryById = async (id) => {
+exports.getCategoryById = async (models, id) => {
+    const { Category } = models;
     try {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new AppError('Invalid Category ID', 400);
-        }
-
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid Category ID', 400);
         const category = await Category.findById(id).lean();
-
-        if (!category) {
-            throw new AppError('Category not found', 404);
-        }
-
+        if (!category) throw new AppError('Category not found', 404);
         return category;
     } catch (error) {
-        console.error('Error in categoryService.getCategoryById:', error);
         throw error;
     }
 };
 
 /**
  * Create a new category
- * @param {Object} categoryData - Category data
- * @returns {Object} Created category
  */
-exports.createCategory = async (categoryData) => {
+exports.createCategory = async (models, categoryData) => {
+    const { Category, brandId } = models;
     try {
         const { name } = categoryData;
-
-        // Check if category with same name exists
         const existingCategory = await Category.findOne({ name });
-        if (existingCategory) {
-            throw new AppError('Category with this name already exists', 400);
-        }
+        if (existingCategory) throw new AppError('Category with this name already exists', 400);
 
-        // Create category
         const newCategory = await Category.create(categoryData);
 
-        // Cache Invalidation & Revalidation
-        await cacheService.invalidateCategoryCaches();
+        await cacheService.invalidateCategoryCachesSafely(brandId);
         await callFrontendRevalidation('category', newCategory.slug || newCategory._id);
 
         return newCategory;
     } catch (error) {
-        console.error('Error in categoryService.createCategory:', error);
         throw error;
     }
 };
 
 /**
  * Update a category
- * @param {String} id - Category ID
- * @param {Object} updateData - Data to update
- * @returns {Object} Updated category
  */
-exports.updateCategory = async (id, updateData) => {
+exports.updateCategory = async (models, id, updateData) => {
+    const { Category, brandId } = models;
     try {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new AppError('Invalid Category ID', 400);
-        }
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid Category ID', 400);
 
-        // Check for duplicate name if name is being updated
         if (updateData.name) {
-            const existingCategory = await Category.findOne({
-                name: updateData.name,
-                _id: { $ne: id }
-            });
-
-            if (existingCategory) {
-                throw new AppError('Category with this name already exists', 400);
-            }
+            const existingCategory = await Category.findOne({ name: updateData.name, _id: { $ne: id } });
+            if (existingCategory) throw new AppError('Category with this name already exists', 400);
         }
 
-        // Update category
-        const updatedCategory = await Category.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+        if (!updatedCategory) throw new AppError('Category not found', 404);
 
-        if (!updatedCategory) {
-            throw new AppError('Category not found', 404);
-        }
-
-        // Cache Invalidation & Revalidation
-        await cacheService.invalidateCategoryCaches();
+        await cacheService.invalidateCategoryCachesSafely(brandId);
         await callFrontendRevalidation('category', updatedCategory.slug || updatedCategory._id);
 
         return updatedCategory;
     } catch (error) {
-        console.error('Error in categoryService.updateCategory:', error);
         throw error;
     }
 };
 
 /**
  * Delete a category
- * @param {String} id - Category ID
- * @returns {Object} Deleted category
  */
-exports.deleteCategory = async (id) => {
+exports.deleteCategory = async (models, id) => {
+    const { Category, brandId } = models;
     try {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            throw new AppError('Invalid Category ID', 400);
-        }
-
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new AppError('Invalid Category ID', 400);
         const deletedCategory = await Category.findByIdAndDelete(id);
+        if (!deletedCategory) throw new AppError('Category not found', 404);
 
-        if (!deletedCategory) {
-            throw new AppError('Category not found', 404);
-        }
-
-        // Cache Invalidation & Revalidation
-        await cacheService.invalidateCategoryCaches();
+        await cacheService.invalidateCategoryCachesSafely(brandId);
         await callFrontendRevalidation('category', deletedCategory.slug || deletedCategory._id, { action: 'deleted' });
 
         return deletedCategory;
     } catch (error) {
-        console.error('Error in categoryService.deleteCategory:', error);
         throw error;
     }
-}; 
+};

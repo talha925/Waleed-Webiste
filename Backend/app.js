@@ -1,9 +1,8 @@
-const express = require('express');
+const express = require('express'); // restart 1
 const dotenv = require('dotenv');
 const { validateEnv, getConfig } = require('./config/env');
-const connectDB = require('./config/db');
-// const cors = require('cors'); // Removed redundant import, using security.configureCors instead
-const helmet = require('helmet');  // Security middleware
+const { getTenantConnection, closeAllConnections } = require('./config/db');
+const helmet = require('helmet');
 const errorHandler = require('./middlewares/errorHandler');
 const security = require('./middlewares/security');
 const requestLogger = require('./middlewares/requestLogger');
@@ -45,48 +44,51 @@ performanceMiddleware.setupQueryMonitoring();
 // Initialize services
 async function initializeServices() {
     try {
-        await connectDB();      // Connect to MongoDB
-        await redisConfig.connect();  // Connect to Redis
+        // Shared services across all brands
+        await redisConfig.connect();
         await cacheService.ensureInitialized();
-        console.log('✅ All services initialized successfully');
+        console.log('✅ Base services (Redis/Cache) initialized');
     } catch (error) {
         console.error('❌ Service initialization error:', error);
-        // Continue without cache if Redis fails
     }
 }
 
 initializeServices();
 
-// Create initial super-admin if needed
-createFirstSuperAdmin();
+// Note: createFirstSuperAdmin() removed from global startup
+// as it requires a specific tenant DB connection.
 
 // Request Logging and Performance Monitoring
-app.use(performanceMonitoring); // 🚨 CRITICAL: Advanced performance monitoring
+app.use(performanceMonitoring || ((req, res, next) => next()));
 app.use(performanceMiddleware.requestTimer);
 app.use(performanceMiddleware.performanceSummary);
 app.use(requestLogger);
 
 // Security Middleware
-app.use(helmet());  // Adds security headers
+app.use(helmet());
 app.use(security.setSecurityHeaders);
-app.use(security.configureCors);  // Improved CORS configuration
-app.use('/api', security.rateLimit()); // Rate limiting
-app.use(express.json({ limit: '10kb' })); // Limit JSON body size
-app.use(security.sanitizeData); // Prevent NoSQL injection
-app.use(security.preventXSS); // Prevent XSS attacks
+app.use(security.configureCors);
+
+// Brand Detection — attaches req.brand, req.db, and req.models for multi-brand support
+const brandDetection = require('./middlewares/brandDetection');
+app.use(brandDetection);
+
+app.use('/api', security.rateLimit());
+app.use(express.json({ limit: '10kb' }));
+app.use(security.sanitizeData);
+app.use(security.preventXSS);
 app.use(security.preventParamPollution(['category', 'language', 'isTopStore']));
 
 // Routes
 app.get('/', (req, res) => {
     res.json({
-        message: 'Coupon Backend API',
-        version: '1.0.0',
+        message: 'Multi-Brand Coupon Backend API',
+        brand: req.brand?.brandId || 'default',
         status: 'running',
         timestamp: new Date().toISOString()
     });
 });
 
-// Health check endpoint
 app.get('/health', performanceMiddleware.healthCheck);
 
 app.use('/api/auth', authRoutes);
@@ -95,7 +97,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/blogs', blogRoutes);
-app.use('/api/blogCategories', blogCategoryRoutes);
+app.use(['/api/blogCategories', '/api/blog-categories'], blogCategoryRoutes);
 app.use('/monitoring', monitoringRoutes);
 
 // Error handling middleware (must be after routes)
@@ -106,98 +108,55 @@ const PORT = config.port;
 const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`🚀 Server running in ${config.nodeEnv} mode on port ${PORT}`);
 
-    // 🔌 Initialize WebSocket server if enabled
     if (process.env.WS_ENABLED === 'true') {
         try {
             await initializeWebSocketServer(server);
-            console.log('🌐 WebSocket server initialized successfully');
+            console.log('🌐 WebSocket server initialized');
         } catch (wsError) {
-            console.error('⚠️ WebSocket server initialization failed:', wsError.message);
-            // Don't crash the main server if WebSocket fails
+            console.error('⚠️ WebSocket server failed:', wsError.message);
         }
-    } else {
-        console.log('📡 WebSocket server disabled (WS_ENABLED=false)');
-    }
-
-    // Start monitoring services in production
-    if (config.nodeEnv === 'production') {
-        const healthCheckService = require('./services/healthCheckService');
-        const performanceReporter = require('./services/performanceReporter');
-
-        // Start health checks and reporting
-        healthCheckService.start();
-        performanceReporter.scheduleDailyReports();
-        performanceReporter.scheduleWeeklyReports();
-
-        console.log('📊 Production monitoring services started');
     }
 });
 
-// 🔥 CRITICAL: Global error handlers to prevent crashes
-process.on('uncaughtException', (err) => {
-    console.error('💥 UNCAUGHT EXCEPTION! Shutting down...');
-    console.error('Error:', err.name, err.message);
-    console.error('Stack:', err.stack);
+/**
+ * Graceful Shutdown Handlers
+ */
+const gracefulShutdown = async (signal) => {
+    console.log(`\n🔄 ${signal} received. Starting graceful shutdown...`);
 
-    // Close server gracefully
-    server.close(() => {
-        process.exit(1);
+    server.close(async () => {
+        console.log('🛑 HTTP server closed');
+
+        try {
+            await shutdownWebSocketServer();
+            await redisConfig.disconnect();
+            await closeAllConnections();
+            console.log('✅ All services shut down successfully');
+            process.exit(0);
+        } catch (err) {
+            console.error('❌ Error during shutdown:', err);
+            process.exit(1);
+        }
     });
 
-    // Force close after 10 seconds
+    // Force exit after 20s
     setTimeout(() => {
         console.error('⚠️ Forced shutdown after timeout');
         process.exit(1);
-    }, 10000);
+    }, 20000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+process.on('uncaughtException', (err) => {
+    console.error('💥 UNCAUGHT EXCEPTION:', err);
+    gracefulShutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (err) => {
-    console.error('💥 UNHANDLED REJECTION! Shutting down...');
-    console.error('Error:', err);
-
-    // Close server gracefully
-    server.close(() => {
-        process.exit(1);
-    });
-
-    // Force close after 10 seconds
-    setTimeout(() => {
-        console.error('⚠️ Forced shutdown after timeout');
-        process.exit(1);
-    }, 10000);
+    console.error('💥 UNHANDLED REJECTION:', err);
+    gracefulShutdown('unhandledRejection');
 });
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-    console.log('🔄 SIGTERM received, shutting down gracefully...');
-    server.close(async () => {
-        // Shutdown WebSocket server if enabled
-        if (process.env.WS_ENABLED === 'true') {
-            try {
-                await shutdownWebSocketServer();
-                console.log('🌐 WebSocket server shut down successfully');
-            } catch (wsError) {
-                console.error('⚠️ WebSocket server shutdown error:', wsError.message);
-            }
-        }
-        await redisConfig.disconnect();
-        process.exit(0);
-    });
-});
-
-process.on('SIGINT', async () => {
-    console.log('🔄 SIGINT received, shutting down gracefully...');
-    server.close(async () => {
-        // Shutdown WebSocket server if enabled
-        if (process.env.WS_ENABLED === 'true') {
-            try {
-                await shutdownWebSocketServer();
-                console.log('🌐 WebSocket server shut down successfully');
-            } catch (wsError) {
-                console.error('⚠️ WebSocket server shutdown error:', wsError.message);
-            }
-        }
-        await redisConfig.disconnect();
-        process.exit(0);
-    });
-});
+module.exports = app;

@@ -83,23 +83,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate category object
-    if (!blogData.category || typeof blogData.category !== 'object') {
-      return NextResponse.json(
-        {
-          error: 'Category must be an object with required fields.'
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!blogData.category.id || !blogData.category.name) {
-      return NextResponse.json(
-        {
-          error: 'Category must have both id and name fields.'
-        },
-        { status: 400 }
-      );
+    // Validate category object - optional now
+    if (blogData.category) {
+      if (!blogData.category.id || !blogData.category.name) {
+        return NextResponse.json(
+          {
+            error: 'Category must have both id and name fields if provided.'
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate store object - optional
@@ -247,11 +240,11 @@ export async function POST(request: NextRequest) {
         email: blogData.author.email || undefined,
         avatar: blogData.author.avatar || undefined,
       },
-      category: {
+      category: blogData.category ? {
         id: blogData.category.id,
         name: blogData.category.name,
         slug: blogData.category.slug || blogData.category.name.toLowerCase().replace(/\s+/g, '-'),
-      },
+      } : undefined,
       store: blogData.store ? {
         id: blogData.store.id,
         name: blogData.store.name,

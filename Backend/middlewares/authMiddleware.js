@@ -1,36 +1,40 @@
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
-const User = require('../models/userModel');
 const AppError = require('../errors/AppError');
 
-// Protect routes - verify JWT token and set req.user
+/**
+ * Protect routes - verify JWT token and set req.user
+ * Multi-tenant aware: Uses the User model from the current brand's database
+ */
 exports.protect = async (req, res, next) => {
     try {
+        const User = req.models.User;
+
         // 1) Check if token exists
         let token;
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
         }
-        
+
         if (!token) {
             return next(new AppError('You are not logged in. Please log in to get access.', 401));
         }
-        
+
         // 2) Verify token
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-        
-        // 3) Check if user still exists
+
+        // 3) Check if user still exists in THIS brand's database
         const currentUser = await User.findById(decoded.userId);
         if (!currentUser) {
-            return next(new AppError('The user belonging to this token no longer exists.', 401));
+            return next(new AppError('The user belonging to this token no longer exists in this brand.', 401));
         }
-        
+
         // 4) Check if user is active
         if (!currentUser.active) {
             return next(new AppError('This user account has been deactivated.', 401));
         }
-        
-        // Grant access to protected route
+
+        // Grant access
         req.user = currentUser._id;
         req.userRole = currentUser.role;
         next();
@@ -45,7 +49,9 @@ exports.protect = async (req, res, next) => {
     }
 };
 
-// Restrict access to certain roles
+/**
+ * Restrict access to certain roles
+ */
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {
         if (!roles.includes(req.userRole)) {
@@ -55,14 +61,15 @@ exports.restrictTo = (...roles) => {
     };
 };
 
-// Create first super-admin for system initialization
-exports.createFirstSuperAdmin = async () => {
+/**
+ * Create first super-admin (Legacy - needs to be moved to a tenant-aware route)
+ */
+exports.createFirstSuperAdmin = async (models) => {
     try {
+        const User = models.User;
         const adminCount = await User.countDocuments({ role: 'super-admin' });
-        
+
         if (adminCount === 0 && process.env.INIT_ADMIN_EMAIL && process.env.INIT_ADMIN_PASSWORD) {
-            console.log('🔧 No super-admin found. Creating initial super-admin...');
-            
             await User.create({
                 name: 'Super Admin',
                 email: process.env.INIT_ADMIN_EMAIL,
@@ -70,10 +77,9 @@ exports.createFirstSuperAdmin = async () => {
                 role: 'super-admin',
                 active: true
             });
-            
-            console.log('✅ Initial super-admin created successfully!');
+            console.log('✅ Initial super-admin created for tenant db.');
         }
     } catch (error) {
-        console.error('❌ Failed to create initial super-admin:', error);
+        console.error('❌ Failed to create initial super-admin:', error.message);
     }
 };

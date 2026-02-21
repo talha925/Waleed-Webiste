@@ -7,6 +7,11 @@ const API_URL = `${config.api.baseUrl}/api/blogs`;
 // GET /api/blogs/[id]
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
+
+  if (!id || id === 'undefined') {
+    return NextResponse.json({ message: 'Blog ID is required' }, { status: 400 });
+  }
+
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'GET',
@@ -15,13 +20,21 @@ export async function GET(request: Request, { params }: { params: { id: string }
       },
       cache: 'no-store',
     });
+
+    console.log(`[GET /api/blogs/${id}] Backend response status:`, response.status);
+
     if (!response.ok) {
       if (response.status === 404) {
         return NextResponse.json({ message: 'Blog not found' }, { status: 404 });
       }
+      const errBody = await response.text();
+      console.error(`[GET /api/blogs/${id}] Backend error:`, errBody);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
     const data = await response.json();
+    console.log(`[GET /api/blogs/${id}] Data received:`, JSON.stringify(data).substring(0, 200) + "...");
+
     // Unwrap common response shapes to return the actual blog object
     const blog = (data?.data?.blog) ?? (data?.blog) ?? (data?.data) ?? data ?? null;
     return NextResponse.json({ blog });
@@ -35,6 +48,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const { id } = params;
   try {
     const formData = await request.json();
+    console.log(`[PUT /api/blogs/${id}] Data received from frontend:`, JSON.stringify(formData).substring(0, 300) + "...");
+
     const { cookies } = await import('next/headers');
     const token = cookies().get('authToken')?.value;
 
@@ -47,12 +62,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log(`[PUT /api/blogs/${id}] Forwarding to backend: ${API_URL}/${id}`);
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(formData),
       cache: 'no-store',
     });
+
+    console.log(`[PUT /api/blogs/${id}] Backend response status:`, response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

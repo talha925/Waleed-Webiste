@@ -42,7 +42,7 @@ router.get('/health', async (req, res) => {
 });
 
 router.get('/system-health', async (req, res) => {
-    const health = await storeService.getSystemHealth();
+    const health = await storeService.getSystemHealth(req.models);
     res.status(health.status === 'healthy' ? 200 : 503).json(health);
 });
 

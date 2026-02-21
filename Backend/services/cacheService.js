@@ -166,23 +166,24 @@ class CacheService {
   }
 
   generateKey(type, params = {}) {
-    // ✅ CONSISTENT KEY PATTERNS: store:{slug}, coupon:{id}, etc.
+    // ✅ BRAND ISOLATION: Prefix every key with brandId
+    const brandPrefix = params.brandId ? `${params.brandId}:` : '';
+
     switch (type) {
       case 'store':
-        return params.slug ? `coupon_backend:store:slug:${params.slug}` : `coupon_backend:stores:${this._hashParams(params)}`;
+        return `${brandPrefix}coupon_backend:store:slug:${params.slug || this._hashParams(params)}`;
       case 'store_detail':
-        return `coupon_backend:store:${params.id || params.slug}`;
+        return `${brandPrefix}coupon_backend:store:${params.id || params.slug}`;
       case 'coupon':
-        return params.id ? `coupon_backend:coupon:${params.id}` : `coupon_backend:coupons:${this._hashParams(params)}`;
+        return params.id ? `${brandPrefix}coupon_backend:coupon:${params.id}` : `${brandPrefix}coupon_backend:coupons:${this._hashParams(params)}`;
       case 'coupon_detail':
-        return `coupon_backend:coupon:${params.id}`;
+        return `${brandPrefix}coupon_backend:coupon:${params.id}`;
       case 'store_coupons':
-        return `coupon_backend:store:${params.storeId}:coupons:${this._hashParams(params)}`;
+        return `${brandPrefix}coupon_backend:store:${params.storeId}:coupons:${this._hashParams(params)}`;
       case 'user':
-        return `coupon_backend:user:${params.id}`;
+        return `${brandPrefix}coupon_backend:user:${params.id}`;
       default:
-        // Fallback to original pattern for other types
-        const baseKey = `coupon_backend:${type}`;
+        const baseKey = `${brandPrefix}coupon_backend:${type}`;
         if (Object.keys(params).length === 0) return baseKey;
 
         const filteredParams = Object.entries(params)
@@ -262,35 +263,36 @@ class CacheService {
   }
 
   // ✅ ATOMIC CACHE INVALIDATION FOR STORES
-  async invalidateStoreCache(storeId, storeSlug = null) {
+  async invalidateStoreCache(storeId, storeSlug = null, brandId = null) {
     await this.ensureInitialized();
     if (!this.isAvailable()) return false;
 
     try {
       const keysToDelete = [];
+      const brandPrefix = brandId ? `${brandId}:` : '';
 
       // Store-specific keys
       if (storeSlug) {
-        keysToDelete.push(this.generateKey('store', { slug: storeSlug }));
+        keysToDelete.push(this.generateKey('store', { slug: storeSlug, brandId }));
       }
       if (storeId) {
-        keysToDelete.push(this.generateKey('store_detail', { id: storeId }));
+        keysToDelete.push(this.generateKey('store_detail', { id: storeId, brandId }));
       }
 
       // Store coupons cache patterns
-      const storeCouponPattern = `store:${storeId}:coupons:*`;
+      const storeCouponPattern = `${brandPrefix}coupon_backend:store:${storeId}:coupons:*`;
       const storeCouponKeys = await this._getKeysByPattern(storeCouponPattern);
       keysToDelete.push(...storeCouponKeys);
 
       // General stores list cache
-      const storesPattern = 'stores:*';
+      const storesPattern = `${brandPrefix}coupon_backend:stores:*`;
       const storesKeys = await this._getKeysByPattern(storesPattern);
       keysToDelete.push(...storesKeys);
 
       // Delete all keys
       if (keysToDelete.length > 0) {
         await this.redis.del(...keysToDelete);
-        console.log(`✅ Invalidated ${keysToDelete.length} store cache keys for store ${storeId}`);
+        console.log(`✅ Invalidated ${keysToDelete.length} store cache keys for store ${storeId} (Brand: ${brandId})`);
       }
 
       return true;
@@ -301,32 +303,33 @@ class CacheService {
   }
 
   // ✅ ATOMIC CACHE INVALIDATION FOR COUPONS
-  async invalidateCouponCache(couponId, storeId = null) {
+  async invalidateCouponCache(couponId, storeId = null, brandId = null) {
     await this.ensureInitialized();
     if (!this.isAvailable()) return false;
 
     try {
       const keysToDelete = [];
+      const brandPrefix = brandId ? `${brandId}:` : '';
 
       // Coupon-specific keys
-      keysToDelete.push(this.generateKey('coupon', { id: couponId }));
+      keysToDelete.push(this.generateKey('coupon', { id: couponId, brandId }));
 
       // Store coupons cache if storeId provided
       if (storeId) {
-        const storeCouponPattern = `store:${storeId}:coupons:*`;
+        const storeCouponPattern = `${brandPrefix}coupon_backend:store:${storeId}:coupons:*`;
         const storeCouponKeys = await this._getKeysByPattern(storeCouponPattern);
         keysToDelete.push(...storeCouponKeys);
       }
 
       // General coupons list cache
-      const couponsPattern = 'coupons:*';
+      const couponsPattern = `${brandPrefix}coupon_backend:coupons:*`;
       const couponsKeys = await this._getKeysByPattern(couponsPattern);
       keysToDelete.push(...couponsKeys);
 
       // Delete all keys
       if (keysToDelete.length > 0) {
         await this.redis.del(...keysToDelete);
-        console.log(`✅ Invalidated ${keysToDelete.length} coupon cache keys for coupon ${couponId}`);
+        console.log(`✅ Invalidated ${keysToDelete.length} coupon cache keys for coupon ${couponId} (Brand: ${brandId})`);
       }
 
       return true;
@@ -468,15 +471,16 @@ class CacheService {
   }
 
   // ✅ FIXED: Correct cache patterns
-  async invalidateBlogCaches() {
+  async invalidateBlogCaches(brandId = null) {
+    const prefix = brandId ? `${brandId}:` : '';
     try {
       await Promise.all([
-        this.delPattern('coupon_backend:blog_post*'),
-        this.delPattern('coupon_backend:blogs*'),
-        this.delPattern('coupon_backend:frontBannerBlogs*'),
-        this.delPattern('coupon_backend:related*') // ✅ FIXED: was 'related_posts*'
+        this.delPattern(`${prefix}coupon_backend:blog_post*`),
+        this.delPattern(`${prefix}coupon_backend:blogs*`),
+        this.delPattern(`${prefix}coupon_backend:frontBannerBlogs*`),
+        this.delPattern(`${prefix}coupon_backend:related*`)
       ]);
-      console.log('✅ Blog caches invalidated (invalidateBlogCaches)');
+      console.log(`✅ Blog caches invalidated for brand ${brandId}`);
       return true;
     } catch (err) {
       console.error('❌ invalidateBlogCaches error:', err);
@@ -485,36 +489,26 @@ class CacheService {
   }
 
   // ✅ COMPREHENSIVE CACHE INVALIDATION WITH ALL REQUIRED PATTERNS
-  async invalidateStoreCaches(storeId = null) {
+  async invalidateStoreCaches(storeId = null, brandId = null) {
+    const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
-        // Core store patterns
-        'coupon_backend:stores*',
-        'coupon_backend:store:*',
-        'coupon_backend:store_search*',
-
-        // Blog patterns
-        'coupon_backend:blog*',
-        'coupon_backend:blogs*',
-        'coupon_backend:frontBannerBlogs*',
-        'coupon_backend:related*',
-
-        // Homepage patterns
-        'coupon_backend:homepage*',
-
-        // Category patterns
-        'coupon_backend:categories*',
-
-        // Coupon patterns
-        'coupon_backend:coupons*'
+        `${prefix}coupon_backend:stores*`,
+        `${prefix}coupon_backend:store:*`,
+        `${prefix}coupon_backend:store_search*`,
+        `${prefix}coupon_backend:blog*`,
+        `${prefix}coupon_backend:blogs*`,
+        `${prefix}coupon_backend:frontBannerBlogs*`,
+        `${prefix}coupon_backend:related*`,
+        `${prefix}coupon_backend:homepage*`,
+        `${prefix}coupon_backend:categories*`,
+        `${prefix}coupon_backend:coupons*`
       ];
 
-      // Add aggressive store-specific patterns if storeId provided
       if (storeId) {
         patterns.push(
-          `coupon_backend:store:${storeId}*`,
-          `coupon_backend:coupons:store:${storeId}*`,
-          `coupon_backend:*${storeId}*` // Aggressive pattern for any cache containing storeId
+          `${prefix}coupon_backend:store:${storeId}*`,
+          `${prefix}coupon_backend:coupons:store:${storeId}*`
         );
       }
 
@@ -542,13 +536,14 @@ class CacheService {
   }
 
   // ✅ ENHANCED HOMEPAGE CACHE INVALIDATION
-  async invalidateHomepageCaches() {
+  async invalidateHomepageCaches(brandId = null) {
+    const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
-        'coupon_backend:homepage*',
-        'coupon_backend:frontBannerBlogs*',
-        'coupon_backend:categories*',
-        'coupon_backend:stores*' // Homepage often shows featured stores
+        `${prefix}coupon_backend:homepage*`,
+        `${prefix}coupon_backend:frontBannerBlogs*`,
+        `${prefix}coupon_backend:categories*`,
+        `${prefix}coupon_backend:stores*`
       ];
 
       let totalDeleted = 0;
@@ -557,7 +552,7 @@ class CacheService {
         totalDeleted += deleted;
       }
 
-      console.log(`✅ Homepage caches invalidated: ${totalDeleted} keys deleted`);
+      console.log(`✅ Homepage caches invalidated for brand ${brandId}: ${totalDeleted} keys deleted`);
       return totalDeleted;
     } catch (error) {
       console.error('❌ Homepage cache invalidation error:', error);
@@ -566,12 +561,13 @@ class CacheService {
   }
 
   // ✅ ENHANCED CATEGORY CACHE INVALIDATION
-  async invalidateCategoryCaches() {
+  async invalidateCategoryCaches(brandId = null) {
+    const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
-        'coupon_backend:categories*',
-        'coupon_backend:stores*', // Categories affect store listings
-        'coupon_backend:coupons*' // Categories affect coupon listings
+        `${prefix}coupon_backend:categories*`,
+        `${prefix}coupon_backend:stores*`,
+        `${prefix}coupon_backend:coupons*`
       ];
 
       let totalDeleted = 0;
@@ -580,7 +576,7 @@ class CacheService {
         totalDeleted += deleted;
       }
 
-      console.log(`✅ Category caches invalidated: ${totalDeleted} keys deleted`);
+      console.log(`✅ Category caches invalidated for brand ${brandId}: ${totalDeleted} keys deleted`);
       return totalDeleted;
     } catch (error) {
       console.error('❌ Category cache invalidation error:', error);
@@ -601,10 +597,10 @@ class CacheService {
   }
 
   // ✅ PRODUCTION-READY: SAFE CACHE INVALIDATION WITH ERROR HANDLING
-  async invalidateStoreCachesSafely(storeId = null) {
+  async invalidateStoreCachesSafely(storeId = null, brandId = null) {
     try {
-      console.log(`🛡️ Starting safe cache invalidation for store: ${storeId || 'all'}`);
-      const result = await this.invalidateStoreCaches(storeId);
+      console.log(`🛡️ Starting safe cache invalidation for store: ${storeId || 'all'} (Brand: ${brandId})`);
+      const result = await this.invalidateStoreCaches(storeId, brandId);
       console.log(`✅ Safe cache invalidation completed successfully: ${result.totalDeleted} keys deleted`);
       return result;
     } catch (error) {
@@ -617,7 +613,8 @@ class CacheService {
         error: error.message,
         fallback: true,
         timestamp: new Date(),
-        storeId: storeId
+        storeId: storeId,
+        brandId: brandId
       };
 
       console.warn(`⚠️ Continuing operation without cache invalidation:`, fallbackResult);
@@ -626,10 +623,10 @@ class CacheService {
   }
 
   // ✅ PRODUCTION-READY: SAFE HOMEPAGE CACHE INVALIDATION
-  async invalidateHomepageCachesSafely() {
+  async invalidateHomepageCachesSafely(brandId = null) {
     try {
-      const result = await this.invalidateHomepageCaches();
-      console.log(`✅ Safe homepage cache invalidation completed: ${result} keys deleted`);
+      const result = await this.invalidateHomepageCaches(brandId);
+      console.log(`✅ Safe homepage cache invalidation completed: ${result} keys deleted (Brand: ${brandId})`);
       return { totalDeleted: result, success: true };
     } catch (error) {
       console.error('❌ Homepage cache invalidation failed:', error.message);
@@ -643,10 +640,10 @@ class CacheService {
   }
 
   // ✅ PRODUCTION-READY: SAFE BLOG CACHE INVALIDATION
-  async invalidateBlogCachesSafely() {
+  async invalidateBlogCachesSafely(brandId = null) {
     try {
-      const result = await this.invalidateBlogCaches();
-      console.log(`✅ Safe blog cache invalidation completed: ${result ? 'success' : 'partial'}`);
+      const result = await this.invalidateBlogCaches(brandId);
+      console.log(`✅ Safe blog cache invalidation completed: ${result ? 'success' : 'partial'} (Brand: ${brandId})`);
       return { success: result, fallback: false };
     } catch (error) {
       console.error('❌ Blog cache invalidation failed:', error.message);
@@ -654,6 +651,23 @@ class CacheService {
         success: false,
         error: error.message,
         fallback: true
+      };
+    }
+  }
+
+  // ✅ PRODUCTION-READY: SAFE CATEGORY CACHE INVALIDATION
+  async invalidateCategoryCachesSafely(brandId = null) {
+    try {
+      const result = await this.invalidateCategoryCaches(brandId);
+      console.log(`✅ Safe category cache invalidation completed: ${result} keys deleted (Brand: ${brandId})`);
+      return { totalDeleted: result, success: true };
+    } catch (error) {
+      console.error('❌ Category cache invalidation failed:', error.message);
+      return {
+        totalDeleted: 0,
+        error: error.message,
+        fallback: true,
+        success: false
       };
     }
   }

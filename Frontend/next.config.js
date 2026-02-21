@@ -16,16 +16,20 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'coupon-app-backend.vercel.app',
-      },
-      {
-        protocol: 'https',
-        hostname: 'coupon-app-image.s3.us-east-1.amazonaws.com',
-      },
-      {
-        protocol: 'https',
         hostname: 'cdn.pixabay.com',
       },
+      {
+        protocol: 'https',
+        hostname: '*.s3.us-east-1.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.s3.amazonaws.com',
+      },
+      ...(process.env.NEXT_PUBLIC_IMAGE_DOMAIN ? [{
+        protocol: 'https',
+        hostname: process.env.NEXT_PUBLIC_IMAGE_DOMAIN,
+      }] : []),
     ],
   },
   experimental: {

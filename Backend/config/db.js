@@ -1,114 +1,90 @@
 const mongoose = require('mongoose');
-const Coupon = require('../models/couponModel');
 
+// Cache for tenant connections
+const tenantConnections = {};
+
+/**
+ * Options for MongoDB connection
+ * Optimized for multi-tenant pooling
+ */
 const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
   maxPoolSize: 10,
-  minPoolSize: 2,
+  serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-  serverSelectionTimeoutMS: 30000, // Increased from 5000ms
-  connectTimeoutMS: 30000, // Increased from 10000ms
-  family: 4,
-  retryWrites: true,
-  retryReads: true,
-  writeConcern: { w: 'majority' }
-  // Add DNS resolution options
 };
 
 /**
- * ✅ Reusable reconnection logic
+ * Get or create a database connection for a specific tenant (brand)
+ * @param {string} brandId - Unique identifier for the brand
+ * @param {string} uri - MongoDB URI for this brand
  */
-const reconnectToMongo = async () => {
-  try {
-    console.log('🔄 Attempting MongoDB reconnection...');
-    await mongoose.connect(process.env.MONGO_URI, mongoOptions);
-  } catch (err) {
-    console.error('❌ Reconnection failed:', err.message);
+const getTenantConnection = async (brandId, uri) => {
+  // 1. Check if we already have a healthy connection in cache
+  if (tenantConnections[brandId]) {
+    const conn = tenantConnections[brandId];
+    // 1 = connected, 2 = connecting
+    if (conn.readyState === 1 || conn.readyState === 2) {
+      return conn;
+    }
+    // If it's dead, remove it from cache to recreate
+    delete tenantConnections[brandId];
   }
-};
 
-/**
- * ✅ Main Connection Function
- */
-const connectDB = async () => {
+  console.log(`🔌 Creating new DB connection for brand: ${brandId}`);
+
   try {
-    await mongoose.connect(process.env.MONGO_URI, mongoOptions);
-    console.log('✅ MongoDB Connected');
-    await setupDatabaseIndexes();
-    monitorMongooseConnection();
+    // Create a separate connection instance (not the global mongoose connection)
+    const conn = await mongoose.createConnection(uri, mongoOptions).asPromise();
+
+    tenantConnections[brandId] = conn;
+
+    // Handle connection events for this specific tenant
+    conn.on('error', (err) => {
+      console.error(`❌ MongoDB error for brand [${brandId}]:`, err.message);
+      // On severe error, remove from cache so next request can try a fresh connection
+      if (err.name === 'MongoNetworkError' || err.name === 'MongoTimeoutError') {
+        delete tenantConnections[brandId];
+      }
+    });
+
+    conn.on('disconnected', () => {
+      console.warn(`⚠️ MongoDB disconnected for brand [${brandId}]`);
+      delete tenantConnections[brandId];
+    });
+
+    return conn;
   } catch (error) {
-    console.error('❌ MongoDB Initial Connection Error:', error);
-    process.exit(1);
+    console.error(`❌ Failed to connect to DB for brand [${brandId}]:`, error.message);
+    throw error;
   }
 };
 
 /**
- * ✅ Database Index Maintenance
+ * Graceful shutdown
  */
-const setupDatabaseIndexes = async () => {
-  try {
+const closeAllConnections = async () => {
+  const brandIds = Object.keys(tenantConnections);
+  console.log(`🧹 Closing ${brandIds.length} database connections...`);
+
+  await Promise.all(brandIds.map(async (id) => {
     try {
-      await Coupon.collection.dropIndex("code_1");
-      console.log("✅ Unique index on 'code' removed successfully!");
+      await tenantConnections[id].close();
+      delete tenantConnections[id];
     } catch (err) {
-      console.log("⚠️ Index not found or already removed");
+      console.error(`Error closing connection for ${id}:`, err.message);
     }
-
-    // Add new indexes here if needed
-  } catch (error) {
-    console.error("❌ Error setting up database indexes:", error);
-  }
+  }));
 };
 
-/**
- * ✅ Connection Monitoring & Recovery
- */
-const monitorMongooseConnection = () => {
-  const connection = mongoose.connection;
+// Handle process termination
+process.on('SIGINT', async () => {
+  await closeAllConnections();
+  process.exit(0);
+});
 
-  let connectionStats = {
-    connected: 0,
-    disconnected: 0,
-    errors: 0,
-    lastError: null
-  };
-
-  connection.on('connected', () => {
-    connectionStats.connected++;
-    console.log('🟢 MongoDB Connected - Pool initialized');
-  });
-
-  connection.on('disconnected', () => {
-    connectionStats.disconnected++;
-    console.log('🔴 MongoDB Disconnected');
-
-    // Exponential backoff for reconnection
-    const backoffTime = Math.min(
-      1000 * Math.pow(2, connectionStats.disconnected % 6),
-      30000
-    );
-
-    setTimeout(reconnectToMongo, backoffTime);
-  });
-
-  connection.on('error', err => {
-    connectionStats.errors++;
-    connectionStats.lastError = {
-      message: err.message,
-      timestamp: new Date().toISOString()
-    };
-    console.error('❌ MongoDB Error:', err.message);
-
-    if (err.name === 'MongoNetworkError' || err.name === 'MongoTimeoutError') {
-      console.log('🔄 Network/Timeout error - attempting recovery...');
-    }
-  });
-
-  // ✅ Graceful Shutdown
-  process.on('SIGINT', async () => {
-    await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed due to application termination');
-    process.exit(0);
-  });
+module.exports = {
+  getTenantConnection,
+  closeAllConnections
 };
-
-module.exports = connectDB;

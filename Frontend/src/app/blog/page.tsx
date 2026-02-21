@@ -1,8 +1,24 @@
-'use client';
-
 import BlogList from '@/components/blog/BlogList';
+import { Metadata } from 'next';
+import { getBrandConfig } from '@config/index';
 
-const BlogPage = () => {
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = getBrandConfig();
+  return {
+    title: `Our Blog | ${brand.siteName}`,
+    description: `Stay updated with the latest trends, tips, and insights from ${brand.siteName}.`,
+    openGraph: {
+      title: `Our Blog | ${brand.siteName}`,
+      description: `Stay updated with the latest trends, tips, and insights from ${brand.siteName}.`,
+      url: `${brand.siteUrl}/blog`,
+    },
+    alternates: {
+      canonical: `${brand.siteUrl}/blog`,
+    },
+  };
+}
+
+export default function BlogPage() {
   return (
     <BlogList
       apiEndpoint="/api/blogs"
@@ -13,6 +29,4 @@ const BlogPage = () => {
       emptyStateDescription="Start creating amazing content with our blog form!"
     />
   );
-};
-
-export default BlogPage;
+}

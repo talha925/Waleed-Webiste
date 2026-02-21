@@ -22,9 +22,17 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     // Verify secret token for security
-    if (secret !== process.env.REVALIDATION_SECRET) {
+    // Support secret in body (legacy) OR Authorization header (preferred)
+    const authHeader = request.headers.get('Authorization');
+    const bearerSecret = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    const providedSecret = secret || bearerSecret;
+
+    if (!providedSecret || providedSecret !== process.env.REVALIDATION_SECRET) {
+      console.warn(`[Revalidation] Unauthorized attempt. Type: ${type}, ID: ${path || tag || blogId}`);
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 });
     }
+
+    console.log(`[Revalidation] Triggering ${type} revalidation for:`, { path, tag, blogId, storeSlug });
 
     switch (type) {
       case 'path':

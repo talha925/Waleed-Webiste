@@ -127,7 +127,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 // Generate static params for known categories (optional, for better performance)
 export async function generateStaticParams() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://www.pennyscroll.com' : 'http://localhost:3000');
+    const brand = getBrandConfig();
+    const baseUrl = brand.apiBaseUrl;
     const response = await fetch(`${baseUrl}/api/blog-categories`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });

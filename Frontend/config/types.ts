@@ -63,9 +63,13 @@ export interface BrandConfig {
     /** Backend API base URL */
     apiBaseUrl: string;
 
-    // ─── Database ────────────────────────────────────────────
+    // ─── Database & Storage ──────────────────────────────────
     /** Optional MongoDB database name override for this brand */
     mongoDBName?: string;
+    /** S3 Bucket name for this brand */
+    bucketName?: string;
+    /** S3 Bucket domain host for images (e.g. "mybucket.s3.region.amazonaws.com") */
+    imageDomain?: string;
 
     // ─── Layout ──────────────────────────────────────────────
     /** Homepage layout variant (e.g. "default", "compact", "magazine") */

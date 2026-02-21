@@ -21,7 +21,7 @@ import brandB from './brandB';
 // Order matters — first match wins.
 // The last entry '' is the catch-all fallback.
 const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
-    { match: 'smartsaver.com', config: brandB },
+    { match: 'blogzenix.com', config: brandB },
     // { match: 'brandC.com',   config: brandC },
     // ↑ Add new domains here
 
@@ -37,6 +37,17 @@ const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
  *   const brand = getBrandConfig();
  */
 export function getBrandConfig(): BrandConfig {
+    // 1. Build-Time / Environment Variable Check (Best for Vercel Static Generation)
+    // If this env var is set, we return that brand immediately.
+    if (process.env.NEXT_PUBLIC_APP_BRAND_ID) {
+        for (const entry of DOMAIN_MAP) {
+            if (entry.config.brandId === process.env.NEXT_PUBLIC_APP_BRAND_ID) {
+                return entry.config;
+            }
+        }
+    }
+
+    // 2. Runtime Header Check (Fallback for specialized multi-tenant setups)
     try {
         const headersList = headers();
         const host = headersList.get('host') || headersList.get('x-forwarded-host') || '';
@@ -53,7 +64,7 @@ export function getBrandConfig(): BrandConfig {
         // headers() throws outside of a request context (e.g. build time)
     }
 
-    // Fallback for build-time / non-request context
+    // Fallback
     return brandA;
 }
 

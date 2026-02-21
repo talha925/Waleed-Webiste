@@ -108,6 +108,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
+      setImageUrl(''); // Clear existing URL so the new file takes priority
       setImageUploadMessage('');
     }
   };
@@ -117,8 +118,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const data = await httpClient.get('/api/blog-categories');
-        setCategories(data.data || data || []);
+        const response = await httpClient.get('/api/blog-categories');
+        // Handle the nested structure: { data: { categories: [...] } }
+        const categoriesData = response.data?.categories || response.categories || (Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []));
+        setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
       } finally {
@@ -199,6 +202,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       newErrors.longDescription = 'Long description must be at least 50 characters long';
     }
 
+    /* 
     if (!categoryId) {
       newErrors.category = 'Category is required';
     }
@@ -208,6 +212,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     } else if (!storeUrl) {
       newErrors.store = 'Selected store must have a valid URL';
     }
+    */
 
     if (!authorName.trim()) {
       newErrors.authorName = 'Author name is required';
@@ -264,57 +269,58 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     setLoading(true);
     setMessage('');
 
-    // Find the selected category and store objects
+    // Find the selected category and store objects (Optional now)
     const selectedCategory = categories.find(cat => cat._id === categoryId);
     const selectedStore = stores.find(store => store._id === storeId);
 
-    if (!selectedCategory || !selectedStore) {
-      setMessage('Invalid category or store selection.');
-      setLoading(false);
-      return;
+    // Clean the URL before validation (if store is selected)
+    const cleanUrl = storeUrl ? cleanAndFormatUrl(storeUrl) : '';
+
+    if (cleanUrl) {
+      try {
+        new URL(cleanUrl);
+      } catch (error) {
+        setMessage('Invalid store URL format. Please check the URL and try again.');
+        setLoading(false);
+        return;
+      }
     }
 
-    // Clean the URL before validation to ensure it's properly formatted
-    const cleanUrl = cleanAndFormatUrl(storeUrl);
-
-    // Additional URL validation
-    try {
-      new URL(cleanUrl);
-    } catch (error) {
-      setMessage('Invalid store URL format. Please check the URL and try again.');
-      setLoading(false);
-      return;
-    }
-
-    // Handle image upload if there's a selected file but no imageUrl
+    // Handle image upload if there's a selected file
     let finalImageUrl = imageUrl;
-    if (imageFile && !imageUrl.trim()) {
+
+    if (imageFile) {
+      console.log('New image file detected, starting upload...', imageFile.name);
       try {
         setMessage('Uploading image...');
         const formData = new FormData();
-        formData.append('file', imageFile);
+        formData.append('image', imageFile);
 
-        const uploadResponse = await fetch(`/api/upload`, {
+        const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
           method: 'POST',
           body: formData,
           headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
         });
 
         if (!uploadResponse.ok) {
-          throw new Error(`Image upload failed: ${uploadResponse.status}`);
+          const errorText = await uploadResponse.text();
+          throw new Error(`Image upload failed: ${uploadResponse.status} - ${errorText}`);
         }
 
         const uploadData = await uploadResponse.json();
+        console.log('Image upload successful. New URL:', uploadData.imageUrl);
         finalImageUrl = uploadData.imageUrl;
-        setImageUrl(uploadData.imageUrl); // Update state with uploaded URL
-        setImageFile(null); // Clear the file input
-        setMessage('Image uploaded successfully! Proceeding with blog creation...');
-      } catch (uploadError) {
+        setImageUrl(uploadData.imageUrl);
+        setImageFile(null);
+        setMessage('Image uploaded successfully! Synchronizing data...');
+      } catch (uploadError: any) {
         console.error('Error uploading image:', uploadError);
-        setMessage('Failed to upload image. Please try uploading the image again or provide an image URL.');
+        setMessage(`Failed to upload image: ${uploadError.message}`);
         setLoading(false);
         return;
       }
+    } else {
+      console.log('No new image file selected. Using existing URL or manual URL:', finalImageUrl);
     }
 
     // Process tags
@@ -333,16 +339,20 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         email: authorEmail.trim() || undefined,
         avatar: authorAvatar.trim() || undefined,
       },
-      category: {
-        id: selectedCategory._id,
-        name: selectedCategory.name,
-        slug: selectedCategory.name.toLowerCase().replace(/\s+/g, '-'),
-      },
-      store: {
-        id: selectedStore._id,
-        name: selectedStore.name,
-        url: cleanUrl,
-      },
+      ...(selectedCategory && {
+        category: {
+          id: selectedCategory._id,
+          name: selectedCategory.name,
+          slug: selectedCategory.name.toLowerCase().replace(/\s+/g, '-'),
+        },
+      }),
+      ...(selectedStore && {
+        store: {
+          id: selectedStore._id,
+          name: selectedStore.name,
+          url: cleanUrl || selectedStore.trackingUrl || '',
+        },
+      }),
       status,
       isFeaturedForHome: isFeatured,
       FrontBanner: frontBanner,
@@ -365,8 +375,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       // FAQs
       faqs: faqs.length > 0 ? faqs : undefined,
     };
+    console.log('Final Blog Data to be submitted:', JSON.stringify(blogData, null, 2));
 
     if (onSubmit) {
+      console.log('Calling onSubmit handler...');
       await onSubmit(blogData, resetForm, setLoading, setMessage, setErrors);
       setLoading(false);
       return;
@@ -714,7 +726,9 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               disabled={loading}
               className="px-8 py-3 bg-green-600 text-white rounded-lg text-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-300 cursor-pointer disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating...' : 'Create Blog Post'}
+              {loading
+                ? (submitLabel?.includes('Update') ? 'Updating...' : 'Creating...')
+                : (submitLabel || 'Create Blog Post')}
             </button>
           </div>
 

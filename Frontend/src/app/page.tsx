@@ -38,6 +38,7 @@ async function fetchFeaturedBlogs() {
   }
 }
 
+
 export default async function Blogs() {
   // Fetch data server-side
   const featuredBlogs = await fetchFeaturedBlogs();

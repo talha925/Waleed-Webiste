@@ -11,7 +11,16 @@ const callFrontendRevalidation = async (type, identifier, metadata = {}) => {
     return await callWithCircuitBreaker(
         'frontend',
         async () => {
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const isDev = process.env.NODE_ENV === 'development';
+            let frontendUrl = process.env.FRONTEND_URL;
+
+            // For local development, prioritize localhost if FRONTEND_URL looks like production
+            if (isDev && (!frontendUrl || frontendUrl.includes('pennyscroll.com'))) {
+                frontendUrl = 'http://localhost:3000';
+            } else if (!frontendUrl) {
+                frontendUrl = 'http://localhost:3000';
+            }
+
             const revalidationEndpoint = `${frontendUrl}/api/revalidate`;
 
             // Use NEXT_REVALIDATE_SECRET as primary, REVALIDATION_SECRET as fallback

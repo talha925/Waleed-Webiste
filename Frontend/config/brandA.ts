@@ -57,6 +57,10 @@ const brandA: BrandConfig = {
   apiBaseUrl:
     process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app',
 
+  // ─── Database & Storage ──────────────────────────────────
+  bucketName: process.env.AWS_BUCKET_NAME || 'coupon-app-image',
+  imageDomain: process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'coupon-app-image.s3.us-east-1.amazonaws.com',
+
   // ─── Layout ──────────────────────────────────────────────
   homepageLayout: 'default',
 

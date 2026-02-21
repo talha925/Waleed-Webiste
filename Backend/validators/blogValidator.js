@@ -32,15 +32,15 @@ const authorSchema = Joi.object({
 }).optional();
 
 const categorySchema = Joi.object({
-  id: objectId.required(),
-  name: Joi.string().required(),
-  slug: Joi.string().required()
+  id: objectId.optional(),
+  name: Joi.string().optional(),
+  slug: Joi.string().optional()
 });
 
 const storeSchema = Joi.object({
-  id: objectId.required(),
-  name: Joi.string().required(),
-  url: Joi.string().required().uri()
+  id: objectId.optional(),
+  name: Joi.string().optional(),
+  url: Joi.string().optional().allow('', null)
 });
 
 const seoSchema = Joi.object({
@@ -84,11 +84,11 @@ exports.createBlogSchema = Joi.object({
   title: Joi.string().required().max(200),
   shortDescription: Joi.string().max(500),
   longDescription: Joi.string().required(),
-  image: imageSchema.required(),
+  image: imageSchema.optional(),
   meta: metaSchema,
   author: authorSchema,
-  category: categorySchema.required(),
-  store: storeSchema.required(),
+  category: categorySchema.optional(),
+  store: storeSchema.optional(),
   seo: seoSchema,
   engagement: engagementSchema,
   navigation: navigationSchema,

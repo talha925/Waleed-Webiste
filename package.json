@@ -7,9 +7,14 @@
         "Backend"
     ],
     "scripts": {
-        "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm start --workspace=backend\"",
+        "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+        "dev:frontend": "npm run dev --workspace=frontend",
+        "dev:backend": "npm run dev --workspace=backend",
         "build": "npm run build --workspaces",
+        "build:frontend": "npm run build --workspace=frontend",
         "start": "npm start --workspaces",
+        "start:frontend": "npm start --workspace=frontend",
+        "start:backend": "npm start --workspace=backend",
         "test": "npm test --workspaces",
         "lint": "npm run lint --workspaces"
     },

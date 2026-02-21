@@ -110,7 +110,9 @@ export default function AdminBlogsPage() {
   // Fetch categories
   useEffect(() => {
     httpClient.get("/api/blog-categories").then((data) => {
-      setCategories(data.data || data || []);
+      // Handle the nested structure: { data: { categories: [...] } }
+      const cats = data.data?.categories || data.categories || (Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []));
+      setCategories(cats);
     });
   }, []);
 
