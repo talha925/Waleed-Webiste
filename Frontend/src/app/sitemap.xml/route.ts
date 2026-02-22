@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getBrandConfig } from '@config/index';
 
-// Generate sitemap.xml dynamically
+export const dynamic = 'force-dynamic';
+
+const FETCH_TIMEOUT = 5000; // 5 seconds timeout
 export async function GET() {
   const brand = getBrandConfig();
   const baseUrl = brand.siteUrl;
@@ -18,9 +20,16 @@ export async function GET() {
   // Fetch dynamic blog posts
   let blogPosts: any[] = [];
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&pageSize=1000`, {
-      next: { revalidate: 3600 } // Revalidate every hour
+      next: { revalidate: 3600 },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       const data = await response.json();
       blogPosts = data.blogs?.blogs || data.data?.blogs || [];
@@ -32,9 +41,16 @@ export async function GET() {
   // Fetch dynamic stores
   let stores: any[] = [];
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     const response = await fetch(`${brand.apiBaseUrl}/api/proxy-stores`, {
-      next: { revalidate: 3600 }
+      next: { revalidate: 3600 },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
     if (response.ok) {
       const data = await response.json();
       stores = data.stores || [];

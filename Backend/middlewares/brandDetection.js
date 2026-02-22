@@ -21,14 +21,23 @@ const { getTenantModels } = require('../models/TenantModels');
  */
 async function brandDetection(req, res, next) {
     try {
-        // 1. Resolve Brand from Host
-        const host =
-            req.headers['x-forwarded-host'] ||
-            req.headers.origin?.replace(/^https?:\/\//, '') ||
-            req.headers.host ||
-            '';
+        // 1. Resolve Brand from Header or Host
+        const brandIdFromHeader = req.headers['x-brand-id'];
+        let brand;
 
-        const brand = getBrandByHost(host);
+        if (brandIdFromHeader) {
+            // If explicit brand ID provided, find it in the map
+            const { BRAND_MAP } = require('../config/brands');
+            brand = BRAND_MAP.find(b => b.brandId === brandIdFromHeader) || getBrandByHost('');
+        } else {
+            const host =
+                req.headers['x-forwarded-host'] ||
+                req.headers.origin?.replace(/^https?:\/\//, '') ||
+                req.headers.host ||
+                '';
+            brand = getBrandByHost(host);
+        }
+
         req.brand = brand;
 
         // 2. Resolve Database Connection

@@ -23,10 +23,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
+  const FETCH_TIMEOUT = 5000;
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     const res = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&page=1&pageSize=9&limit=9`, {
-      next: { revalidate: 60, tags: ['featured-blogs'] } // Revalidate every minute or when tagged
+      next: { revalidate: 60, tags: ['featured-blogs'] }, // Revalidate every minute or when tagged
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!res.ok) throw new Error('Failed to fetch blogs');
 

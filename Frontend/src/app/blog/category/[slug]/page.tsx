@@ -4,6 +4,10 @@ import BlogList from '@/components/blog/BlogList';
 import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { getBrandConfig } from '@config/index';
 
+export const dynamicParams = true; // allow dynamic routes even if not in generateStaticParams
+
+const FETCH_TIMEOUT = 5000;
+
 interface CategoryPageProps {
   params: {
     slug: string;
@@ -15,13 +19,16 @@ async function getCategoryBySlug(slug: string) {
   try {
     const brand = getBrandConfig();
     const baseUrl = brand.apiBaseUrl;
-    // Fallback to internal API if apiBaseUrl is essentially the same app
-    // or use absolute URL if it is external. 
-    // For server-side fetch to own API, we need absolute URL.
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
     const response = await fetch(`${baseUrl}/api/blog-categories`, {
-      next: { revalidate: 300 } // Cache for 5 minutes
+      next: { revalidate: 300 }, // Cache for 5 minutes
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error('Failed to fetch categories');
@@ -129,9 +136,16 @@ export async function generateStaticParams() {
   try {
     const brand = getBrandConfig();
     const baseUrl = brand.apiBaseUrl;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
     const response = await fetch(`${baseUrl}/api/blog-categories`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }, // Cache for 1 hour
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       return [];

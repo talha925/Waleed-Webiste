@@ -29,6 +29,12 @@ const BRAND_MAP = [
         mongoUri: process.env.MONGO_URI_BRAND_B || null,
         bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
     },
+    {
+        match: 'waleed-webiste-backend.vercel.app',
+        brandId: 'blogzenix',
+        mongoUri: process.env.MONGO_URI_BRAND_B || null,
+        bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
+    },
     // { match: 'brandC.com', brandId: 'brandC', mongoUri: process.env.MONGO_URI_BRAND_C || null },
     // ↑ Add new brands here
 
