@@ -7,8 +7,7 @@
  * Each app needs these to function properly
  */
 const REQUIRED_ENV_VARS = [
-    'MONGO_URI',
-    'PORT'
+    'MONGO_URI'
 ];
 
 /**
@@ -67,15 +66,15 @@ const getConfig = () => {
         nodeEnv: process.env.NODE_ENV || 'development',
         port: parseInt(process.env.PORT || '5000', 10),
         isDev: (process.env.NODE_ENV || 'development') === 'development',
-        
+
         // Database
         mongoUri: process.env.MONGO_URI,
-        
+
         // Security
         jwtSecret: process.env.JWT_SECRET,
         jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
         allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(','),
-        
+
         // AWS (for file uploads)
         awsRegion: process.env.AWS_REGION,
         awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,

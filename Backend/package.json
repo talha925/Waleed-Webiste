@@ -18,6 +18,7 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
@@ -40,7 +41,6 @@
   },
   "keywords": [],
   "devDependencies": {
-    "dotenv": "^16.5.0",
     "jest": "^30.0.0",
     "mongodb-memory-server": "^10.1.4",
     "nodemon": "^3.1.4"

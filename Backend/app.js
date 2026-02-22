@@ -18,8 +18,7 @@ dotenv.config();
 
 // Validate environment variables
 if (!validateEnv()) {
-    console.error('❌ Environment validation failed. Please check your .env file.');
-    process.exit(1);
+    console.error('⚠️ Environment validation failed. Application might not function correctly.');
 }
 
 // Get configuration
@@ -103,60 +102,62 @@ app.use('/monitoring', monitoringRoutes);
 // Error handling middleware (must be after routes)
 app.use(errorHandler);
 
-// Start the server
-const PORT = config.port;
-const server = app.listen(PORT, '0.0.0.0', async () => {
-    console.log(`🚀 Server running in ${config.nodeEnv} mode on port ${PORT}`);
+// Start the server (Only if NOT on Vercel)
+if (!process.env.VERCEL) {
+    const PORT = config.port;
+    const server = app.listen(PORT, '0.0.0.0', async () => {
+        console.log(`🚀 Server running in ${config.nodeEnv} mode on port ${PORT}`);
 
-    if (process.env.WS_ENABLED === 'true') {
-        try {
-            await initializeWebSocketServer(server);
-            console.log('🌐 WebSocket server initialized');
-        } catch (wsError) {
-            console.error('⚠️ WebSocket server failed:', wsError.message);
-        }
-    }
-});
-
-/**
- * Graceful Shutdown Handlers
- */
-const gracefulShutdown = async (signal) => {
-    console.log(`\n🔄 ${signal} received. Starting graceful shutdown...`);
-
-    server.close(async () => {
-        console.log('🛑 HTTP server closed');
-
-        try {
-            await shutdownWebSocketServer();
-            await redisConfig.disconnect();
-            await closeAllConnections();
-            console.log('✅ All services shut down successfully');
-            process.exit(0);
-        } catch (err) {
-            console.error('❌ Error during shutdown:', err);
-            process.exit(1);
+        if (process.env.WS_ENABLED === 'true') {
+            try {
+                await initializeWebSocketServer(server);
+                console.log('🌐 WebSocket server initialized');
+            } catch (wsError) {
+                console.error('⚠️ WebSocket server failed:', wsError.message);
+            }
         }
     });
 
-    // Force exit after 20s
-    setTimeout(() => {
-        console.error('⚠️ Forced shutdown after timeout');
-        process.exit(1);
-    }, 20000);
-};
+    /**
+     * Graceful Shutdown Handlers
+     */
+    const gracefulShutdown = async (signal) => {
+        console.log(`\n🔄 ${signal} received. Starting graceful shutdown...`);
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+        server.close(async () => {
+            console.log('🛑 HTTP server closed');
 
-process.on('uncaughtException', (err) => {
-    console.error('💥 UNCAUGHT EXCEPTION:', err);
-    gracefulShutdown('uncaughtException');
-});
+            try {
+                await shutdownWebSocketServer();
+                await redisConfig.disconnect();
+                await closeAllConnections();
+                console.log('✅ All services shut down successfully');
+                process.exit(0);
+            } catch (err) {
+                console.error('❌ Error during shutdown:', err);
+                process.exit(1);
+            }
+        });
 
-process.on('unhandledRejection', (err) => {
-    console.error('💥 UNHANDLED REJECTION:', err);
-    gracefulShutdown('unhandledRejection');
-});
+        // Force exit after 20s
+        setTimeout(() => {
+            console.error('⚠️ Forced shutdown after timeout');
+            process.exit(1);
+        }, 20000);
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    process.on('uncaughtException', (err) => {
+        console.error('💥 UNCAUGHT EXCEPTION:', err);
+        gracefulShutdown('uncaughtException');
+    });
+
+    process.on('unhandledRejection', (err) => {
+        console.error('💥 UNHANDLED REJECTION:', err);
+        gracefulShutdown('unhandledRejection');
+    });
+}
 
 module.exports = app;
