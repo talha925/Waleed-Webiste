@@ -389,10 +389,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       console.log('Blog creation response:', response);
       setMessage('Blog created successfully!');
 
-      // Clear banner cache if this blog has FrontBanner enabled
+      // Clear banner cache if this blog has FrontBanner enabled (using v5 key)
       if (frontBanner) {
-        localStorage.removeItem('heroBannerData');
-        console.log('Banner cache cleared due to FrontBanner blog creation');
+        localStorage.removeItem('heroBannerData_v9');
+        console.log('Banner cache cleared (v9) due to FrontBanner blog creation');
       }
 
       // Reset form after successful save

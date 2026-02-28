@@ -9,7 +9,7 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
     const apiUrl = new URL(API_URL);
     if (searchParams) {
       // Forward supported query parameters to the external API
-      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status'];
+      const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status', 'sort', 'slug'];
       supportedParams.forEach(param => {
         const value = searchParams.get(param);
         if (value) {
@@ -44,6 +44,16 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const blogs = await getBlogs(searchParams);
+
+    // 🔥 NEW: Explicitly handle backend errors so we don't return [] for connection fails
+    if (blogs.error) {
+      console.error(`[API Route] Backend error: ${blogs.error}`);
+      return NextResponse.json({
+        blogs: [],
+        error: blogs.error,
+        success: false
+      }, { status: 500 });
+    }
 
     // Handle different response structures from the external API
     const blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];

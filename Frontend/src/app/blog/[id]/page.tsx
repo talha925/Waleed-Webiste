@@ -9,6 +9,7 @@ import { decode } from 'html-entities';
 import TableOfContents from '@/components/blog/TableOfContents';
 import RecentBlogs from '@/components/blog/RecentBlogs';
 import ReadingProgress from '@/components/blog/ReadingProgress';
+import { themeClasses } from '@/lib/theme/utils';
 
 import BackToTop from '@/components/blog/BackToTop';
 
@@ -48,40 +49,36 @@ function decodeRecursively(text: string): string {
 
 
 async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
+  const FETCH_TIMEOUT = 10000;
   try {
-    console.log(`[Blog Fetch] Searching for blog with slug: ${slugOrId}`);
+    console.log(`[Blog Fetch] Fetching blog details for: ${slugOrId}`);
 
-    // Step 1: Fetch ALL blogs summary
-    const listRes = await fetch(`${config.api.baseUrl}/api/blogs?limit=1000`, {
-      next: {
-        revalidate: 60,
-        tags: ['blogs']
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    try {
+      // Step 1: Direct Fetch! The backend now natively supports finding by Slug or ID.
+      // This eliminates downloading 1000 blogs just to find the ID.
+      const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${slugOrId}`, {
+        next: {
+          revalidate: 60,
+          tags: [`blog-${slugOrId}`]
+        },
+        signal: controller.signal
+      });
+
+      if (!detailRes.ok) {
+        if (detailRes.status === 404) return null;
+        throw new Error(`Failed to fetch details: ${detailRes.status}`);
       }
-    });
 
-    if (!listRes.ok) throw new Error('Failed to fetch blog list');
-    const listData = await listRes.json();
-    const allBlogs = listData.blogs || (listData.data && listData.data.blogs) || [];
+      const detailData = await detailRes.json();
+      const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
 
-    // Step 2: Find the correct blog
-    const foundBlogSummary = allBlogs.find((b: any) => b.slug === slugOrId);
-    if (!foundBlogSummary || !foundBlogSummary._id) return null;
-
-    console.log(`[Blog Fetch] Found blog ID: ${foundBlogSummary._id}. Fetching full details...`);
-
-    // Step 3: Fetch full details
-    const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${foundBlogSummary._id}`, {
-      next: {
-        revalidate: 60,
-        tags: [`blog-${foundBlogSummary._id}`]
-      }
-    });
-
-    if (!detailRes.ok) throw new Error('Failed to fetch details');
-    const detailData = await detailRes.json();
-    const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
-
-    return fullBlog || null;
+      return fullBlog || null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   } catch (error) {
     console.error('[Blog Fetch] Error:', error);
     return null;
@@ -130,7 +127,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
   if (!blog) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50/50 to-emerald-50/20">
+      <div className="min-h-screen bg-background">
         {/* Decorative background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
         </div>
@@ -141,16 +138,16 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
             <div className="text-center max-w-md mx-auto">
               {/* Decorative elements */}
               <div className="relative mb-8">
-                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+                <div className={`w-32 h-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-6`}>
+                  <div className={`w-20 h-20 bg-primary rounded-full flex items-center justify-center`}>
                     <span className="text-white text-3xl font-bold">!</span>
                   </div>
                 </div>
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-60 animate-pulse"></div>
-                <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-gradient-to-br from-pink-400 to-red-500 rounded-full opacity-40 animate-pulse delay-300"></div>
+                <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary/20 rounded-full opacity-60 animate-pulse"></div>
+                <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-accent/20 rounded-full opacity-40 animate-pulse delay-300"></div>
               </div>
 
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent mb-4">
+              <h1 className={`text-4xl font-bold text-primary mb-4`}>
                 Blog Not Found
               </h1>
               <p className="text-gray-600 mb-8 leading-relaxed">
@@ -159,7 +156,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
 
               <a
                 href="/blog"
-                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-slate-600 to-emerald-600 text-white font-semibold rounded-2xl hover:from-slate-700 hover:to-emerald-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className={`inline-flex items-center px-8 py-4 ${themeClasses.buttons.orange} transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl`}
               >
                 <span className="mr-2">📚</span>
                 Browse All Blogs
@@ -175,7 +172,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
   const fullUrl = `${config.api.baseUrl}/blog/${blog.slug || params.id}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100/50">
+    <div className="min-h-screen bg-background">
       {/* Reading Progress Indicator */}
       <ReadingProgress />
 
@@ -184,18 +181,18 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
         <nav className="mb-6 text-sm" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-gray-500">
             <li>
-              <a href="/" className="hover:text-blue-600 transition-colors">Home</a>
+              <a href="/" className="hover:text-primary transition-colors">Home</a>
             </li>
             <li className="flex items-center">
               <span className="mx-2">/</span>
-              <a href="/blog" className="hover:text-blue-600 transition-colors">Blog</a>
+              <a href="/blog" className="hover:text-primary transition-colors">Blog</a>
             </li>
             {blog.category && (
               <li className="flex items-center">
                 <span className="mx-2">/</span>
                 <a
                   href={`/blog/category/${blog.category.slug}`}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-primary transition-colors"
                 >
                   {blog.category.name}
                 </a>

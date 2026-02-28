@@ -22,7 +22,7 @@ const createBlog = async (blogData: any) => {
       headers,
       body: JSON.stringify(blogData),
       // Add timeout for better error handling
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(120000) // Increased to 2 minutes for slow image processing/S3/DB ops
     });
 
     console.log('Response status:', response.status);
@@ -252,6 +252,7 @@ export async function POST(request: NextRequest) {
       } : undefined,
       status: blogData.status || 'draft',
       isFeaturedForHome: blogData.isFeaturedForHome || blogData.isFeatured || false, // Match backend expectation
+      FrontBanner: blogData.FrontBanner || blogData.frontBanner || false, // Ensure banner flag is preserved
       image: blogData.image || undefined,
       tags: blogData.tags || undefined,
       // SEO Metadata with proper keywords array

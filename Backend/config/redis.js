@@ -55,7 +55,7 @@ class RedisConfig {
                     console.log('⚠️ Redis connection lost - Running without cache');
                 }
                 this.isConnected = false;
-                
+
                 // 🔥 CRITICAL: Don't let Redis errors crash the process
                 // Errors are handled gracefully by setting isConnected = false
             });
@@ -72,7 +72,7 @@ class RedisConfig {
             // Try to connect with a short timeout
             await Promise.race([
                 this.client.connect(),
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Connection timeout')), 3000)
                 )
             ]);
@@ -81,7 +81,7 @@ class RedisConfig {
             console.log('⚠️ Redis not available - Application will run without caching');
             this.isConnected = false;
             this.client = null;
-            
+
             // 🔥 CRITICAL: Don't throw errors that could crash the process
             // Return gracefully and let the application continue without cache
         }

@@ -19,6 +19,7 @@ interface SafeImageProps {
   onLoad?: () => void;
   onError?: () => void;
   fallbackSrc?: string;
+  unoptimized?: boolean;
 }
 
 /**
@@ -40,11 +41,18 @@ const SafeImage: React.FC<SafeImageProps> = ({
   loading = 'lazy',
   onLoad,
   onError,
-  fallbackSrc = '/placeholder-store.png',
+  fallbackSrc = '',
+  unoptimized,
   ...props
 }) => {
   const [imgSrc, setImgSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
+
+  // Synchronize internal state when src prop changes
+  React.useEffect(() => {
+    setImgSrc(src);
+    setHasError(false);
+  }, [src]);
 
   /**
    * Properly encode URL for AWS S3 images
@@ -64,10 +72,17 @@ const SafeImage: React.FC<SafeImageProps> = ({
           // Get the file path and encode it properly
           const filePath = urlParts.slice(3).join('/');
 
-          // Encode the file path while preserving forward slashes
+          // Encode the file path while preserving forward slashes, but ONLY if not already encoded
           const encodedPath = filePath
             .split('/')
-            .map(segment => encodeURIComponent(segment))
+            .map(segment => {
+              // Robust check: try to decode. If it changes, it was encoded.
+              try {
+                const decoded = decodeURIComponent(segment);
+                if (decoded !== segment) return segment;
+              } catch (e) { }
+              return encodeURIComponent(segment);
+            })
             .join('/');
 
           return `${baseUrl}/${encodedPath}`;
@@ -95,11 +110,23 @@ const SafeImage: React.FC<SafeImageProps> = ({
     onLoad?.();
   };
 
-  const encodedSrc = encodeImageUrl(imgSrc);
+  // Decode potentially already encoded URL to avoid double-encoding by Next.js Image component
+  const getCleanSrc = (url: string): string => {
+    if (!url) return '';
+    try {
+      // Decode the URL. If it was already encoded (like %20 for space), this makes it a raw space.
+      // Next.js Image component will then encode it exactly once.
+      return decodeURIComponent(url);
+    } catch (e) {
+      return url;
+    }
+  };
+
+  const cleanSrc = getCleanSrc(imgSrc);
 
   return (
     <Image
-      src={encodedSrc}
+      src={cleanSrc}
       alt={alt}
       width={width}
       height={height}
@@ -113,6 +140,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
       loading={priority ? undefined : loading}
       onLoad={handleLoad}
       onError={handleError}
+      unoptimized={unoptimized}
       {...props}
     />
   );

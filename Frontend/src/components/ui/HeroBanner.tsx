@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { Blog } from '@/lib/types/blog';
 import { themeClasses } from '@/lib/theme/utils';
@@ -74,7 +74,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   }, []);
 
   const fetchBannerBlogs = async (forceRefresh = false) => {
-    const cacheKey = 'heroBannerData';
+    const cacheKey = 'heroBannerData_v9'; // Standardizing on decoded S3 paths for single-encoding reliability
 
     console.log('[HeroBanner] Starting fetch, forceRefresh:', forceRefresh);
 
@@ -104,8 +104,9 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
     }
 
     try {
-      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true');
-      const response = await fetch('/api/blogs?frontBanner=true');
+      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true&sort=-createdAt&limit=50');
+      // Request a high limit and sort descending by date directly from the backend
+      const response = await fetch('/api/blogs?frontBanner=true&sort=-createdAt&limit=3');
 
       console.log('[HeroBanner] API Response status:', response.status, response.statusText);
 
@@ -114,35 +115,31 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
       }
 
       const result = await response.json();
-      console.log('[HeroBanner] API Response data:', result);
+      console.log('[HeroBanner] API Response decoded:', result);
 
       let blogsArray = [];
       if (Array.isArray(result)) {
         blogsArray = result;
       } else if (result.blogs && Array.isArray(result.blogs)) {
         blogsArray = result.blogs;
+      } else if (result.data?.blogs && Array.isArray(result.data.blogs)) {
+        blogsArray = result.data.blogs;
       } else if (result.data && Array.isArray(result.data)) {
         blogsArray = result.data;
       }
 
-      console.log('[HeroBanner] Extracted blogs array, count:', blogsArray.length);
+      console.log(`[HeroBanner] Found ${blogsArray.length} blogs in response`);
 
-      // Filter for banner blogs - check both FrontBanner and frontBanner properties
-      const filteredBlogs = blogsArray.length > 0
-        ? blogsArray
-          .filter((blog: Blog) => {
-            return blog.FrontBanner === true || blog.frontBanner === true;
-          })
-          .sort((a: Blog, b: Blog) => {
-            // Sort by creation date (newest first)
-            const dateA = new Date(a.createdAt || 0).getTime();
-            const dateB = new Date(b.createdAt || 0).getTime();
-            return dateB - dateA;
-          })
-          .slice(0, 3) // Limit to only 3 latest blogs
-        : [];
+      // Backend filtered, we just sort and take 3
+      const filteredBlogs = Array.isArray(blogsArray) ? blogsArray
+        .sort((a: any, b: any) => {
+          const dateA = new Date(a.createdAt || a.publishDate || 0).getTime();
+          const dateB = new Date(b.createdAt || b.publishDate || 0).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 3) : []; // Strictly 3 banners as per root requirements
 
-      console.log('[HeroBanner] Filtered banner blogs, count:', filteredBlogs.length, filteredBlogs);
+      console.log('[HeroBanner] Final banner blogs count:', filteredBlogs.length);
 
       setBannerBlogs(filteredBlogs);
       setError(null); // Clear any previous errors
@@ -217,9 +214,9 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
   if (loading && isFirstLoad) {
     return (
-      <div className={`relative h-\[450px\] md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
+      <div className={`relative h-[450px] md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
         {/* Enhanced Shimmer Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-purple-100 animate-pulse" />
+        <div className="absolute inset-0 bg-background-secondary animate-pulse" />
 
         {/* Shimmer Effect Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer"
@@ -235,33 +232,32 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
             {/* Title Skeleton */}
-            <div className="h-10 md:h-14 lg:h-18 bg-gradient-to-r from-blue-200/60 to-purple-200/60 rounded-2xl mb-6 animate-pulse shadow-lg" />
-            <div className="h-6 md:h-8 bg-gradient-to-r from-gray-200/60 to-blue-200/60 rounded-xl mb-10 max-w-3xl mx-auto animate-pulse shadow-md" />
+            <div className="h-10 md:h-14 lg:h-18 bg-background-tertiary rounded-2xl mb-6 animate-pulse shadow-lg" />
+            <div className="h-6 md:h-8 bg-background-secondary rounded-xl mb-10 max-w-3xl mx-auto animate-pulse shadow-md" />
             {/* Button Skeleton */}
-            <div className="h-14 w-48 bg-gradient-to-r from-purple-200/60 to-pink-200/60 rounded-2xl mx-auto animate-pulse shadow-lg" />
+            <div className="h-14 w-48 bg-background-tertiary rounded-2xl mx-auto animate-pulse shadow-lg" />
           </div>
         </div>
       </div>
     );
   }
 
-  // Show error state instead of hiding component completely
   if (error) {
     console.error('[HeroBanner] Error state:', error);
     return (
       <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-red-100 via-orange-50 to-yellow-100" />
+        <div className={`absolute inset-0 bg-background-secondary`} />
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">Unable to Load Banner</h2>
-            <p className="text-lg text-gray-600 mb-6">We're having trouble loading the featured content.</p>
+          <div className="text-center px-6 md:px-12 max-w-5xl">
+            <h2 className={`text-2xl md:text-3xl font-bold mb-4 ${themeClasses.text.primary}`}>Unable to Load Banner</h2>
+            <p className={`text-lg ${themeClasses.text.secondary} mb-6`}>We're having trouble loading the featured content.</p>
             <button
               onClick={() => {
                 setError(null);
                 fetchBannerBlogs(true);
               }}
               disabled={loading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl"
+              className={themeClasses.buttons.orange}
             >
               {loading ? 'Retrying...' : 'Try Again'}
             </button>
@@ -273,16 +269,16 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
 
   if (bannerBlogs.length === 0) {
     return (
-      <div className={`relative h-\[450px\] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100" />
+      <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
+        <div className={`absolute inset-0 ${themeClasses.backgrounds.secondary}`} />
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-gray-700 px-6 md:px-12 max-w-5xl">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">No Featured Blogs</h2>
-            <p className="text-lg text-gray-600 mb-6">No blogs are currently marked as front banner.</p>
+          <div className="text-center px-6 md:px-12 max-w-5xl">
+            <h2 className={`text-2xl md:text-3xl font-bold mb-4 ${themeClasses.text.primary}`}>No Featured Blogs</h2>
+            <p className={`text-lg ${themeClasses.text.secondary} mb-6`}>No blogs are currently marked as front banner.</p>
             <button
               onClick={() => fetchBannerBlogs(true)} // Force refresh on manual click
               disabled={loading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors duration-200 shadow-lg hover:shadow-xl"
+              className={themeClasses.buttons.orange}
             >
               {loading ? 'Refreshing...' : 'Refresh Data'}
             </button>
@@ -293,32 +289,24 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   }
 
   const currentBlog = bannerBlogs[currentSlide];
-  const imageKey = currentBlog?._id || currentSlide;
-  const hasImageError = imageError[imageKey];
-  const imageUrl = hasImageError
-    ? '/images/default-blog.jpg'
-    : (currentBlog.image?.url || '/images/default-blog.jpg');
-
-  const handleImageError = () => {
-    setImageError(prev => ({
-      ...prev,
-      [imageKey]: true
-    }));
-  };
+  const imageUrl = currentBlog.image?.url || '';
 
   return (
-    <div className={`relative h-\[450px\] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
-      {/* Background Image */}
+    <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
+      {/* Background Image / Fallback */}
       <div className="absolute inset-0">
-        <Image
-          src={imageUrl}
-          alt={currentBlog.image?.alt || currentBlog.title}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
-          onError={handleImageError}
-        />
+        {imageUrl ? (
+          <SafeImage
+            src={imageUrl}
+            alt={currentBlog.image?.alt || currentBlog.title}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-brand-to-accent opacity-20" />
+        )}
         {/* Multi-layer Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-black/10 to-black/25" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
@@ -331,7 +319,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
         <div className="text-center md:text-left text-white px-4 md:px-12 max-w-4xl mx-4 md:ml-12 lg:ml-16 w-full md:w-auto z-10">
           {/* Enhanced Glassmorphism Card (Desktop Only) / Clean Text (Mobile) */}
           <div className="md:backdrop-blur-lg md:bg-white/5 md:rounded-3xl p-2 md:p-6 md:border md:border-white/15 md:shadow-2xl md:hover:bg-white/8 transition-all duration-500">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 leading-relaxed text-white md:bg-gradient-to-r md:from-white md:via-blue-100 md:to-purple-100 md:bg-clip-text md:text-transparent drop-shadow-2xl break-words max-w-full whitespace-pre-wrap">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-4 leading-relaxed text-white drop-shadow-2xl break-words max-w-full whitespace-pre-wrap">
               {currentBlog.title && currentBlog.title.length > 40
                 ? currentBlog.title.replace(/(.{1,25})(\s|$)/g, '$1\n').trim()
                 : currentBlog.title}
@@ -346,11 +334,11 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
             </p>
             <Link
               href={`/blog/${currentBlog.slug || currentBlog._id}`}
-              className="group inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600/90 via-purple-600/90 to-pink-600/90 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl transition-all duration-500 shadow-2xl hover:shadow-3xl transform hover:scale-105 hover:-translate-y-1 border border-white/30 backdrop-blur-sm"
+              className="inline-flex items-center px-8 py-4 bg-gradient-vibrant text-white font-black rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 group/btn uppercase tracking-widest text-xs"
             >
-              <span className="text-sm">Explore Now</span>
+              <span>Explore Now</span>
               <svg
-                className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                className="ml-3 w-5 h-5 transition-transform duration-300 group-hover/btn:translate-x-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -358,7 +346,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={3}
                   d="M17 8l4 4m0 0l-4 4m4-4H3"
                 />
               </svg>

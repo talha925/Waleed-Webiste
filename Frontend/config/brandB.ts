@@ -11,8 +11,8 @@ const brandB: BrandConfig = {
     brandId: 'blogzenix',
     siteName: 'Blogzenix',
     siteTagline: 'Unlocking Insights, One Story at a Time',
-    logoPath: '/image/Logo-ATT.png', // Update this when you have a Blogzenix logo
-    faviconPath: '/favicon.svg',
+    logoPath: '/image/blogzenix-logo.png',
+    faviconPath: '/blogzenix-favicon.png',
 
     // ─── Domain ──────────────────────────────────────────────
     domain: 'blogzenix.com',
@@ -45,26 +45,28 @@ const brandB: BrandConfig = {
     },
 
     // ─── Theme / Colors ──────────────────────────────────────
-    themeColor: '#8B5CF6', // Violet-500 (Changing to a blog-friendly purple)
-    primaryHSL: '263 90% 61%',
-    accentHSL: '199 89% 48%',
+    themeColor: '#0F3D5E', // Deep Navy Blue (Matches "Blog" part of logo)
+    primaryHSL: '204 72% 22%', // Deep Navy Blue
+    secondaryHSL: '220 91% 34%', // Rich Blue
+    accentHSL: '33 94% 54%', // Vibrant Orange
+    accent2HSL: '343 89% 52%', // Vivid Pink/Raspberry (Matches "Zenix" vibe) (Matches "Zenix" part of logo)
 
     // ─── API ─────────────────────────────────────────────────
     apiBaseUrl:
         process.env.NEXT_PUBLIC_API_BASE_URL_BRAND_B ||
         process.env.NEXT_PUBLIC_API_BASE_URL ||
-        'https://coupon-app-backend.vercel.app',
+        'https://waleed-webiste-backend.vercel.app',
 
     // ─── Database & Storage ──────────────────────────────────
     mongoDBName: process.env.MONGO_DB_NAME_BRAND_B || undefined,
     bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || 'blogzenix-images',
-    imageDomain: process.env.NEXT_PUBLIC_IMAGE_DOMAIN_BRAND_B || 'blogzenix-images.s3.us-east-1.amazonaws.com',
+    imageDomain: process.env.BLOGZENIX_IMAGE_DOMAIN || 'blogzenix-images.s3.us-east-1.amazonaws.com',
 
     // ─── Layout ──────────────────────────────────────────────
     homepageLayout: 'default',
 
     // ─── Footer ──────────────────────────────────────────────
-    copyrightText: '© 2025 Blogzenix — Unlocking Insights, One Story at a Time.',
+    copyrightText: '© 2026 Blogzenix — Unlocking Insights, One Story at a Time.',
 
     // ─── Contact ─────────────────────────────────────────────
     contactEmail: 'contact@blogzenix.com',

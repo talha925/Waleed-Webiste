@@ -92,12 +92,12 @@ export default function Header() {
                 <Link
                   key={name}
                   href={href}
-                  className={`relative px-4 py-2 text-foreground-secondary hover:text-foreground transition-all duration-300 group ${pathname === href ? 'text-foreground' : ''
+                  className={`relative px-4 py-2 hover:text-foreground transition-all duration-300 group ${pathname === href ? 'text-foreground' : 'text-foreground-secondary'
                     }`}
                 >
-                  <span className="relative z-10 font-medium">{name}</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-blue-400 to-purple-600 transition-all duration-300 ${pathname === href ? 'w-full' : 'w-0 group-hover:w-full'
+                  <span className="relative z-10 font-bold">{name}</span>
+                  <div className={`absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                  <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent transition-all duration-500 rounded-full ${pathname === href ? 'w-[70%]' : 'w-0 group-hover:w-[70%]'
                     }`} />
                 </Link>
               ))}
@@ -111,29 +111,31 @@ export default function Header() {
                     aria-haspopup="true"
                     aria-label="Blog categories menu"
                   >
-                    <span className="relative z-10 font-medium">Categories</span>
-                    <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <span className="relative z-10 font-bold">Categories</span>
+                    <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                     </svg>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </button>
 
                   {/* Dropdown Menu */}
                   <div
-                    className="absolute top-full left-0 mt-2 w-64 bg-background-elevated/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50"
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 bg-background-elevated/95 backdrop-blur-2xl border border-white/20 rounded-[2rem] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 z-50 p-2 overflow-hidden ring-1 ring-black/5"
                     role="menu"
                     aria-label="Blog categories"
                   >
-                    <div className="p-2">
+                    <div className="relative z-10 grid grid-cols-1 gap-1">
                       {STATIC_CATEGORIES.map((category) => (
                         <Link
                           key={category._id}
                           href={`/blog/category/${category.slug}`}
-                          className="block px-4 py-3 text-foreground-secondary hover:text-foreground hover:bg-gradient-to-r hover:from-button-blue/20 hover:to-primary/20 rounded-lg transition-all duration-300 group/item focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background-elevated"
+                          className="flex items-center space-x-3 px-5 py-4 text-foreground-secondary hover:text-foreground hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 rounded-2xl transition-all duration-300 group/item relative overflow-hidden"
                           role="menuitem"
                           aria-label={`View ${category.name} blog posts`}
                         >
-                          <span className="font-medium">{category.name}</span>
+                          <div className={`w-2 h-2 rounded-full bg-gradient-brand-to-accent opacity-0 group-hover/item:opacity-100 transition-opacity`} />
+                          <span className="font-semibold">{category.name}</span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/5 via-brand-secondary/5 to-brand-accent/5 opacity-0 group-hover/item:opacity-100 transition-opacity -z-10" />
                         </Link>
                       ))}
                     </div>
@@ -191,7 +193,7 @@ export default function Header() {
 
           {/* Mobile Search Bar */}
           {isSearchOpen && (
-            <div className="md:hidden py-4 border-t border-gray-800/50">
+            <div className="md:hidden py-4 border-t border-border/50">
               <SearchBar
                 className="w-full"
                 isMobile={true}

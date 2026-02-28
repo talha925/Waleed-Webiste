@@ -68,6 +68,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       headers,
       body: JSON.stringify(formData),
       cache: 'no-store',
+      signal: AbortSignal.timeout(120000) // Support long-running updates/revalidation
     });
 
     console.log(`[PUT /api/blogs/${id}] Backend response status:`, response.status);
@@ -128,6 +129,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       method: 'DELETE',
       headers,
       cache: 'no-store',
+      signal: AbortSignal.timeout(120000) // Support long-running deletion/revalidation
     });
     if (!response.ok) {
       if (response.status === 404) {

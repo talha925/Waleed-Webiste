@@ -15,25 +15,25 @@ interface SearchBarProps {
   onClose?: () => void;
 }
 
-const SearchBar = React.memo(function SearchBar({ 
-  className, 
-  placeholder, 
-  isMobile = false, 
-  onClose 
+const SearchBar = React.memo(function SearchBar({
+  className,
+  placeholder,
+  isMobile = false,
+  onClose
 }: SearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const { 
-    query, 
-    results, 
-    searchType, 
-    isSearching, 
-    hasResults, 
-    updateQuery, 
+
+  const {
+    query,
+    results,
+    searchType,
+    isSearching,
+    hasResults,
+    updateQuery,
     clearSearch,
     loadMore
   } = useSearch({ debounceMs: 300, minQueryLength: 2, limit: 20 });
@@ -97,7 +97,7 @@ const SearchBar = React.memo(function SearchBar({
     if (relatedTarget && containerRef.current?.contains(relatedTarget)) {
       return;
     }
-    
+
     // Delay blur to allow for dropdown interactions
     setTimeout(() => {
       setIsFocused(false);
@@ -127,8 +127,8 @@ const SearchBar = React.memo(function SearchBar({
 
   const placeholderText = useMemo(() => {
     if (placeholder) return placeholder;
-    return searchType === 'stores' 
-      ? 'Search stores and coupons...' 
+    return searchType === 'stores'
+      ? 'Search stores and coupons...'
       : 'Search blog articles...';
   }, [placeholder, searchType]);
 
@@ -248,17 +248,24 @@ const SearchBar = React.memo(function SearchBar({
     return (
       <div className={cn("relative", className)}>
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-foreground-muted" />
+          <Search className={cn(
+            "absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 z-10",
+            "text-foreground-muted group-hover:text-brand-accent"
+          )} />
           <input
             type="text"
             disabled
             placeholder="Search..."
             value=""
             className={cn(
-              "w-full pl-10 pr-10 py-3 bg-background-secondary border border-border rounded-xl text-foreground placeholder-foreground-muted",
-              "transition-all duration-300"
+              "w-full pl-10 pr-10 py-3.5 bg-background-secondary/50 backdrop-blur-md border border-border/50 rounded-2xl text-foreground placeholder-foreground-muted",
+              "focus:outline-none focus:ring-4 focus:ring-brand-primary/20 focus:border-brand-primary/50",
+              "transition-all duration-300 hover:bg-background-tertiary/70 hover:shadow-lg",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "relative z-0"
             )}
           />
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-vibrant opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-b-2xl" />
         </div>
       </div>
     );
@@ -268,8 +275,8 @@ const SearchBar = React.memo(function SearchBar({
     <div ref={containerRef} className={cn("relative", className)}>
       <div className="relative group">
         <Search className={cn(
-          "absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300",
-          isFocused ? "text-button-blue" : "text-foreground-muted group-hover:text-button-blue"
+          "absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors duration-300 z-10",
+          isFocused ? "text-brand-accent" : "text-foreground-muted group-hover:text-brand-accent"
         )} />
         <input
           ref={inputRef}
@@ -281,11 +288,12 @@ const SearchBar = React.memo(function SearchBar({
           placeholder={placeholderText}
           disabled={!isHydrated}
           className={cn(
-            "w-full pl-10 pr-10 py-3 bg-background-secondary border border-border rounded-xl text-foreground placeholder-foreground-muted",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus",
-            "transition-all duration-300 hover:bg-background-tertiary",
+            "w-full pl-10 pr-10 py-3.5 bg-background-secondary/50 backdrop-blur-md border border-border/50 rounded-2xl text-foreground placeholder-foreground-muted",
+            "focus:outline-none focus:ring-4 focus:ring-brand-primary/20 focus:border-brand-primary/50",
+            "transition-all duration-300 hover:bg-background-tertiary/70 hover:shadow-lg",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            isFocused && "ring-2 ring-ring border-input-focus"
+            isFocused && "bg-white shadow-2xl ring-4 ring-brand-primary/10 border-brand-primary/30",
+            "relative z-0"
           )}
         />
         {query && (
@@ -293,17 +301,17 @@ const SearchBar = React.memo(function SearchBar({
             type="button"
             onClick={handleClear}
             onMouseDown={(e) => e.preventDefault()} // Prevent input blur
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-foreground-muted hover:text-foreground transition-colors duration-200"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-foreground-muted hover:text-brand-accent transition-colors duration-200 z-10 bg-white/10 rounded-lg backdrop-blur-sm"
           >
             <X className="w-4 h-4" />
           </button>
         )}
         {isSearching && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <Loader2 className="w-4 h-4 text-button-blue animate-spin" />
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">
+            <Loader2 className="w-4 h-4 text-brand-primary animate-spin" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-button-blue/10 to-primary/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-vibrant opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-b-2xl" />
       </div>
 
       {/* Search Results Dropdown */}
@@ -321,7 +329,7 @@ const SearchBar = React.memo(function SearchBar({
                 <div className="px-3 py-2 text-xs text-foreground-tertiary text-center">Scroll down to load more…</div>
               )}
             </div>
-        ) : query.length >= 2 ? (
+          ) : query.length >= 2 ? (
             <div className="flex flex-col items-center justify-center py-8 text-foreground-secondary">
               <Search className="w-8 h-8 mb-2 opacity-50" />
               <span>No {searchType} found for "{query}"</span>

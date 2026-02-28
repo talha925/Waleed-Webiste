@@ -42,17 +42,28 @@ async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
     if (forceRefresh) {
       apiUrl.searchParams.set('_ts', String(Date.now()));
     }
-    const response = await fetch(apiUrl.toString(), fetchOptions);
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch stores: ${response.status}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(apiUrl.toString(), {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stores: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const stores = data?.data || [];
+
+      log(`Stores fetched (${stores.length} stores)`);
+      return stores;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json();
-    const stores = data?.data || [];
-
-    log(`Stores fetched (${stores.length} stores)`);
-    return stores;
 
   } catch (error) {
     log(`Fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -81,18 +92,29 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
       ? { headers, cache: 'no-store' as const }
       : { headers, next: { revalidate: 60, tags: [`store-${slug}`] } };
 
-    const response = await fetch(url, fetchOptions);
-    if (!response.ok) {
-      if (response.status === 404) {
-        log(`Direct slug endpoint returned 404 for ${slug}`);
-        return null;
-      }
-      throw new Error(`Direct slug fetch failed: ${response.status}`);
-    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const data = await response.json();
-    const store = (data?.data && typeof data.data === 'object') ? data.data as Store : null;
-    return store || null;
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          log(`Direct slug endpoint returned 404 for ${slug}`);
+          return null;
+        }
+        throw new Error(`Direct slug fetch failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const store = (data?.data && typeof data.data === 'object') ? data.data as Store : null;
+      return store || null;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   } catch (err) {
     log(`Direct slug fetch error for ${slug}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     return null;
@@ -145,24 +167,35 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
           const fetchOptions = (forceRefresh)
             ? { headers, cache: 'no-store' as const }
             : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
-          const listRes = await fetch(`${config.api.baseUrl}/api/coupons?storeId=${store._id}`, fetchOptions);
-          if (listRes.ok) {
-            const listJson = await listRes.json();
-            const allCoupons: Coupon[] = Array.isArray(listJson?.data) ? listJson.data : [];
-            const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
-            if (storeCouponIds.length > 0) {
-              const idSet = new Set(storeCouponIds);
-              const matched = allCoupons.filter((c) => idSet.has(c._id));
-              if (matched.length > 0) {
-                hydratedCoupons = matched;
-                hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
-              }
-            } else {
-              const byStore = allCoupons.filter((c: any) => c.storeId === store._id);
-              if (byStore.length > 0) {
-                hydratedCoupons = byStore;
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          try {
+            const listRes = await fetch(`${config.api.baseUrl}/api/coupons?storeId=${store._id}`, {
+              ...fetchOptions,
+              signal: controller.signal
+            });
+
+            if (listRes.ok) {
+              const listJson = await listRes.json();
+              const allCoupons: Coupon[] = Array.isArray(listJson?.data) ? listJson.data : [];
+              const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
+              if (storeCouponIds.length > 0) {
+                const idSet = new Set(storeCouponIds);
+                const matched = allCoupons.filter((c) => idSet.has(c._id));
+                if (matched.length > 0) {
+                  hydratedCoupons = matched;
+                  hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
+                }
+              } else {
+                const byStore = allCoupons.filter((c: any) => c.storeId === store._id);
+                if (byStore.length > 0) {
+                  hydratedCoupons = byStore;
+                }
               }
             }
+          } finally {
+            clearTimeout(timeoutId);
           }
           if (hydratedCoupons.length === 0) {
             const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];

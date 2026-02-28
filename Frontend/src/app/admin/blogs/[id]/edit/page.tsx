@@ -92,10 +92,10 @@ export default function EditBlogPage() {
         await httpClient.put(`/api/blogs/${blogId}`, formData);
         setMessage("Blog updated successfully!");
 
-        // Clear banner cache if this blog has FrontBanner enabled
+        // Clear banner cache if this blog has FrontBanner enabled (using v9 key)
         if (formData.FrontBanner) {
-          localStorage.removeItem('heroBannerData');
-          console.log('Banner cache cleared due to FrontBanner blog update');
+          localStorage.removeItem('heroBannerData_v9');
+          console.log('Banner cache cleared (v9) due to FrontBanner blog update');
         }
 
         setTimeout(() => router.push("/admin/blogs"), 1200);

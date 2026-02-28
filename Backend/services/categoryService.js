@@ -71,7 +71,7 @@ exports.createCategory = async (models, categoryData) => {
         const newCategory = await Category.create(categoryData);
 
         await cacheService.invalidateCategoryCachesSafely(brandId);
-        await callFrontendRevalidation('category', newCategory.slug || newCategory._id);
+        await callFrontendRevalidation('category', newCategory.slug || newCategory._id, brandId);
 
         return newCategory;
     } catch (error) {
@@ -96,7 +96,7 @@ exports.updateCategory = async (models, id, updateData) => {
         if (!updatedCategory) throw new AppError('Category not found', 404);
 
         await cacheService.invalidateCategoryCachesSafely(brandId);
-        await callFrontendRevalidation('category', updatedCategory.slug || updatedCategory._id);
+        await callFrontendRevalidation('category', updatedCategory.slug || updatedCategory._id, brandId);
 
         return updatedCategory;
     } catch (error) {
@@ -115,7 +115,7 @@ exports.deleteCategory = async (models, id) => {
         if (!deletedCategory) throw new AppError('Category not found', 404);
 
         await cacheService.invalidateCategoryCachesSafely(brandId);
-        await callFrontendRevalidation('category', deletedCategory.slug || deletedCategory._id, { action: 'deleted' });
+        await callFrontendRevalidation('category', deletedCategory.slug || deletedCategory._id, brandId, { action: 'deleted' });
 
         return deletedCategory;
     } catch (error) {

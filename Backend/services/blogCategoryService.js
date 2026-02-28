@@ -46,7 +46,7 @@ exports.create = async (models, data) => {
     try {
         const category = await BlogCategory.create(data);
         await cacheService.invalidateBlogCachesSafely(brandId);
-        await callFrontendRevalidation('blogCategory', category.slug || category._id);
+        await callFrontendRevalidation('blogCategory', category.slug || category._id, brandId);
         return category;
     } catch (error) {
         if (error.code === 11000) throw new AppError('Category with this name or slug already exists', 400);
@@ -61,7 +61,7 @@ exports.update = async (models, id, data) => {
         if (!category) throw new AppError('Blog category not found', 404);
 
         await cacheService.invalidateBlogCachesSafely(brandId);
-        await callFrontendRevalidation('blogCategory', category.slug || id);
+        await callFrontendRevalidation('blogCategory', category.slug || id, brandId);
         return category;
     } catch (error) {
         if (error.code === 11000) throw new AppError('Category with this name or slug already exists', 400);
@@ -76,7 +76,7 @@ exports.delete = async (models, id) => {
         if (!category) throw new AppError('Blog category not found', 404);
 
         await cacheService.invalidateBlogCachesSafely(brandId);
-        await callFrontendRevalidation('blogCategory', category.slug || id, { action: 'deleted' });
+        await callFrontendRevalidation('blogCategory', category.slug || id, brandId, { action: 'deleted' });
         return null;
     } catch (error) {
         throw error;

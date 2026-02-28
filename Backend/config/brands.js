@@ -14,26 +14,26 @@ const BRAND_MAP = [
     {
         match: 'localhost',
         brandId: 'blogzenix',
-        mongoUri: process.env.MONGO_URI_BRAND_B || null,
-        bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: '127.0.0.1',
         brandId: 'blogzenix',
-        mongoUri: process.env.MONGO_URI_BRAND_B || null,
-        bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: 'blogzenix.com',
         brandId: 'blogzenix',
-        mongoUri: process.env.MONGO_URI_BRAND_B || null,
-        bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: 'waleed-webiste-backend.vercel.app',
         brandId: 'blogzenix',
-        mongoUri: process.env.MONGO_URI_BRAND_B || null,
-        bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || process.env.AWS_BUCKET_NAME,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     // { match: 'brandC.com', brandId: 'brandC', mongoUri: process.env.MONGO_URI_BRAND_C || null },
     // ↑ Add new brands here
@@ -42,8 +42,8 @@ const BRAND_MAP = [
     {
         match: '',
         brandId: 'pennyscroll',
-        mongoUri: null,
-        bucketName: process.env.AWS_BUCKET_NAME,
+        mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
+        bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
 ];
 

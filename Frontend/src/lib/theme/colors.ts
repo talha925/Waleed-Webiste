@@ -8,7 +8,7 @@
 export const baseColors = {
   // Pure whites
   white: '#FFFFFF',
-  
+
   // Modern greys (updated to specified color palette)
   grey: {
     50: '#F9FAFB',   // Soft white-gray (specified primary background)
@@ -22,7 +22,7 @@ export const baseColors = {
     800: '#1F2937',  // Very dark grey
     900: '#111827',  // Dark gray for primary text (specified)
   },
-  
+
   // Cool greys (for modern, tech-focused sections)
   slate: {
     50: '#F8FAFC',
@@ -47,7 +47,7 @@ export const buttonColors = {
     light: '#FED7AA',      // orange-200
     dark: '#C2410C',       // orange-700
   },
-  
+
   // Black to blue gradient (from StoreCard and StoreClient)
   gradient: {
     blackToBlue: {
@@ -58,32 +58,32 @@ export const buttonColors = {
         to: '#000000',
       }
     },
-    
-    // Blue to purple gradient (from homepage)
-    blueToPurple: {
-      from: '#2563EB',     // blue-600
-      to: '#9333EA',       // purple-600
+
+    // Brand primary to accent gradient
+    primaryToAccent: {
+      from: 'var(--brand-primary)',
+      to: 'var(--brand-accent)',
       light: {
-        from: '#60A5FA',   // blue-400
-        to: '#A855F7',     // purple-500
+        from: 'var(--brand-primary)',
+        to: 'var(--brand-accent)',
       }
     },
-    
-    // Cyan to purple (from homepage categories)
-    cyanToPurple: {
-      from: '#06B6D4',     // cyan-500
-      via: '#2563EB',      // blue-600
-      to: '#9333EA',       // purple-600
+
+    // Brand multi-stop gradient
+    brand: {
+      from: 'var(--brand-primary)',
+      via: 'var(--brand-primary)',
+      to: 'var(--brand-accent)',
     }
   },
-  
+
   // Green for success states
   green: {
     primary: '#10B981',    // emerald-500
     hover: '#059669',      // emerald-600
     light: '#A7F3D0',      // emerald-200
   },
-  
+
   // Blue accents
   blue: {
     primary: '#3B82F6',    // blue-500
@@ -103,7 +103,7 @@ export const semanticColors = {
     elevated: baseColors.white,      // Pure white for cards
     overlay: 'rgba(0, 0, 0, 0.5)',
   },
-  
+
   // Surface colors (cards, panels, etc.)
   surface: {
     primary: baseColors.white,
@@ -112,7 +112,7 @@ export const semanticColors = {
     hover: baseColors.grey[100],     // #F3F4F6
     pressed: baseColors.grey[200],   // #E5E7EB
   },
-  
+
   // Border colors
   border: {
     light: baseColors.grey[200],     // #E5E7EB
@@ -120,7 +120,7 @@ export const semanticColors = {
     strong: baseColors.grey[400],    // #9CA3AF
     focus: buttonColors.blue.primary,
   },
-  
+
   // Text colors (Updated to specified colors)
   text: {
     primary: baseColors.grey[900],   // #111827 - specified primary text
@@ -131,7 +131,7 @@ export const semanticColors = {
     link: buttonColors.blue.primary,
     linkHover: buttonColors.blue.hover,
   },
-  
+
   // State colors
   state: {
     success: buttonColors.green.primary,
@@ -139,7 +139,7 @@ export const semanticColors = {
     error: '#EF4444',      // red-500
     info: buttonColors.blue.primary,
   },
-  
+
   // Interactive elements
   interactive: {
     primary: buttonColors.blue.primary,

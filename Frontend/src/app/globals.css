@@ -117,30 +117,6 @@ body {
     --popover-foreground: 0 0% 13%;
     /* Grey-900 */
 
-    /* Primary Colors (Preserving existing button colors) */
-    --primary: 220 91% 34%;
-    /* Blue-800 #1E40AF for primary actions */
-    --primary-foreground: 0 0% 100%;
-    /* White text on primary */
-
-    /* Secondary Colors */
-    --secondary: 0 0% 96%;
-    /* Grey-100 #F5F5F5 */
-    --secondary-foreground: 0 0% 13%;
-    /* Grey-900 */
-
-    /* Muted Colors */
-    --muted: 0 0% 96%;
-    /* Grey-100 #F5F5F5 */
-    --muted-foreground: 0 0% 46%;
-    /* Grey-600 #757575 */
-
-    /* Accent Colors */
-    --accent: 0 0% 96%;
-    /* Grey-100 #F5F5F5 */
-    --accent-foreground: 0 0% 13%;
-    /* Grey-900 */
-
     /* State Colors */
     --destructive: 0 84% 60%;
     /* Red-500 #EF4444 */
@@ -154,6 +130,28 @@ body {
     /* Orange-500 #F97316 */
     --warning-foreground: 0 0% 98%;
     /* White */
+
+    /* Brand Variables - These are overridden by layout.tsx injection */
+    --brand-primary: 220 91% 34%;
+    --brand-secondary: 271 81% 56%;
+    --brand-accent: 33 94% 54%;
+    --brand-accent-2: 343 89% 52%;
+
+    /* Primary Colors - Map to brand variables */
+    --primary: var(--brand-primary);
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary Colors */
+    --secondary: var(--brand-secondary);
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent Colors - Map to brand variables */
+    --accent: var(--brand-accent);
+    --accent-foreground: 0 0% 100%;
+
+    /* Accent 2 Colors */
+    --accent-2: var(--brand-accent-2);
+    --accent-2-foreground: 0 0% 100%;
 
     /* Border Colors */
     --border: 0 0% 89%;
@@ -173,35 +171,25 @@ body {
     --ring: 217 91% 60%;
     /* Blue-500 #3B82F6 */
 
-    /* Button Color Variables (Preserving existing design) */
-    --button-orange: 25 95% 53%;
-    /* Orange-500 #F97316 */
-    --button-orange-hover: 20 91% 48%;
-    /* Orange-600 #EA580C */
-    --button-blue: 217 91% 60%;
-    /* Blue-500 #3B82F6 */
-    --button-blue-hover: 220 91% 54%;
-    /* Blue-600 #2563EB */
+    /* Button Color Variables - Tied to brand identity */
+    --button-orange: var(--brand-accent);
+    --button-orange-hover: var(--brand-accent);
+    /* Simplified for dynamic system */
+    --button-blue: var(--brand-primary);
+    --button-blue-hover: var(--brand-primary);
     --button-green: 160 84% 39%;
-    /* Emerald-500 #10B981 */
     --button-green-hover: 158 64% 52%;
     /* Emerald-600 #059669 */
 
-    /* Gradient Variables (Preserving existing gradients) */
+    /* Gradient Variables - Dynamic Brand Gradients */
     --gradient-black-to-blue-from: 0 0% 0%;
-    /* Black */
-    --gradient-black-to-blue-to: 220 91% 34%;
-    /* Blue-800 */
-    --gradient-blue-to-purple-from: 220 91% 54%;
-    /* Blue-600 */
-    --gradient-blue-to-purple-to: 271 81% 56%;
-    /* Purple-600 */
-    --gradient-cyan-to-purple-from: 188 94% 43%;
-    /* Cyan-500 */
-    --gradient-cyan-to-purple-via: 220 91% 54%;
-    /* Blue-600 */
-    --gradient-cyan-to-purple-to: 271 81% 56%;
-    /* Purple-600 */
+    --gradient-black-to-blue-to: var(--brand-primary);
+    --gradient-primary-accent-from: var(--brand-primary);
+    --gradient-primary-accent-to: var(--brand-accent);
+    --gradient-brand-from: var(--brand-primary);
+    --gradient-brand-via: var(--brand-secondary);
+    --gradient-brand-to: var(--brand-accent);
+    --gradient-vibrant: linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-secondary)), hsl(var(--brand-accent)), hsl(var(--brand-accent-2)));
 
     /* Chart Colors */
     --chart-1: 12 76% 61%;
@@ -333,6 +321,19 @@ body {
     overflow-wrap: break-word;
     hyphens: auto;
   }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
 }
 
 /* Shimmer Animation */
@@ -363,8 +364,7 @@ html {
 
 /* Enhanced Text Selection */
 ::selection {
-  background-color: rgba(59, 130, 246, 0.25);
-  /* Blue-500 with opacity - more vibrant */
+  background-color: hsl(var(--primary) / 0.25);
   color: inherit;
 }
 
@@ -439,8 +439,7 @@ html {
 
 /* Blog Content Links */
 .blog-content a {
-  color: #2563EB;
-  /* Blue-600 - more vibrant */
+  color: hsl(var(--primary));
   font-weight: 500;
   text-decoration: none;
   position: relative;
@@ -448,8 +447,7 @@ html {
 }
 
 .blog-content a:hover {
-  color: #1D4ED8;
-  /* Blue-700 */
+  color: hsl(var(--accent));
   text-decoration: underline;
 }
 
@@ -477,16 +475,13 @@ html {
 .blog-content blockquote {
   margin: 2rem 0;
   padding: 1.5rem 1.75rem;
-  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
-  /* Blue-50 gradient - more vibrant */
-  border-left: 4px solid #3B82F6;
-  /* Blue-500 */
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
+  border-left: 4px solid hsl(var(--primary));
   border-radius: 0 0.5rem 0.5rem 0;
   font-style: italic;
-  color: #1E40AF;
-  /* Blue-800 */
+  color: hsl(var(--primary) / 0.8);
   position: relative;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 2px 12px hsl(var(--primary) / 0.15);
 }
 
 .blog-content blockquote p:last-child {
@@ -497,7 +492,7 @@ html {
   content: '"';
   font-size: 4rem;
   line-height: 1;
-  color: #3B82F6;
+  color: hsl(var(--primary));
   opacity: 0.15;
   position: absolute;
   top: 0.5rem;
@@ -529,7 +524,7 @@ html {
   margin: 2rem 0;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   position: relative;
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  border: 1px solid hsl(var(--primary) / 0.1);
 }
 
 .blog-content pre code {
@@ -607,7 +602,7 @@ html {
   margin: 3rem 0;
   border: none;
   height: 1px;
-  background: linear-gradient(to right, transparent, #D1D5DB, transparent);
+  background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
 }
 
 /* Drop Cap (First Letter - Optional Premium Touch) - Removed as per user request */
@@ -630,8 +625,7 @@ html {
   right: 2rem;
   width: 3rem;
   height: 3rem;
-  background: linear-gradient(135deg, #3B82F6, #2563EB);
-  /* Blue gradient - more vibrant */
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   color: white;
   border-radius: 50%;
   display: flex;
@@ -641,7 +635,7 @@ html {
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.4);
   z-index: 40;
 }
 
@@ -652,9 +646,8 @@ html {
 
 .back-to-top:hover {
   transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
-  background: linear-gradient(135deg, #2563EB, #1D4ED8);
-  /* Darker on hover */
+  box-shadow: 0 8px 24px hsl(var(--accent) / 0.5);
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--primary)));
 }
 
 /* Fade In Animation */
@@ -728,7 +721,7 @@ html {
 /* Focus Visible Enhancements for Accessibility */
 .blog-content a:focus-visible,
 .blog-content button:focus-visible {
-  outline: 2px solid #3B82F6;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
   border-radius: 0.25rem;
 }

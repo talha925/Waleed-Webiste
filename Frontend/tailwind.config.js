@@ -68,7 +68,7 @@ module.exports = {
           focus: 'hsl(var(--input-focus))',
         },
         ring: 'hsl(var(--ring))',
-        
+
         // Button colors (preserving existing design)
         'button-orange': {
           DEFAULT: 'hsl(var(--button-orange))',
@@ -82,7 +82,7 @@ module.exports = {
           DEFAULT: 'hsl(var(--button-green))',
           hover: 'hsl(var(--button-green-hover))',
         },
-        
+
         // Modern grey scale (Updated to specified colors)
         grey: {
           50: '#F9FAFB',   // Soft white-gray (specified primary background)
@@ -96,13 +96,19 @@ module.exports = {
           800: '#1F2937',  // Very dark grey
           900: '#111827',  // Dark gray for primary text (specified)
         },
-        
+
+        // Brand-specific colors from CSS variables
+        'brand-primary': 'hsl(var(--brand-primary))',
+        'brand-secondary': 'hsl(var(--brand-secondary))',
+        'brand-accent': 'hsl(var(--brand-accent))',
+        'brand-accent-2': 'hsl(var(--brand-accent-2))',
+
         // Semantic color aliases for better DX
         'bg-primary': 'hsl(var(--background))',
         'bg-secondary': 'hsl(var(--background-secondary))',
         'text-primary': 'hsl(var(--foreground))',
         'text-secondary': 'hsl(var(--foreground-secondary))',
-        
+
         // Slate colors for modern sections
         slate: {
           50: '#F8FAFC',
@@ -117,38 +123,42 @@ module.exports = {
           900: '#0F172A',
         },
       },
-      
+
       borderRadius: {
         lg: 'var(--radius-lg)',
         md: 'var(--radius)',
         sm: 'var(--radius-sm)',
         xl: 'var(--radius-xl)',
       },
-      
+
       boxShadow: {
         'theme-sm': 'var(--shadow-sm)',
         'theme-md': 'var(--shadow-md)',
         'theme-lg': 'var(--shadow-lg)',
         'theme-xl': 'var(--shadow-xl)',
       },
-      
+
       backgroundImage: {
         // Preserving existing gradients with CSS variables
         'gradient-black-to-blue': 'linear-gradient(to right, hsl(var(--gradient-black-to-blue-from)), hsl(var(--gradient-black-to-blue-to)))',
-        'gradient-blue-to-purple': 'linear-gradient(to right, hsl(var(--gradient-blue-to-purple-from)), hsl(var(--gradient-blue-to-purple-to)))',
-        'gradient-cyan-to-purple': 'linear-gradient(to right, hsl(var(--gradient-cyan-to-purple-from)), hsl(var(--gradient-cyan-to-purple-via)), hsl(var(--gradient-cyan-to-purple-to)))',
+        'gradient-primary-accent': 'linear-gradient(to right, hsl(var(--gradient-primary-accent-from)), hsl(var(--gradient-primary-accent-to)))',
+        'gradient-brand': 'linear-gradient(to right, hsl(var(--brand-primary)), hsl(var(--brand-secondary)), hsl(var(--brand-accent)))',
+        'gradient-brand-to-accent': 'linear-gradient(to right, hsl(var(--brand-primary)), hsl(var(--brand-accent)))',
+        'gradient-vibrant': 'var(--gradient-vibrant)',
       },
-      
+
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
+        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'shimmer': 'shimmer 2s infinite linear',
       },
-      
+
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
@@ -157,6 +167,16 @@ module.exports = {
         scaleIn: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        shake: {
+          '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+          '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+          '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+          '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
         },
       },
     },

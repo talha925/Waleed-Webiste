@@ -50,8 +50,10 @@ const brandA: BrandConfig = {
 
   // ─── Theme / Colors ──────────────────────────────────────
   themeColor: '#3B82F6', // Blue-500
-  primaryHSL: '217 91% 60%',
-  accentHSL: '271 81% 56%',
+  primaryHSL: '217 91% 60%', // Blue
+  secondaryHSL: '271 81% 56%', // Purple
+  accentHSL: '33 94% 54%', // Orange
+  accent2HSL: '160 84% 39%', // Green
 
   // ─── API ─────────────────────────────────────────────────
   apiBaseUrl:
@@ -59,13 +61,13 @@ const brandA: BrandConfig = {
 
   // ─── Database & Storage ──────────────────────────────────
   bucketName: process.env.AWS_BUCKET_NAME || 'coupon-app-image',
-  imageDomain: process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'coupon-app-image.s3.us-east-1.amazonaws.com',
+  imageDomain: process.env.PENNYSCROLL_IMAGE_DOMAIN || 'coupon-app-image.s3.us-east-1.amazonaws.com',
 
   // ─── Layout ──────────────────────────────────────────────
   homepageLayout: 'default',
 
   // ─── Footer ──────────────────────────────────────────────
-  copyrightText: '© 2025 PennyScroll — Your trusted source for savings, deals & shopping guides.',
+  copyrightText: '© 2026 PennyScroll — Your trusted source for savings, deals & shopping guides.',
 
   // ─── Contact ─────────────────────────────────────────────
   contactEmail: 'pennyscroll@gmail.com',

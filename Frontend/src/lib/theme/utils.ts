@@ -17,7 +17,7 @@ export const themeClasses = {
     card: 'bg-card/80 backdrop-blur-md border-0 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300',
     cardHover: 'bg-card/90 hover:bg-card border-0 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300',
   },
-  
+
   // Text variations
   text: {
     primary: 'text-foreground',
@@ -27,41 +27,41 @@ export const themeClasses = {
     inverse: 'text-white',
     link: 'text-button-blue hover:text-button-blue-hover transition-colors',
   },
-  
+
   // Button styles (preserving existing design)
   buttons: {
-    // Orange button (primary CTA)
-    orange: 'bg-button-orange hover:bg-button-orange-hover text-white font-semibold py-2 px-6 rounded-full shadow-md transition-all duration-200 transform hover:scale-105',
-    
-    // Blue button
-    blue: 'bg-button-blue hover:bg-button-blue-hover text-white font-semibold py-2 px-6 rounded-lg transition-colors',
-    
-    // Green button (success states)
-    green: 'bg-button-green hover:bg-button-green-hover text-white font-semibold py-2 px-6 rounded-lg transition-colors',
-    
+    // Orange button (primary CTA) - Now using vibrant brand tones
+    orange: 'bg-gradient-brand-to-accent text-white font-bold py-2.5 px-8 rounded-full shadow-lg shadow-brand-accent/20 hover:shadow-brand-accent/40 transition-all duration-300 transform hover:scale-105 active:scale-95 uppercase tracking-wider text-xs',
+
+    // Blue button - Using primary brand color
+    blue: 'bg-brand-primary text-white font-bold py-2.5 px-8 rounded-xl shadow-lg shadow-brand-primary/20 hover:bg-brand-secondary transition-all duration-300 transform hover:-translate-y-0.5',
+
+    // Green button (success states) - Using accent-2 (green/pink depending on brand)
+    green: 'bg-brand-accent-2 text-white font-bold py-2.5 px-8 rounded-xl shadow-lg shadow-brand-accent-2/20 hover:brightness-110 transition-all duration-300 transform hover:-translate-y-0.5',
+
     // Black to blue gradient (existing design)
-    gradientBlackBlue: 'bg-gradient-black-to-blue text-white font-bold uppercase tracking-wide rounded-md transition-all duration-200 active:scale-95 hover:opacity-90',
-    
-    // Blue to purple gradient (existing design)
-    gradientBluePurple: 'bg-gradient-blue-to-purple text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl',
-    
-    // Secondary button
-    secondary: 'bg-secondary hover:bg-secondary/80 text-secondary-foreground border border-border rounded-lg transition-colors',
-    
+    gradientBlackBlue: 'bg-gradient-black-to-blue text-white font-bold uppercase tracking-widest py-2.5 px-8 rounded-xl shadow-xl transition-all duration-300 hover:brightness-125 hover:scale-[1.02]',
+
+    // Primary to accent gradient (existing design) - The most vibrant one
+    gradientPrimaryAccent: 'bg-gradient-vibrant text-white font-black uppercase tracking-widest py-3 px-8 rounded-2xl shadow-2xl shadow-brand-primary/20 hover:shadow-brand-primary/40 transition-all duration-300 hover:scale-105 active:scale-95',
+
+    // Secondary button - subtle but multi-color on hover
+    secondary: 'bg-white border-2 border-brand-primary/10 text-brand-primary font-bold py-2.5 px-8 rounded-xl hover:bg-brand-primary/5 transition-all duration-300 hover:border-brand-primary/30',
+
     // Ghost button
-    ghost: 'hover:bg-accent hover:text-accent-foreground transition-colors',
-    
+    ghost: 'hover:bg-brand-primary/5 hover:text-brand-primary font-semibold transition-all duration-300 rounded-lg px-4 py-2',
+
     // Outline button
-    outline: 'border border-border hover:bg-accent hover:text-accent-foreground transition-colors',
+    outline: 'border-2 border-brand-primary/20 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 rounded-xl px-6 py-2.5',
   },
-  
+
   // Input styles
   inputs: {
     default: 'w-full px-3 py-2 bg-background border border-border rounded-md text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-ring focus:border-input-focus transition-colors',
     error: 'w-full px-3 py-2 bg-background border border-destructive rounded-md text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-destructive transition-colors',
     success: 'w-full px-3 py-2 bg-background border border-success rounded-md text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-success transition-colors',
   },
-  
+
   // Border styles
   borders: {
     light: 'border-border',
@@ -69,7 +69,7 @@ export const themeClasses = {
     strong: 'border-border-strong',
     focus: 'border-ring',
   },
-  
+
   // Shadow styles
   shadows: {
     sm: 'shadow-theme-sm',
@@ -77,7 +77,7 @@ export const themeClasses = {
     lg: 'shadow-theme-lg',
     xl: 'shadow-theme-xl',
   },
-  
+
   // State styles
   states: {
     success: 'text-success bg-success/10 border-success/20',
@@ -97,14 +97,14 @@ export const componentThemes = {
     compact: cn(themeClasses.backgrounds.card, 'p-6'),
     modern: 'bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-lg border-0 rounded-3xl shadow-2xl hover:shadow-3xl hover:scale-[1.02] transition-all duration-500 p-8',
   },
-  
+
   // Header/Navigation themes
   header: {
     default: 'bg-background-elevated border-b border-border shadow-theme-sm',
     transparent: 'bg-background/80 backdrop-blur-md border-b border-border/50',
     dark: 'bg-slate-900 border-b border-slate-800 text-white',
   },
-  
+
   // Modal/Dialog themes
   modal: {
     overlay: 'fixed inset-0 bg-black/50 backdrop-blur-sm z-50',
@@ -112,7 +112,7 @@ export const componentThemes = {
     header: 'border-b border-border pb-4 mb-4',
     footer: 'border-t border-border pt-4 mt-4',
   },
-  
+
   // Form themes
   form: {
     group: 'space-y-2',
@@ -120,14 +120,14 @@ export const componentThemes = {
     helperText: 'text-xs text-foreground-tertiary',
     errorText: 'text-xs text-destructive',
   },
-  
+
   // List/Grid themes
   list: {
     container: 'space-y-2',
     item: 'p-3 rounded-lg hover:bg-background-secondary transition-colors',
     itemActive: 'p-3 rounded-lg bg-accent text-accent-foreground',
   },
-  
+
   // Search/Filter themes
   search: {
     container: 'relative',
@@ -147,7 +147,7 @@ export const responsive = {
     xl: 'max-w-7xl mx-auto px-4 md:px-12',
     full: 'w-full px-4 md:px-6',
   },
-  
+
   // Grid layouts
   grids: {
     auto: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6',
@@ -155,7 +155,7 @@ export const responsive = {
     blog: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8',
     stores: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4',
   },
-  
+
   // Flex layouts
   flex: {
     center: 'flex items-center justify-center',
@@ -175,14 +175,14 @@ export const animations = {
     slideUp: 'animate-slide-up',
     scaleIn: 'animate-scale-in',
   },
-  
+
   // Hover animations
   hover: {
     scale: 'transform transition-transform duration-200 hover:scale-105',
     lift: 'transform transition-all duration-200 hover:-translate-y-1 hover:shadow-theme-lg',
     glow: 'transition-shadow duration-300 hover:shadow-theme-xl',
   },
-  
+
   // Loading states
   loading: {
     spin: 'animate-spin',
@@ -198,13 +198,13 @@ export const accessibility = {
     ring: 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
     visible: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
   },
-  
+
   // Screen reader utilities
   screenReader: {
     only: 'sr-only',
     focusable: 'sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0',
   },
-  
+
   // High contrast mode support
   highContrast: {
     border: 'border border-current',
@@ -218,27 +218,27 @@ export const themeUtils = {
   combine: (...classes: (string | undefined | null | false)[]): string => {
     return cn(...classes);
   },
-  
+
   // Get button theme by variant
   getButtonTheme: (variant: keyof typeof themeClasses.buttons): string => {
     return themeClasses.buttons[variant];
   },
-  
+
   // Get background theme by variant
   getBackgroundTheme: (variant: keyof typeof themeClasses.backgrounds): string => {
     return themeClasses.backgrounds[variant];
   },
-  
+
   // Get text theme by variant
   getTextTheme: (variant: keyof typeof themeClasses.text): string => {
     return themeClasses.text[variant];
   },
-  
+
   // Get state theme by variant
   getStateTheme: (variant: keyof typeof themeClasses.states): string => {
     return themeClasses.states[variant];
   },
-  
+
   // Create custom button with theme
   createButton: ({
     variant = 'blue',
@@ -255,10 +255,10 @@ export const themeUtils = {
       md: 'px-4 py-2 text-base',
       lg: 'px-6 py-3 text-lg',
     };
-    
+
     return cn(baseTheme, sizeClasses[size], className);
   },
-  
+
   // Create custom card with theme
   createCard: ({
     variant = 'default',
@@ -276,10 +276,10 @@ export const themeUtils = {
       md: 'p-6',
       lg: 'p-8',
     };
-    
+
     // Remove default padding if custom padding is specified
     const themeWithoutPadding = baseTheme.replace(/p-\d+/, '');
-    
+
     return cn(themeWithoutPadding, paddingClasses[padding], className);
   },
 } as const;

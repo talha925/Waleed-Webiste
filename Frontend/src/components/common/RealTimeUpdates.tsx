@@ -138,7 +138,7 @@ export const RealTimeUpdates: React.FC<RealTimeUpdatesProps> = ({
   useEffect(() => {
     if (lastMessage && isConnected) {
       const content = getNotificationContent(lastMessage);
-      
+
       if (content) {
         const notification: UpdateNotification = {
           id: `${Date.now()}-${Math.random()}`,
@@ -154,7 +154,7 @@ export const RealTimeUpdates: React.FC<RealTimeUpdatesProps> = ({
   const getNotificationIcon = (type: string, action: string) => {
     if (action === 'created') return '✨';
     if (action === 'deleted') return '🗑️';
-    
+
     switch (type) {
       case 'store': return '🏪';
       case 'coupon': return '🎫';
@@ -192,7 +192,7 @@ export const RealTimeUpdates: React.FC<RealTimeUpdatesProps> = ({
           <div className="text-lg">
             {getNotificationIcon(notification.type, notification.action)}
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -205,11 +205,11 @@ export const RealTimeUpdates: React.FC<RealTimeUpdatesProps> = ({
                 ×
               </button>
             </div>
-            
+
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               {notification.message}
             </p>
-            
+
             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {notification.timestamp.toLocaleTimeString()}
             </p>

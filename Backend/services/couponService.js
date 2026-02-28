@@ -103,7 +103,7 @@ exports.createCoupon = async (models, couponData) => {
     await cacheService.invalidateStoreCachesSafely(storeId, brandId);
 
     getWebSocketServer().notifyUpdate(models, 'created', 'coupon', newCoupon._id, newCoupon);
-    await callFrontendRevalidation('store', storeId, { action: 'created', couponId: newCoupon._id.toString() });
+    await callFrontendRevalidation('store', storeId, brandId, { action: 'created', couponId: newCoupon._id.toString() });
 
     return newCoupon;
   } catch (error) {
@@ -130,7 +130,7 @@ exports.updateCoupon = async (models, id, updateData) => {
     await cacheService.invalidateStoreCachesSafely(storeId, brandId);
 
     getWebSocketServer().notifyUpdate(models, 'updated', 'coupon', id, updatedCoupon);
-    await callFrontendRevalidation('coupon', id, { storeId, updatedFields: Object.keys(updateData) });
+    await callFrontendRevalidation('coupon', id, brandId, { storeId, updatedFields: Object.keys(updateData) });
 
     return formatCoupon(updatedCoupon);
   } catch (error) {
@@ -152,7 +152,7 @@ exports.deleteCoupon = async (models, id) => {
     await cacheService.invalidateStoreCachesSafely(storeId, brandId);
 
     getWebSocketServer().notifyUpdate(models, 'deleted', 'coupon', id, { id });
-    await callFrontendRevalidation('coupon', id, { action: 'deleted', storeId });
+    await callFrontendRevalidation('coupon', id, brandId, { action: 'deleted', storeId });
 
     return deletedCoupon;
   } catch (error) {
@@ -209,7 +209,7 @@ exports.updateCouponOrder = async (models, storeId, orderedCouponIds) => {
 
     await cacheService.invalidateStoreCachesSafely(storeId, brandId);
     getWebSocketServer().notifyUpdate(models, 'updated', 'store', storeId, { event: 'coupon_order_updated' });
-    await callFrontendRevalidation('store', storeId, { event: 'coupon_order_updated' });
+    await callFrontendRevalidation('store', storeId, brandId, { event: 'coupon_order_updated' });
 
     return { message: 'Coupon order updated successfully', totalUpdated: bulkOps.length };
   } catch (error) {

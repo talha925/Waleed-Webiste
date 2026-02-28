@@ -59,7 +59,7 @@ export default function HeaderMobileMenu({
                                     key={name}
                                     href={href}
                                     className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 group focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background-elevated ${pathname === href
-                                        ? 'bg-gradient-to-r from-button-blue/20 to-primary/20 text-foreground border border-primary/30'
+                                        ? 'bg-gradient-to-r from-primary/20 to-accent/20 text-foreground border border-primary/30'
                                         : 'text-foreground-secondary hover:text-foreground hover:bg-accent/50'
                                         }`}
                                     aria-current={pathname === href ? 'page' : undefined}
@@ -73,7 +73,7 @@ export default function HeaderMobileMenu({
                         {isHydrated && isAuthenticated && (
                             <div className={`mt-8 pt-6 border-t ${themeClasses.borders.light}`}>
                                 <div className="flex items-center space-x-3 mb-4">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-full flex items-center justify-center">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center">
                                         <span className={`${themeClasses.text.inverse} font-semibold text-sm`}>
                                             {user?.name?.charAt(0)?.toUpperCase()}
                                         </span>

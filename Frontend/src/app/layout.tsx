@@ -135,7 +135,9 @@ export default function RootLayout({
             __html: `
               :root {
                 --brand-primary: ${brand.primaryHSL};
+                --brand-secondary: ${brand.secondaryHSL || brand.primaryHSL};
                 --brand-accent: ${brand.accentHSL};
+                --brand-accent-2: ${brand.accent2HSL || brand.accentHSL};
                 --brand-theme-color: ${brand.themeColor};
               }
             `,
@@ -165,14 +167,18 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers initialToken={initialToken} brand={brand}>
           <ErrorBoundary>
-            <Header />
-            {children}
-            <ConditionalFooter />
-            {/* Performance monitoring is available in admin dashboard only */}
-            {/* Real-time updates notifications */}
-            <RealTimeUpdates />
-            <SpeedInsights />
-            <Analytics />
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <ConditionalFooter />
+              {/* Performance monitoring is available in admin dashboard only */}
+              {/* Real-time updates notifications */}
+              <RealTimeUpdates />
+              <SpeedInsights />
+              <Analytics />
+            </div>
           </ErrorBoundary>
         </Providers>
       </body>

@@ -111,17 +111,17 @@ export default function TableOfContents({ headings: propHeadings, contentSelecto
             <button
               key={index}
               onClick={() => scrollToHeading(item.id)}
-              className={`w-full text-left p-2 rounded-lg transition-all duration-300 hover:bg-blue-50 group ${isActive ? 'bg-blue-100 border-l-4 border-blue-500' : ''
+              className={`w-full text-left p-2 rounded-lg transition-all duration-300 hover:bg-primary/5 group ${isActive ? 'bg-primary/10 border-l-4 border-primary' : ''
                 }`}
               style={{ paddingLeft }}
             >
               <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full transition-colors ${item.level === 1 ? 'bg-blue-600' :
-                  item.level === 2 ? 'bg-blue-500' :
-                    item.level === 3 ? 'bg-blue-400' :
-                      'bg-blue-300'
+                <div className={`w-2 h-2 rounded-full transition-colors ${item.level === 1 ? 'bg-primary' :
+                  item.level === 2 ? 'bg-primary/80' :
+                    item.level === 3 ? 'bg-primary/60' :
+                      'bg-primary/40'
                   } ${isActive ? 'scale-125' : ''}`}></div>
-                <span className={`text-sm transition-colors line-clamp-2 ${isActive ? 'text-blue-700 font-semibold' : 'text-gray-700 group-hover:text-blue-600'
+                <span className={`text-sm transition-colors line-clamp-2 ${isActive ? 'text-primary font-bold' : 'text-foreground/70 group-hover:text-primary'
                   } ${item.level === 1 ? 'font-semibold' :
                     item.level === 2 ? 'font-medium' :
                       'font-normal'

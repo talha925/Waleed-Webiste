@@ -56,8 +56,12 @@ export interface BrandConfig {
     themeColor: string;
     /** Primary color in HSL values (e.g. "217 91% 60%"), injected as CSS variable */
     primaryHSL: string;
-    /** Accent color in HSL values */
+    /** Secondary color in HSL values */
+    secondaryHSL?: string;
+    /** Primary accent color in HSL values */
     accentHSL: string;
+    /** Secondary accent color in HSL values */
+    accent2HSL?: string;
 
     // ─── API ─────────────────────────────────────────────────
     /** Backend API base URL */

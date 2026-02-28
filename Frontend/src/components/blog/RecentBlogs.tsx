@@ -66,8 +66,8 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded mb-2"></div>
+              <div className="h-3 bg-muted rounded w-3/4"></div>
             </div>
           ))}
         </div>
@@ -78,7 +78,7 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
   if (error) {
     return (
       <SidebarCard title="Top Articles" icon="📚">
-        <p className="text-red-600 text-sm">{error}</p>
+        <p className="text-destructive text-sm font-medium">{error}</p>
       </SidebarCard>
     );
   }
@@ -111,16 +111,16 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
                         width={96}
                         height={64}
                         className="rounded-lg object-cover w-24 h-16"
-                        fallbackSrc="/placeholder-blog.png"
+                        fallbackSrc="/image/travel1.jpg"
                       />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 line-clamp-2 mb-0.5 transition-colors">
+                    <h4 className={`text-sm font-semibold text-foreground group-hover:text-primary line-clamp-2 mb-0.5 transition-colors`}>
                       {blog.title}
                     </h4>
                     {blog.shortDescription && (
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-1">
+                      <p className="text-xs text-foreground-secondary line-clamp-2 mb-1">
                         {blog.shortDescription}
                       </p>
                     )}
@@ -133,10 +133,10 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
         </div>
       )}
 
-      <div className="pt-4 border-t border-gray-200/50">
+      <div className="pt-4 border-t border-border/50">
         <Link
           href="/blog"
-          className="block text-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          className="block text-center text-sm font-medium text-primary hover:text-accent transition-colors"
         >
           View All Blogs →
         </Link>

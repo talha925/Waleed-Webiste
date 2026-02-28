@@ -41,8 +41,20 @@ async function brandDetection(req, res, next) {
         req.brand = brand;
 
         // 2. Resolve Database Connection
-        // Use brand-specific URI if provided in config, otherwise fallback to default MONGO_URI
-        const uri = brand.mongoUri || process.env.MONGO_URI;
+        // CRITICAL: We now require a brand-specific URI for secondary brands.
+        // PennyScroll remains the default fallback only if explicitly configured so.
+        let uri = brand.mongoUri;
+
+        // If brand is strictly defined (like blogzenix) but URI is missing, 
+        // we should fail fast rather than showing another brand's data.
+        if (brand.brandId !== 'pennyscroll' && !uri) {
+            console.error(`❌ Missing MONGO_URI for brand: ${brand.brandId}. Check your .env file.`);
+            return res.status(500).json({ error: `Configuration missing for ${brand.brandId}` });
+        }
+
+        // Fallback to MONGO_URI only for the default brand (pennyscroll)
+        if (!uri) uri = process.env.MONGO_URI;
+
         const connection = await getTenantConnection(brand.brandId, uri);
 
         // 3. Attach DB-specific Models to the request

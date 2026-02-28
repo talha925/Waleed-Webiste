@@ -44,6 +44,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       Key: fileKey,
       Body: req.file.buffer,
       ContentType: req.file.mimetype,
+      ACL: 'public-read', // Ensure image is publicly readable for Next.js optimizer and users
     };
 
     console.log(`Uploading to S3 Bucket [${bucketName}] with params:`, uploadParams);
@@ -85,7 +86,6 @@ router.post('/delete-image', async (req, res) => {
       console.log('Parsed pathname from decoded URL:', url.pathname);
 
       // Ab jab URL theek hai, simple logic istemal karen key nikalne ke liye
-      // (assuming keys mein slashes nahi hote)
       fileKey = url.pathname.substring(1); // Pehla slash / hata dein
       console.log('Extracted fileKey from decoded URL:', fileKey);
 

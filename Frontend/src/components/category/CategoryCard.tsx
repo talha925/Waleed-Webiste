@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Category } from '@/lib/types';
+import { themeClasses } from '@/lib/theme/utils';
 
 interface CategoryCardProps {
   category: Category;
@@ -9,18 +10,18 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
   return (
-    <div className="border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 bg-white p-5 flex flex-col items-center gap-4">
-      <h3 className="text-xl font-semibold text-gray-800 text-center">{category.name}</h3>
-      
+    <div className={`border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ${themeClasses.backgrounds.card} p-5 flex flex-col items-center gap-4`}>
+      <h3 className={`text-xl font-semibold ${themeClasses.text.primary} text-center`}>{category.name}</h3>
+
       {category.description && (
-        <p className="text-sm text-gray-600 text-center">{category.description}</p>
+        <p className={`text-sm ${themeClasses.text.secondary} text-center`}>{category.description}</p>
       )}
-      
-      <button className="text-sm px-2 py-1.5 bg-orange-500 text-white rounded-md hover:bg-orange-700 transition">
+
+      <button className={themeClasses.buttons.orange}>
         View
       </button>
     </div>
   );
 };
 
-export default CategoryCard; 
+export default CategoryCard;

@@ -239,7 +239,7 @@ exports.createStore = async (models, storeData) => {
 
         await cacheService.invalidateStoreCachesSafely(null, brandId);
         getWebSocketServer().notifyUpdate(models, 'created', 'store', storeId, newStore);
-        await callFrontendRevalidation('store', newStore.slug || storeId);
+        await callFrontendRevalidation('store', newStore.slug || storeId, brandId);
 
         return newStore;
     } catch (error) {
@@ -255,7 +255,7 @@ exports.updateStore = async (models, id, updateData) => {
 
         await cacheService.invalidateStoreCachesSafely(id, brandId);
         getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, updatedStore);
-        await callFrontendRevalidation('store', updatedStore.slug || id);
+        await callFrontendRevalidation('store', updatedStore.slug || id, brandId);
 
         return updatedStore;
     } catch (error) {
@@ -274,7 +274,7 @@ exports.deleteStore = async (models, id) => {
 
         await cacheService.invalidateStoreCachesSafely(id, brandId);
         getWebSocketServer().notifyUpdate(models, 'deleted', 'store', id, { id });
-        await callFrontendRevalidation('store', store.slug || id, { action: 'deleted' });
+        await callFrontendRevalidation('store', store.slug || id, brandId, { action: 'deleted' });
 
         return null;
     } catch (error) {

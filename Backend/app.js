@@ -1,7 +1,22 @@
-const express = require('express'); // restart 1
+const dns = require('node:dns');
+// 🔥 ROOT FIX: Force IPv4 DNS resolution BEFORE anything else.
+// Without this, Node.js on Windows tries IPv6 first for MongoDB Atlas SRV records.
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
+
+// 🌐 NETWORK FIX: Some ISP DNS servers fail on MongoDB SRV lookups.
+// Using Google DNS as a backup can solve 'querySrv ETIMEOUT' on Windows.
+try {
+    dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+} catch (e) {
+    console.warn('⚠️ Could not set custom DNS servers, using system defaults.');
+}
+
+const express = require('express');
 const dotenv = require('dotenv');
 const { validateEnv, getConfig } = require('./config/env');
-const { getTenantConnection, closeAllConnections } = require('./config/db');
+const { getTenantConnection, closeAllConnections, warmupConnection } = require('./config/db');
 const helmet = require('helmet');
 const errorHandler = require('./middlewares/errorHandler');
 const security = require('./middlewares/security');
@@ -40,13 +55,27 @@ const app = express();
 // Setup performance monitoring
 performanceMiddleware.setupQueryMonitoring();
 
-// Initialize services
+// Initialize services AND pre-warm database connections
 async function initializeServices() {
     try {
-        // Shared services across all brands
+        // 1. Shared services across all brands
         await redisConfig.connect();
         await cacheService.ensureInitialized();
         console.log('✅ Base services (Redis/Cache) initialized');
+
+        // 2. 🔥 PRE-WARM DATABASE: Connect to MongoDB NOW so first API request is instant
+        // Without this, the first request waits 30-50s for SRV DNS resolution
+        const { BRAND_MAP } = require('./config/brands');
+        const brandsToWarm = BRAND_MAP.filter(b => b.mongoUri && b.match !== '');
+
+        // De-duplicate by brandId (multiple hosts can map to same brand)
+        const uniqueBrands = new Map();
+        brandsToWarm.forEach(b => { if (!uniqueBrands.has(b.brandId)) uniqueBrands.set(b.brandId, b); });
+
+        for (const [brandId, brand] of uniqueBrands) {
+            await warmupConnection(brandId, brand.mongoUri);
+        }
+        console.log('✅ Database connections pre-warmed');
     } catch (error) {
         console.error('❌ Service initialization error:', error);
     }

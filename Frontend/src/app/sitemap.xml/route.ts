@@ -23,7 +23,7 @@ export async function GET() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&pageSize=1000`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&limit=1000`, {
       next: { revalidate: 3600 },
       signal: controller.signal
     });

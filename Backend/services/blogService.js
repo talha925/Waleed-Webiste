@@ -36,7 +36,21 @@ exports.getRelatedPosts = async (models, categoryId, storeId, excludeId, limit =
 exports.findAll = async (models, queryParams = {}) => {
   const { Blog: BlogPost, brandId } = models;
   try {
-    const { page = 1, limit = 9, status = 'published', categoryId, storeId, search, FrontBanner, sort = '-publishDate' } = queryParams;
+    const {
+      page = 1,
+      limit = 9,
+      status = 'published',
+      categoryId,
+      category,
+      storeId,
+      search,
+      FrontBanner,
+      frontBanner,
+      isFeaturedForHome,
+      featured,
+      slug, // 🔥 Added direct slug lookup for massive performance boost
+      sort = '-createdAt'
+    } = queryParams;
 
     const cacheKey = cacheService.generateKey('blogs', { ...queryParams, brandId });
     const cachedResult = await cacheService.get(cacheKey);
@@ -44,9 +58,27 @@ exports.findAll = async (models, queryParams = {}) => {
 
     const query = {};
     if (status && status !== 'all') query.status = status;
-    if (FrontBanner !== undefined) query.FrontBanner = FrontBanner === 'true';
+
+    // Normalize FrontBanner / frontBanner (case-insensitive and type-safe)
+    const bannerVal = FrontBanner !== undefined ? FrontBanner : frontBanner;
+    if (bannerVal !== undefined) {
+      query.FrontBanner = bannerVal === 'true' || bannerVal === true;
+    }
+
+    // Support isFeaturedForHome filtering
+    if (isFeaturedForHome !== undefined) {
+      query.isFeaturedForHome = isFeaturedForHome === 'true' || isFeaturedForHome === true;
+    }
+
+    // Support generic featured filtering
+    if (featured !== undefined) {
+      query.isFeatured = featured === 'true' || featured === true;
+    }
+
     if (categoryId) query['category.id'] = categoryId;
+    if (category) query['category.slug'] = category;
     if (storeId) query['store.id'] = storeId;
+    if (slug) query.slug = slug;
     if (search) query.title = { $regex: search, $options: 'i' };
 
     const total = await BlogPost.countDocuments(query);
@@ -54,7 +86,7 @@ exports.findAll = async (models, queryParams = {}) => {
       .sort(sort)
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
-      .select('title slug shortDescription image.url image.alt author.name category.name category.slug status publishDate engagement.readingTime')
+      .select('title slug shortDescription image.url image.alt author.name category.name category.slug category.id store.id status publishDate engagement.readingTime FrontBanner isFeaturedForHome isFeatured createdAt')
       .lean();
 
     const result = {
@@ -71,12 +103,27 @@ exports.findAll = async (models, queryParams = {}) => {
 
 exports.findById = async (models, id) => {
   const { Blog: BlogPost } = models;
+  const mongoose = require('mongoose');
   try {
-    const blog = await BlogPost.findById(id).lean();
+    if (!id || id === 'undefined') throw new AppError('Valid ID or Slug is required', 400);
+
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
+    const query = isObjectId ? { _id: id } : { slug: id };
+
+    const blog = await BlogPost.findOne(query).lean();
     if (!blog) throw new AppError('Blog post not found', 404);
-    const relatedPosts = await exports.getRelatedPosts(models, blog.category?.id, blog.store?.id, id);
+
+    // Fetch related posts but don't let it crash the main request
+    let relatedPosts = [];
+    try {
+      relatedPosts = await exports.getRelatedPosts(models, blog.category?.id, blog.store?.id, blog._id);
+    } catch (relErr) {
+      console.error(`[BlogService.findById] Non-fatal error fetching related posts:`, relErr.message);
+    }
+
     return { ...blog, relatedPosts };
   } catch (error) {
+    console.error(`[BlogService.findById] Error fetching blog [${id}]:`, error);
     throw error;
   }
 };
@@ -86,7 +133,8 @@ exports.create = async (models, data) => {
   const blog = await BlogPost.create(data);
   await cacheService.invalidateBlogCachesSafely(brandId);
   getWebSocketServer().notifyUpdate(models, 'created', 'blog', blog._id, blog);
-  await callFrontendRevalidation('blog', blog.slug || blog._id);
+  // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
+  callFrontendRevalidation('blog', blog.slug || blog._id, brandId);
   return blog;
 };
 
@@ -96,14 +144,21 @@ exports.update = async (models, id, data) => {
   console.log(`[BlogService.update] Brand: ${brandId}, ID: ${id}`);
 
   // 1. Find the old blog to check for existing image
-  const oldBlog = await BlogPost.findById(id);
+  // Root fix: Support lookup by slug during update to prevent CastError
+  const mongoose = require('mongoose');
+  const isObjectId = mongoose.Types.ObjectId.isValid(id);
+  const query = isObjectId ? { _id: id } : { slug: id };
+
+  const oldBlog = await BlogPost.findOne(query);
   if (!oldBlog) {
     console.error(`[BlogService.update] Blog post not found: ${id}`);
     throw new AppError('Blog post not found', 404);
   }
 
+  const blogId = oldBlog._id;
+
   // 2. Perform the update
-  const updatedBlog = await BlogPost.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  const updatedBlog = await BlogPost.findByIdAndUpdate(blogId, data, { new: true, runValidators: true });
 
   // 3. Handle S3 image cleanup if the image URL has changed
   if (data.image && data.image.url && oldBlog.image && oldBlog.image.url) {
@@ -118,14 +173,23 @@ exports.update = async (models, id, data) => {
 
   await cacheService.invalidateBlogCachesSafely(brandId);
   getWebSocketServer().notifyUpdate(models, 'updated', 'blog', id, updatedBlog);
-  await callFrontendRevalidation('blog', updatedBlog.slug || id);
+  // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
+  callFrontendRevalidation('blog', updatedBlog.slug || id, brandId);
   return updatedBlog;
 };
 
 exports.delete = async (models, id) => {
   const { Blog: BlogPost, brandId } = models;
-  const blog = await BlogPost.findByIdAndDelete(id);
+
+  const mongoose = require('mongoose');
+  const isObjectId = mongoose.Types.ObjectId.isValid(id);
+  const query = isObjectId ? { _id: id } : { slug: id };
+
+  const blog = await BlogPost.findOne(query);
   if (!blog) throw new AppError('Blog post not found', 404);
+
+  const blogId = blog._id;
+  await BlogPost.findByIdAndDelete(blogId);
 
   // Clean up image from S3 on deletion
   if (blog.image && blog.image.url) {
@@ -135,7 +199,8 @@ exports.delete = async (models, id) => {
 
   await cacheService.invalidateBlogCachesSafely(brandId);
   getWebSocketServer().notifyUpdate(models, 'deleted', 'blog', id, { id });
-  await callFrontendRevalidation('blog', blog.slug || id, { action: 'deleted' });
+  // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
+  callFrontendRevalidation('blog', blog.slug || id, brandId, { action: 'deleted' });
   return null;
 };
 
