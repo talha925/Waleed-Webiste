@@ -52,9 +52,9 @@ export class CacheManager<T> {
   private isrRevalidate: number;
   private tags: string[];
 
-  constructor(cacheKey: string, config: { 
-    inMemoryDuration: number; 
-    isrRevalidate: number; 
+  constructor(cacheKey: string, config: {
+    inMemoryDuration: number;
+    isrRevalidate: number;
     tags?: string[];
   }) {
     this.cacheKey = cacheKey;
@@ -77,7 +77,7 @@ export class CacheManager<T> {
     if (!noCache && cache && now - cache.timestamp < this.inMemoryDuration) {
       data = cache.data;
       log(`Serving ${this.cacheKey} from in-memory cache`);
-      
+
       // Record cache hit
       const responseTime = Date.now() - startTime;
       cacheOptimizer.recordHit(this.cacheKey, responseTime);
@@ -85,22 +85,29 @@ export class CacheManager<T> {
       // Fetch fresh data
       const fetchOptions: RequestInit = noCache || this.isrRevalidate === 0
         ? { cache: 'no-store' }
-        : { 
-            next: { 
-              revalidate: this.isrRevalidate, 
-              tags: this.tags 
-            } 
-          };
+        : {
+          next: {
+            revalidate: this.isrRevalidate,
+            tags: this.tags
+          }
+        };
 
       log(`Fetching ${this.cacheKey} from API (noCache=${noCache})`);
       const res = await fetch(apiUrl, fetchOptions);
-      
+
       if (!res.ok) {
         throw new Error(`Failed to fetch ${this.cacheKey}: ${res.status}`);
       }
 
       const response = await res.json();
-      data = Array.isArray(response.data) ? response.data : response;
+
+      // Smart extraction of the data array from various backend response structures
+      data = Array.isArray(response.data?.categories) ? response.data.categories :
+        Array.isArray(response.data?.stores) ? response.data.stores :
+          Array.isArray(response.data?.coupons) ? response.data.coupons :
+            Array.isArray(response.data?.data) ? response.data.data :
+              Array.isArray(response.data) ? response.data :
+                Array.isArray(response) ? response : [];
 
       // Update in-memory cache (only if caching is enabled)
       if (this.inMemoryDuration > 0) {
@@ -167,13 +174,13 @@ export const invalidateCache = (cacheKeys: string[]) => {
 // Get cache stats (for debugging)
 export const getCacheStats = () => {
   const stats: Record<string, { size: number; lastUpdated: number }> = {};
-  
+
   cacheStorage.forEach((value, key) => {
     stats[key] = {
       size: value.data.length,
       lastUpdated: value.timestamp
     };
   });
-  
+
   return stats;
 };

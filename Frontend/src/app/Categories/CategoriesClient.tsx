@@ -12,11 +12,11 @@ interface CategoriesClientProps {
 
 export function CategoriesClient({ initialCategories, serverError }: CategoriesClientProps) {
   // Use unified data fetching with server-side initial data
-  const { 
-    data, 
-    isLoading: loading, 
-    error, 
-    isInitialized 
+  const {
+    data,
+    isLoading: loading,
+    error,
+    isInitialized
   } = useUnifiedDataFetching('/api/proxy-categories?fields=name,description', {
     method: 'GET',
     requireAuth: true,
@@ -30,15 +30,20 @@ export function CategoriesClient({ initialCategories, serverError }: CategoriesC
   });
 
   // Use server data initially, then client data once initialized
-  const categories = data?.data?.categories || initialCategories;
+  const fetchedCategories = Array.isArray(data?.data?.categories) ? data.data.categories :
+    Array.isArray(data?.data) ? data.data :
+      Array.isArray(data?.categories) ? data.categories :
+        Array.isArray(data) ? data : undefined;
+
+  const categories = fetchedCategories || initialCategories;
   const finalError = error?.message || serverError;
   const isLoading = loading; // Show loading state
 
   return (
-    <CategoryGrid 
-      categories={categories} 
-      loading={isLoading} 
-      error={finalError} 
+    <CategoryGrid
+      categories={categories}
+      loading={isLoading}
+      error={finalError}
     />
   );
 }

@@ -35,10 +35,12 @@ const CategorySelector = ({
         // Use relative URL to ensure it goes through the Next.js API route
         const response = await fetch('/api/blog-categories');
         if (response.ok) {
-          const data = await response.json();
-          // Handle different response formats
-          const categoryData = data.data || data || [];
-          setCategories(Array.isArray(categoryData) ? categoryData : []);
+          const parsedData = await response.json();
+          const categoryData = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
+            Array.isArray(parsedData.data) ? parsedData.data :
+              Array.isArray(parsedData.categories) ? parsedData.categories :
+                Array.isArray(parsedData) ? parsedData : [];
+          setCategories(categoryData);
         } else {
           console.error('Failed to fetch categories');
           setCategories([]);
@@ -58,9 +60,8 @@ const CategorySelector = ({
     onChange(e.target.value);
   };
 
-  const baseClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white ${
-    error ? 'border-red-500' : 'border-gray-300'
-  } ${className}`;
+  const baseClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white ${error ? 'border-red-500' : 'border-gray-300'
+    } ${className}`;
 
   return (
     <div className="mb-4">

@@ -26,9 +26,14 @@ export const useBlogCategories = (): UseBlogCategoriesReturn => {
       setLoading(true);
       setError(null);
       const httpClient = new HttpClient();
-      const response = await httpClient.get<{success: boolean; message: string; data: Category[]}>('/api/blog-categories');
-      // Extract the data array from the response
-      setCategories(response.data || []);
+      const response = await httpClient.get<any>('/api/blog-categories');
+
+      // Extract the data array intelligently handling the nested backend response structure
+      const parsedData = response.data || response;
+      const categoriesArray = Array.isArray(parsedData?.categories) ? parsedData.categories :
+        Array.isArray(parsedData) ? parsedData : [];
+
+      setCategories(categoriesArray);
     } catch (err) {
       console.error('Error fetching blog categories:', err);
       setError('Failed to fetch blog categories');

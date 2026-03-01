@@ -34,8 +34,11 @@ async function getCategoryBySlug(slug: string) {
       throw new Error('Failed to fetch categories');
     }
 
-    const data = await response.json();
-    const categories = data.data || data || [];
+    const parsedData = await response.json();
+    const categories = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
+      Array.isArray(parsedData.data) ? parsedData.data :
+        Array.isArray(parsedData.categories) ? parsedData.categories :
+          Array.isArray(parsedData) ? parsedData : [];
 
     return categories.find((category: any) => category.slug === slug);
   } catch (error) {
@@ -151,8 +154,11 @@ export async function generateStaticParams() {
       return [];
     }
 
-    const data = await response.json();
-    const categories = data.data || data || [];
+    const parsedData = await response.json();
+    const categories = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
+      Array.isArray(parsedData.data) ? parsedData.data :
+        Array.isArray(parsedData.categories) ? parsedData.categories :
+          Array.isArray(parsedData) ? parsedData : [];
 
     return categories.map((category: any) => ({
       slug: category.slug,
