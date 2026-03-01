@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getStoreBySlug } from '@/lib/store-service';
 
+export const dynamic = 'force-dynamic';
+
 // Dev-only logging
 const log = (msg: string) => {
   if (process.env.NODE_ENV !== 'production') console.log(msg);
@@ -31,7 +33,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
 
     // CRITICAL FIX: Use direct service layer instead of internal HTTP calls
     const store = await getStoreBySlug(params.slug, noCache);
-    
+
     if (!store) {
       return NextResponse.json({ message: 'Store not found' }, { status: 404 });
     }

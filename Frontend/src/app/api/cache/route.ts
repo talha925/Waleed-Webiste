@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { invalidateCache, getCacheStats } from '@/lib/cache';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
-    
+
     if (action === 'stats') {
       // Return cache statistics
       const stats = getCacheStats();
@@ -15,7 +17,7 @@ export async function GET(req: Request) {
         timestamp: new Date().toISOString()
       });
     }
-    
+
     return NextResponse.json({
       message: 'Cache management API',
       availableActions: [
@@ -36,17 +38,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { keys } = body;
-    
+
     if (!Array.isArray(keys)) {
       return NextResponse.json(
         { message: 'Invalid request. Expected { keys: string[] }' },
         { status: 400 }
       );
     }
-    
+
     // Invalidate specified cache keys
     invalidateCache(keys);
-    
+
     return NextResponse.json({
       message: 'Cache invalidated successfully',
       invalidatedKeys: keys,

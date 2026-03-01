@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import config from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 const API_URL = `${config.api.baseUrl}/api/blogCategories`;
 
 const getBlogCategories = async () => {
@@ -10,7 +12,7 @@ const getBlogCategories = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      next: { 
+      next: {
         revalidate: 300, // Revalidate every 5 minutes
         tags: ['blog-categories'] // Enable tag-based revalidation
       }
@@ -35,7 +37,7 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch categories',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

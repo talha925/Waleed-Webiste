@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import config from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 interface UploadResponse {
   imageUrl?: string;
   message?: string;
@@ -55,7 +57,7 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
     console.log('Authentication failed: Missing or invalid Bearer token');
     return NextResponse.json({ message: 'Unauthorized - Missing or invalid Bearer token' }, { status: 401 });
   }
-  
+
   console.log('Authentication successful');
 
   // Check if required environment variables are set
@@ -123,7 +125,7 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
     return NextResponse.json({ imageUrl });
   } catch (error) {
     console.error('Upload error:', error);
-    
+
     // Provide more specific error messages
     if (error instanceof Error) {
       if (error.message.includes('InvalidAccessKeyId')) {
@@ -137,7 +139,7 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
       }
       return NextResponse.json({ message: `Upload failed: ${error.message}` }, { status: 500 });
     }
-    
+
     return NextResponse.json({ message: 'Internal server error during upload' }, { status: 500 });
   }
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 interface WebVitalMetric {
   metric: string;
   value: number;
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check if request has body
     const contentLength = request.headers.get('content-length');
-    
+
     if (!contentLength || contentLength === '0') {
       return NextResponse.json(
         { error: 'Empty request body' },
@@ -33,14 +35,14 @@ export async function POST(request: NextRequest) {
       // Fallback: try reading as text for debugging
       try {
         const rawBody = await request.text();
-        
+
         if (!rawBody || rawBody.trim() === '') {
           return NextResponse.json(
             { error: 'Empty request body' },
             { status: 400 }
           );
         }
-        
+
         // Try manual JSON parse
         data = JSON.parse(rawBody);
       } catch (fallbackError) {
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    
+
     // Validate the incoming data
     if (!data.metric || typeof data.value !== 'number' || !data.id) {
       return NextResponse.json(
@@ -63,15 +65,15 @@ export async function POST(request: NextRequest) {
     // 1. Store in a database (MongoDB, PostgreSQL, etc.)
     // 2. Send to analytics service (Google Analytics, Mixpanel, etc.)
     // 3. Send to monitoring service (DataDog, New Relic, etc.)
-    
+
     // Store the data (uncomment when ready to persist)
     try {
       const dataDir = path.join(process.cwd(), 'data');
       const filePath = path.join(dataDir, 'web-vitals.json');
-      
+
       // Ensure data directory exists
       await fs.mkdir(dataDir, { recursive: true });
-      
+
       // Read existing data
       let existingData: WebVitalMetric[] = [];
       try {
@@ -80,10 +82,10 @@ export async function POST(request: NextRequest) {
       } catch (readError) {
         // No existing data file, start with empty array
       }
-      
+
       // Add new data
       existingData.push(data);
-      
+
       // Write back to file
       await fs.writeFile(filePath, JSON.stringify(existingData, null, 2));
     } catch (storageError) {
@@ -140,7 +142,7 @@ export async function GET(request: NextRequest) {
   try {
     const dataDir = path.join(process.cwd(), 'data');
     const filePath = path.join(dataDir, 'web-vitals.json');
-    
+
     // Read existing data
     let webVitalsData: WebVitalMetric[] = [];
     try {
@@ -149,7 +151,7 @@ export async function GET(request: NextRequest) {
     } catch (readError) {
       // No existing data file
     }
-    
+
     // Return the actual data
     return NextResponse.json({
       message: 'Web vitals analytics data',

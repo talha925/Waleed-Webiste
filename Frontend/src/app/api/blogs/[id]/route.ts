@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import config from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 const API_URL = `${config.api.baseUrl}/api/blogs`;
 
 // GET /api/blogs/[id]

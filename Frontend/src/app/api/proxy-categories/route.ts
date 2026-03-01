@@ -3,6 +3,8 @@ import config from '@/lib/config';
 import { Category } from '@/lib/types/category';
 import { CacheManager, CACHE_CONFIG, generateCategoryJsonLd } from '@/lib/cache';
 
+export const dynamic = 'force-dynamic';
+
 // Initialize cache manager for categories
 const categoriesCache = new CacheManager<Category>('categories', CACHE_CONFIG.categories);
 
@@ -20,9 +22,9 @@ export async function GET(req: Request) {
 
     // Add JSON-LD structured data if requested
     let responseData: any = { data: categories };
-    
+
     if (includeJsonLd && categories.length > 0) {
-      const jsonLdData = categories.map(category => 
+      const jsonLdData = categories.map(category =>
         generateCategoryJsonLd(category, config.api.siteUrl)
       );
       responseData.seo = {

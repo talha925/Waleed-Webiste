@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import config from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
 const API_URL = `${config.api.baseUrl}/api/blogs`;
 
 export async function GET(request: NextRequest) {
@@ -8,7 +10,7 @@ export async function GET(request: NextRequest) {
     console.log('Health check - Testing backend connectivity');
     console.log('API_URL:', API_URL);
     console.log('Environment NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
-    
+
     // Test backend connectivity with a simple GET request
     const response = await fetch(API_URL, {
       method: 'GET',
@@ -17,10 +19,10 @@ export async function GET(request: NextRequest) {
       },
       signal: AbortSignal.timeout(10000) // 10 second timeout
     });
-    
+
     const isBackendHealthy = response.ok;
     const backendStatus = response.status;
-    
+
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Health check failed:', error);
-    
+
     return NextResponse.json(
       {
         status: 'unhealthy',

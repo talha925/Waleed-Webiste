@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 interface LoginRequest {
   email: string;
   password: string;
@@ -49,8 +51,8 @@ export async function POST(request: Request) {
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || 'default_secret_replace_in_production'
     );
-    
-    const token = await new SignJWT({ 
+
+    const token = await new SignJWT({
       id: '1',
       email: email,
       name: 'Admin User',

@@ -13,6 +13,9 @@ import { themeClasses } from '@/lib/theme/utils';
 
 import BackToTop from '@/components/blog/BackToTop';
 
+// ISR: revalidate blog pages every 60s for fresh content + edge caching
+export const revalidate = 60;
+
 // Blog Type Interface
 interface Blog {
   _id: string;

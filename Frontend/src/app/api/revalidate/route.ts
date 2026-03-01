@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { invalidateStoreCache } from '@/lib/store-service';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * API route for on-demand revalidation of cached pages and data
  * Supports revalidation by path, tag, or specific content types

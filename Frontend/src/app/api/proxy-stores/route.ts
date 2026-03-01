@@ -3,6 +3,8 @@ import config from '@/lib/config';
 import { Store } from '@/lib/types/store';
 import { CacheManager, CACHE_CONFIG, generateStoreJsonLd } from '@/lib/cache';
 
+export const dynamic = 'force-dynamic';
+
 // Initialize cache manager for stores
 const storesCache = new CacheManager<Store>('stores', CACHE_CONFIG.stores);
 
@@ -25,9 +27,9 @@ export async function GET(req: Request) {
 
     // Add JSON-LD structured data if requested
     let responseData: any = { data: stores };
-    
+
     if (includeJsonLd && stores.length > 0) {
-      const jsonLdData = stores.map(store => 
+      const jsonLdData = stores.map(store =>
         generateStoreJsonLd(store, config.api.siteUrl)
       );
       responseData.seo = {

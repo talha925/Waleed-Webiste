@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
+export const dynamic = 'force-dynamic';
+
 // Blog data interface
 interface BlogData {
   title: string;
@@ -38,10 +40,10 @@ const saveBlogData = async (blogData: BlogData) => {
   // Log for debugging
   console.log('Blog saved successfully:', newBlog);
 
-  return { 
-    success: true, 
+  return {
+    success: true,
     blog: newBlog,
-    message: 'Blog post saved successfully!' 
+    message: 'Blog post saved successfully!'
   };
 };
 
@@ -52,8 +54,8 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!blogData.title || !blogData.shortDescription || !blogData.longDescription) {
       return NextResponse.json(
-        { 
-          error: 'Title, short description, and long description are required fields.' 
+        {
+          error: 'Title, short description, and long description are required fields.'
         },
         { status: 400 }
       );
@@ -62,8 +64,8 @@ export async function POST(request: NextRequest) {
     // Validate title length
     if (blogData.title.length < 3) {
       return NextResponse.json(
-        { 
-          error: 'Title must be at least 3 characters long.' 
+        {
+          error: 'Title must be at least 3 characters long.'
         },
         { status: 400 }
       );
@@ -72,8 +74,8 @@ export async function POST(request: NextRequest) {
     // Validate description lengths
     if (blogData.shortDescription.length < 10) {
       return NextResponse.json(
-        { 
-          error: 'Short description must be at least 10 characters long.' 
+        {
+          error: 'Short description must be at least 10 characters long.'
         },
         { status: 400 }
       );
@@ -81,8 +83,8 @@ export async function POST(request: NextRequest) {
 
     if (blogData.longDescription.length < 50) {
       return NextResponse.json(
-        { 
-          error: 'Long description must be at least 50 characters long.' 
+        {
+          error: 'Long description must be at least 50 characters long.'
         },
         { status: 400 }
       );
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     // Save the blog data
     const result = await saveBlogData(blogData);
-    
+
     // Revalidate blog-related pages and tags after saving
     revalidatePath('/blog');
     revalidateTag('blogs');
@@ -98,12 +100,12 @@ export async function POST(request: NextRequest) {
       revalidatePath(`/blog/${result.blog.id}`);
       revalidateTag(`blog-${result.blog.id}`);
     }
-    
+
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error('Error saving blog:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to save blog. Please try again.',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
@@ -115,15 +117,15 @@ export async function POST(request: NextRequest) {
 // GET method to retrieve all blog posts (for debugging/testing)
 export async function GET() {
   try {
-    return NextResponse.json({ 
+    return NextResponse.json({
       blogs: blogPosts,
       count: blogPosts.length,
-      success: true 
+      success: true
     });
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch blogs.',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

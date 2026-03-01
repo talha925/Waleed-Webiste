@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
+export const dynamic = 'force-dynamic';
+
 interface JWTPayload {
   id: string;
   email: string;
@@ -18,7 +20,7 @@ interface ValidateResponse {
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { message: 'No token provided' },
@@ -27,14 +29,14 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
+
     // Verify the token
     const secret = new TextEncoder().encode(
       process.env.JWT_SECRET || 'default_secret_replace_in_production'
     );
-    
+
     const { payload } = await jwtVerify(token, secret) as { payload: JWTPayload };
-    
+
     // Check if token is expired
     if (payload.exp && Date.now() >= payload.exp * 1000) {
       return NextResponse.json(
@@ -43,9 +45,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Token is valid',
-      user: payload 
+      user: payload
     });
   } catch (error) {
     console.error('Token validation error:', error);

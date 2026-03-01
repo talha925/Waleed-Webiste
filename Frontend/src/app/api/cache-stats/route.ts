@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { cacheOptimizer } from '@/lib/cache-optimizer';
 import { getCacheStats } from '@/lib/cache';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * API endpoint for cache statistics and performance monitoring
  * Provides detailed insights into cache performance and recommendations

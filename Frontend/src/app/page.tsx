@@ -7,6 +7,9 @@ import config from '@/lib/config';
 import { themeClasses } from '@/lib/theme/utils';
 import { getBrandConfig } from '@config/index';
 
+// ISR: revalidate the page every 60s. Build-time fetches fail gracefully (return []).
+export const revalidate = 60;
+
 // Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrandConfig();
@@ -23,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // Fetch data at build time or with revalidation
 async function fetchFeaturedBlogs() {
-  const FETCH_TIMEOUT = 30000; // 30s: safety net for cold-start DB connections
+  const FETCH_TIMEOUT = 5000; // 5s: fast fail during build, ISR will retry on first request
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);

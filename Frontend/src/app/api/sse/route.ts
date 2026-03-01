@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Simple SSE stream for admin dashboards. In production, hook into your backend/Redis.
 export async function GET(request: NextRequest) {
