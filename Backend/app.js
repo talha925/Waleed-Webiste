@@ -75,6 +75,11 @@ async function initializeServices() {
         for (const [brandId, brand] of uniqueBrands) {
             await warmupConnection(brandId, brand.mongoUri);
         }
+
+        // 🔥 Pre-warm Central Connection
+        const { getCentralConnection } = require('./config/db');
+        await getCentralConnection();
+
         console.log('✅ Database connections pre-warmed');
     } catch (error) {
         console.error('❌ Service initialization error:', error);

@@ -14,10 +14,16 @@ export async function GET(req: Request) {
     const noCache = searchParams.get('noCache') === 'true';
     const includeJsonLd = searchParams.get('jsonLd') === 'true';
 
+    // For brand-aware Backend detection
+    const host = req.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     // Get categories with caching
     const { data: categories, headers } = await categoriesCache.getData(
       `${config.api.baseUrl}/api/categories`,
-      noCache
+      noCache,
+      { 'x-brand-id': brand.brandId }
     );
 
     // Add JSON-LD structured data if requested

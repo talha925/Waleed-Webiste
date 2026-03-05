@@ -308,9 +308,15 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         }
 
         const uploadData = await uploadResponse.json();
-        console.log('Image upload successful. New URL:', uploadData.imageUrl);
-        finalImageUrl = uploadData.imageUrl;
-        setImageUrl(uploadData.imageUrl);
+        const newImageUrl = uploadData.data?.imageUrl || uploadData.imageUrl;
+
+        if (!newImageUrl) {
+          throw new Error('Image URL not found in upload response');
+        }
+
+        console.log('Image upload successful. New URL:', newImageUrl);
+        finalImageUrl = newImageUrl;
+        setImageUrl(newImageUrl);
         setImageFile(null);
         setMessage('Image uploaded successfully! Synchronizing data...');
       } catch (uploadError: any) {

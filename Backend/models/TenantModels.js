@@ -31,7 +31,11 @@ const UserSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    lastLogin: Date
+    // Tracking & Multi-Brand Access
+    allowedBrands: [{ type: String }], // e.g. ["pennyscroll", "blogzenix"]
+    totalStoresAdded: { type: Number, default: 0 },
+    totalCouponsAdded: { type: Number, default: 0 },
+    lastActive: Date
 }, {
     timestamps: true
 });
@@ -131,7 +135,12 @@ const StoreSchema = new mongoose.Schema({
             validator: (v) => ALLOWED_HEADINGS.includes(v),
             message: props => `Invalid heading: ${props.value}`
         }
-    }
+    },
+    // Tracking Fields
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdByName: { type: String },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updatedByName: { type: String }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -188,7 +197,12 @@ const CouponSchema = new mongoose.Schema({
     featuredForHome: { type: Boolean, default: false },
     hits: { type: Number, default: 0 },
     lastAccessed: { type: Date, default: null },
-    order: { type: Number, default: 0 }
+    order: { type: Number, default: 0 },
+    // Tracking Fields
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdByName: { type: String },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updatedByName: { type: String }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -322,20 +336,39 @@ BlogPostSchema.pre('save', function (next) {
     next();
 });
 
+const ActivityLogSchema = require('./activityLogModel');
+
 /**
  * Model Cache
  */
 const modelCache = new Map();
 
 /**
- * Get models for a specific database connection
+ * Get models for the central database connection
  */
-function getTenantModels(connection) {
-    const connId = connection.id || connection.name;
-    if (modelCache.has(connId)) return modelCache.get(connId);
+function getCentralModels(connection) {
+    if (modelCache.has('central')) return modelCache.get('central');
 
     const models = {
         User: connection.model('User', UserSchema),
+        ActivityLog: connection.model('ActivityLog', ActivityLogSchema)
+    };
+
+    modelCache.set('central', models);
+    return models;
+}
+
+/**
+ * Get models for a specific database connection (Tenant specific)
+ */
+function getTenantModels(connection) {
+    const connId = connection.id || connection.name;
+    // Don't cache tenant-specific models under 'central' ID
+    if (connId === 'central') return getCentralModels(connection);
+
+    if (modelCache.has(connId)) return modelCache.get(connId);
+
+    const models = {
         Category: connection.model('Category', CategorySchema),
         BlogCategory: connection.model('BlogCategory', BlogCategorySchema),
         Store: connection.model('Store', StoreSchema),
@@ -347,4 +380,4 @@ function getTenantModels(connection) {
     return models;
 }
 
-module.exports = { getTenantModels };
+module.exports = { getTenantModels, getCentralModels };

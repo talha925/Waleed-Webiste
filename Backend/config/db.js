@@ -3,12 +3,45 @@ const mongoose = require('mongoose');
 // Cache for tenant connections
 const tenantConnections = {};
 
+// Central connection for Users and Activity Logs
+let centralConnection = null;
+
 const mongoOptions = {
   maxPoolSize: 10,
-  serverSelectionTimeoutMS: 60000, // Windows SRV lookup can take 40s+
+  serverSelectionTimeoutMS: 60000,
   socketTimeoutMS: 45000,
   heartbeatFrequencyMS: 10000,
   family: 4,
+};
+
+/**
+ * Get or create the central database connection
+ */
+const getCentralConnection = async () => {
+  if (centralConnection && (centralConnection.readyState === 1 || centralConnection.readyState === 2)) {
+    return centralConnection;
+  }
+
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    throw new Error('❌ MONGO_URI is missing in .env. Central connection cannot be established.');
+  }
+
+  console.log('🔌 Connecting to Central Database...');
+  try {
+    centralConnection = mongoose.createConnection(uri, mongoOptions);
+    await centralConnection.asPromise();
+    console.log('✅ Central Database Connected.');
+
+    centralConnection.on('error', (err) => {
+      console.error('❌ Central MongoDB Error:', err.message);
+    });
+
+    return centralConnection;
+  } catch (error) {
+    console.error('❌ Failed to connect to Central Database:', error.message);
+    throw error;
+  }
 };
 
 /**
@@ -20,8 +53,6 @@ const getTenantConnection = async (brandId, uri) => {
     if (conn.readyState === 1 || conn.readyState === 2) {
       return conn;
     }
-    // If state is disconnected (0), we keep the object to let it auto-reconnect
-    // unless it's manually being recreated
     if (conn.readyState === 0) {
       console.log(`ℹ️ Connection [${brandId}] is disconnected, awaiting auto-reconnect...`);
     }
@@ -34,24 +65,15 @@ const getTenantConnection = async (brandId, uri) => {
     const conn = mongoose.createConnection(uri, mongoOptions);
     tenantConnections[brandId] = conn;
 
-    // Use a timeout for the initial connection so we don't hang forever
     await Promise.race([
       conn.asPromise(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timed out (60s). Please check your internet or DNS.')), 60000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timed out (60s).')), 60000))
     ]);
 
     console.log(`✅ DB connected for [${brandId}]`);
 
     conn.on('error', (err) => {
       console.error(`❌ MongoDB error for brand [${brandId}]:`, err.message);
-    });
-
-    conn.on('disconnected', () => {
-      console.warn(`⚠️ MongoDB disconnected for brand [${brandId}] (Auto-reconnecting...)`);
-    });
-
-    conn.on('reconnected', () => {
-      console.log(`✅ MongoDB reconnected for brand [${brandId}]`);
     });
 
     return conn;
@@ -75,10 +97,17 @@ const warmupConnection = async (brandId, uri) => {
 
 const closeAllConnections = async () => {
   const brandIds = Object.keys(tenantConnections);
+  if (centralConnection) {
+    brandIds.push('central');
+    tenantConnections['central'] = centralConnection;
+  }
+
   await Promise.all(brandIds.map(async (id) => {
     try {
-      await tenantConnections[id].close();
-      delete tenantConnections[id];
+      if (tenantConnections[id]) {
+        await tenantConnections[id].close();
+        delete tenantConnections[id];
+      }
     } catch (err) {
       console.error(`Error closing connection:`, err.message);
     }
@@ -92,6 +121,7 @@ process.on('SIGINT', async () => {
 
 module.exports = {
   getTenantConnection,
+  getCentralConnection,
   closeAllConnections,
   warmupConnection
 };

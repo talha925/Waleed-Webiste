@@ -9,6 +9,7 @@ const AppError = require('../errors/AppError');
 exports.protect = async (req, res, next) => {
     try {
         const User = req.models.User;
+        const currentBrandId = req.models.brandId;
 
         // 1) Check if token exists
         let token;
@@ -23,10 +24,10 @@ exports.protect = async (req, res, next) => {
         // 2) Verify token
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-        // 3) Check if user still exists in THIS brand's database
+        // 3) Check if user still exists in Central Database
         const currentUser = await User.findById(decoded.userId);
         if (!currentUser) {
-            return next(new AppError('The user belonging to this token no longer exists in this brand.', 401));
+            return next(new AppError('The user belonging to this token no longer exists.', 401));
         }
 
         // 4) Check if user is active
@@ -34,8 +35,17 @@ exports.protect = async (req, res, next) => {
             return next(new AppError('This user account has been deactivated.', 401));
         }
 
+        // 5) 🔐 Brand Authorization Check
+        // Super-admins can access any brand. 
+        // Admins must have the brandId in their allowedBrands array.
+        if (currentUser.role === 'admin') {
+            if (!currentUser.allowedBrands || !currentUser.allowedBrands.includes(currentBrandId)) {
+                return next(new AppError(`Access Denied: You do not have permission for the brand '${currentBrandId}'.`, 403));
+            }
+        }
+
         // Grant access
-        req.user = currentUser._id;
+        req.user = currentUser;
         req.userRole = currentUser.role;
         next();
     } catch (error) {

@@ -258,14 +258,13 @@ const SearchBar = React.memo(function SearchBar({
             placeholder="Search..."
             value=""
             className={cn(
-              "w-full pl-10 pr-10 py-3.5 bg-background-secondary/50 backdrop-blur-md border border-border/50 rounded-2xl text-foreground placeholder-foreground-muted",
-              "focus:outline-none focus:ring-4 focus:ring-brand-primary/20 focus:border-brand-primary/50",
-              "transition-all duration-300 hover:bg-background-tertiary/70 hover:shadow-lg",
+              "w-full pl-10 pr-10 py-3.5 bg-background-secondary border border-border/60 rounded-2xl text-foreground placeholder-foreground-muted",
+              "focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50",
+              "transition-all duration-300 hover:bg-background-tertiary hover:shadow-md",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               "relative z-0"
             )}
           />
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-vibrant opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-b-2xl" />
         </div>
       </div>
     );
@@ -288,11 +287,11 @@ const SearchBar = React.memo(function SearchBar({
           placeholder={placeholderText}
           disabled={!isHydrated}
           className={cn(
-            "w-full pl-10 pr-10 py-3.5 bg-background-secondary/50 backdrop-blur-md border border-border/50 rounded-2xl text-foreground placeholder-foreground-muted",
-            "focus:outline-none focus:ring-4 focus:ring-brand-primary/20 focus:border-brand-primary/50",
-            "transition-all duration-300 hover:bg-background-tertiary/70 hover:shadow-lg",
+            "w-full pl-10 pr-10 py-3.5 bg-background-secondary border border-border/60 rounded-2xl text-foreground placeholder-foreground-muted",
+            "focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50",
+            "transition-all duration-300 hover:bg-background-tertiary hover:shadow-md",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            isFocused && "bg-white shadow-2xl ring-4 ring-brand-primary/10 border-brand-primary/30",
+            isFocused && "bg-white shadow-lg border-brand-primary/50",
             "relative z-0"
           )}
         />
@@ -311,7 +310,6 @@ const SearchBar = React.memo(function SearchBar({
             <Loader2 className="w-4 h-4 text-brand-primary animate-spin" />
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-vibrant opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-b-2xl" />
       </div>
 
       {/* Search Results Dropdown */}

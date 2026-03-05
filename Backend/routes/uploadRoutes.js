@@ -54,11 +54,19 @@ router.post('/', upload.single('image'), async (req, res) => {
     const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
     console.log('Image URL:', imageUrl);
 
-    res.status(200).json({ imageUrl });
+    res.status(200).json({
+      success: true,
+      message: 'Image uploaded successfully',
+      data: { imageUrl }
+    });
   } catch (error) {
     console.error('Error uploading image:', error.message);
     console.error('Error details:', error.stack);
-    res.status(500).json({ error: 'Failed to upload image', details: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image',
+      error: error.message
+    });
   }
 });
 

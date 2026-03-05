@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose';
 // Function to verify JWT token
 async function verifyToken(token: string) {
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'default_secret_replace_in_production');
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
     return payload;
   } catch (_error) {
@@ -22,21 +22,21 @@ export async function middleware(req: NextRequest) {
     const segments = pathname.split('/');
     if (segments.length === 3) { // /stores/[id]
       const storeIdOrSlug = segments[2];
-      
+
       // Check if it's already a slug (contains letters) or an ID (only numbers/ObjectId format)
       const isLikelyId = /^[0-9a-fA-F]{24}$/.test(storeIdOrSlug) || /^\d+$/.test(storeIdOrSlug);
-      
+
       if (isLikelyId) {
         // For actual IDs, we need to fetch the slug from the API
         try {
           const storesRes = await fetch(`${req.nextUrl.origin}/api/proxy-stores`, {
             headers: { 'User-Agent': 'middleware-redirect' }
           });
-          
+
           if (storesRes.ok) {
             const storesData = await storesRes.json();
             const store = storesData.data?.find((s: any) => s._id === storeIdOrSlug);
-            
+
             if (store?.slug) {
               const newUrl = new URL(`/store/${store.slug}`, req.url);
               return NextResponse.redirect(newUrl, 301);
@@ -46,7 +46,7 @@ export async function middleware(req: NextRequest) {
           console.error('Middleware redirect error:', error);
         }
       }
-      
+
       // Fallback: redirect as-is (assuming it might be a slug already)
       const newUrl = new URL(`/store/${storeIdOrSlug}`, req.url);
       return NextResponse.redirect(newUrl, 301);
@@ -103,7 +103,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Check admin permissions for admin routes
-    if (isAdminRoute && payload.role !== 'admin') {
+    if (isAdminRoute && (payload.role !== 'admin' && payload.role !== 'super-admin')) {
       return NextResponse.redirect(new URL('/', req.url));
     }
   }

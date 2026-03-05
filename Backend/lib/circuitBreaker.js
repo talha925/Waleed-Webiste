@@ -79,9 +79,9 @@ const callWithCircuitBreaker = async (service, operation, fallback = null) => {
             console.log(`🔄 Circuit breaker RESET for ${service}`);
         } else {
             // Still open, fail fast
-            // console.warn(`⚠️ Circuit breaker OPEN for ${service}, using fallback`);
             updateCircuitBreakerMetrics(service, false);
-            return fallback ? await fallback() : { success: false, circuitBreakerOpen: true };
+            if (fallback) return await fallback();
+            throw new Error(`Circuit breaker is OPEN for ${service}. Service is temporarily unavailable.`);
         }
     }
 

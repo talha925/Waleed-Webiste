@@ -79,13 +79,7 @@ exports.getStores = async (models, queryParams) => {
             }
         ];
 
-        let result;
-        try {
-            result = await Store.aggregate(aggregation).exec();
-        } catch (aggregationError) {
-            console.error('❌ Aggregation failed, falling back to find:', aggregationError);
-            return await exports.getStoresFallback(models, queryParams);
-        }
+        const result = await Store.aggregate(aggregation).exec();
         const stores = result[0]?.stores || [];
         const totalStores = result[0]?.totalCount[0]?.count || 0;
 
@@ -101,36 +95,6 @@ exports.getStores = async (models, queryParams) => {
         console.error('Error in storeService.getStores:', error);
         throw error;
     }
-};
-
-exports.getStoresFallback = async (models, queryParams) => {
-    const { Store, brandId } = models;
-    const { page = 1, limit = 10, language = 'English', category, isTopStore, isEditorsChoice } = queryParams;
-    const query = { language };
-    if (category) query.categories = category;
-    if (isTopStore !== undefined) query.isTopStore = isTopStore === 'true';
-    if (isEditorsChoice !== undefined) query.isEditorsChoice = isEditorsChoice === 'true';
-
-    const stores = await Store.find(query)
-        .sort({ createdAt: -1 })
-        .skip((parseInt(page) - 1) * parseInt(limit))
-        .limit(parseInt(limit))
-        .populate('categories')
-        .populate({
-            path: 'coupons',
-            select: '_id offerDetails code active isValid featuredForHome hits lastAccessed order',
-            match: { isValid: true, $or: [{ active: true }, { code: { $exists: true, $ne: '' } }] },
-            options: { sort: { order: 1, createdAt: -1 } }
-        })
-        .lean();
-
-    const totalStores = await Store.countDocuments(query);
-
-    return {
-        stores,
-        totalStores,
-        timestamp: new Date().toISOString()
-    };
 };
 
 exports.getStoreBySlug = async (models, slug) => {

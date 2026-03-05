@@ -5,12 +5,16 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = `${config.api.baseUrl}/api/blogCategories`;
 
-const getBlogCategories = async () => {
+const getBlogCategories = async (host: string = '') => {
   try {
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     const response = await fetch(API_URL, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
       },
       next: {
         revalidate: 300, // Revalidate every 5 minutes
@@ -30,9 +34,10 @@ const getBlogCategories = async () => {
   }
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const categories = await getBlogCategories();
+    const host = request.headers.get('host') || '';
+    const categories = await getBlogCategories(host);
     return NextResponse.json(categories);
   } catch (error) {
     console.error('Failed to fetch categories:', error);

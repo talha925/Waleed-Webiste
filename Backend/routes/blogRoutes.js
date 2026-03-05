@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const blogController = require('../controllers/blogController');
-// const { protect, restrictTo } = require('../middlewares/authMiddleware'); // comment out these imports
+const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validationMiddleware');
 const blogValidator = require('../validators/blogValidator');
 
@@ -10,11 +10,11 @@ router.get('/', blogController.getBlogs);
 router.get('/:id', blogController.getBlogById);
 router.get('/:id/related', blogController.getRelatedPosts);
 
-// COMMENT OUT PROTECTED MIDDLEWARE
-// router.use(protect);
-// router.use(restrictTo('author', 'admin'));
+// Protected routes - admin/super-admin only for now
+router.use(protect);
+router.use(restrictTo('admin', 'super-admin'));
 
-// Routes without authentication (temporarily)
+// Routes for content management
 router.route('/')
   .post(
     validate(blogValidator.createBlogSchema),

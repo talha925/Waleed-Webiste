@@ -20,9 +20,15 @@ export async function GET(req: Request) {
     apiUrl.searchParams.set('limit', '1000');
     apiUrl.searchParams.set('page', '1');
 
+    // For brand-aware Backend detection
+    const host = req.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     const { data: stores, headers } = await storesCache.getData(
       apiUrl.toString(),
-      noCache
+      noCache,
+      { 'x-brand-id': brand.brandId }
     );
 
     // Add JSON-LD structured data if requested

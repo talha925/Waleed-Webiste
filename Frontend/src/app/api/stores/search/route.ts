@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     const data = await fetchResponse.json();
 
     // Handle backend search response structure
-    if (data.status === 'success' && Array.isArray(data.data)) {
+    if (data.success && Array.isArray(data.data)) {
       return NextResponse.json({
         stores: data.data,
         total: data.data.length,

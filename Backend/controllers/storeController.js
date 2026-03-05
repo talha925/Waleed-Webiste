@@ -1,5 +1,8 @@
 const storeService = require('../services/storeService');
 const AppError = require('../errors/AppError');
+const { catchAsync } = require('../utils/errorUtils');
+const { logActivity } = require('../utils/activityLogger');
+
 
 const htmlDecode = (str) => {
   if (!str || typeof str !== 'string') return str;
@@ -11,94 +14,134 @@ const htmlDecode = (str) => {
 };
 
 // Get stores with pagination
-exports.getStores = async (req, res, next) => {
-  try {
-    const result = await storeService.getStores(req.models, req.query);
-    res.status(200).json({
-      status: 'success',
-      data: result.stores,
-      metadata: {
-        totalStores: result.totalStores,
-        timestamp: result.timestamp
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+exports.getStores = catchAsync(async (req, res, next) => {
+  const result = await storeService.getStores(req.models, req.query);
+  res.status(200).json({
+    success: true,
+    message: 'Stores retrieved successfully',
+    data: result.stores,
+    metadata: {
+      totalStores: result.totalStores,
+      timestamp: result.timestamp
+    }
+  });
+});
 
 // Search stores
-exports.searchStores = async (req, res, next) => {
-  try {
-    const { q, page, limit } = req.query;
-    if (!q) {
-      return next(new AppError('Search query is required', 400));
-    }
-    const result = await storeService.searchStores(req.models, q, page, limit);
-    res.status(200).json({
-      status: 'success',
-      data: result.stores,
-      metadata: {
-        totalStores: result.totalStores,
-        query: result.query,
-        page: result.page,
-        limit: result.limit
-      }
-    });
-  } catch (error) {
-    next(error);
+exports.searchStores = catchAsync(async (req, res, next) => {
+  const { q, page, limit } = req.query;
+  if (!q) {
+    return next(new AppError('Search query is required', 400));
   }
-};
+  const result = await storeService.searchStores(req.models, q, page, limit);
+  res.status(200).json({
+    success: true,
+    message: 'Store search completed',
+    data: result.stores,
+    metadata: {
+      totalStores: result.totalStores,
+      query: result.query,
+      page: result.page,
+      limit: result.limit
+    }
+  });
+});
 
 // Fetch a store by slug
-exports.getStoreBySlug = async (req, res, next) => {
-  try {
-    const store = await storeService.getStoreBySlug(req.models, req.params.slug);
-    res.status(200).json({ status: 'success', data: store });
-  } catch (error) {
-    next(error);
-  }
-};
+exports.getStoreBySlug = catchAsync(async (req, res, next) => {
+  const store = await storeService.getStoreBySlug(req.models, req.params.slug);
+  res.status(200).json({
+    success: true,
+    message: 'Store found by slug',
+    data: store
+  });
+});
 
 // Get store by ID
-exports.getStoreById = async (req, res, next) => {
-  try {
-    const store = await storeService.getStoreById(req.models, req.params.id);
-    res.status(200).json({ status: 'success', data: store });
-  } catch (error) {
-    next(error);
-  }
-};
+exports.getStoreById = catchAsync(async (req, res, next) => {
+  const store = await storeService.getStoreById(req.models, req.params.id);
+  res.status(200).json({
+    success: true,
+    message: 'Store found by ID',
+    data: store
+  });
+});
 
 // Create a new store
-exports.createStore = async (req, res, next) => {
-  try {
-    if (req.body.trackingUrl) req.body.trackingUrl = htmlDecode(req.body.trackingUrl);
-    if (req.body.heading) req.body.heading = htmlDecode(req.body.heading);
+exports.createStore = catchAsync(async (req, res, next) => {
+  if (req.body.trackingUrl) req.body.trackingUrl = htmlDecode(req.body.trackingUrl);
+  if (req.body.heading) req.body.heading = htmlDecode(req.body.heading);
 
-    const newStore = await storeService.createStore(req.models, req.body);
-    res.status(201).json({ status: 'success', data: newStore });
-  } catch (error) {
-    next(error);
-  }
-};
+  // Add tracking data
+  const storeData = {
+    ...req.body,
+    createdBy: req.user._id,
+    createdByName: req.user.name,
+    updatedBy: req.user._id,
+    updatedByName: req.user.name
+  };
+
+  const newStore = await storeService.createStore(req.models, storeData);
+
+  // Log Activity
+  logActivity(req, {
+    action: 'CREATE_STORE',
+    targetId: newStore._id,
+    targetName: newStore.name,
+    details: `Store "${newStore.name}" created.`
+  });
+
+  res.status(201).json({
+    success: true,
+    message: 'Store created successfully',
+    data: newStore
+  });
+});
 
 // Update a store by ID
-exports.updateStore = async (req, res, next) => {
-  try {
-    const updatedStore = await storeService.updateStore(req.models, req.params.id, req.body);
-    res.status(200).json({ status: 'success', data: updatedStore });
-  } catch (error) {
-    next(error);
-  }
-};
+exports.updateStore = catchAsync(async (req, res, next) => {
+  // Add tracking data
+  const updateData = {
+    ...req.body,
+    updatedBy: req.user._id,
+    updatedByName: req.user.name
+  };
+
+  const updatedStore = await storeService.updateStore(req.models, req.params.id, updateData);
+
+  // Log Activity
+  logActivity(req, {
+    action: 'UPDATE_STORE',
+    targetId: updatedStore._id,
+    targetName: updatedStore.name,
+    details: `Store "${updatedStore.name}" updated.`
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Store updated successfully',
+    data: updatedStore
+  });
+});
 
 // Delete a store by ID
-exports.deleteStore = async (req, res, next) => {
-  try {
-    await storeService.deleteStore(req.models, req.params.id);
-    res.status(200).json({ status: 'success', message: 'Store deleted successfully' });
-  } catch (error) {
-    next(error);
+exports.deleteStore = catchAsync(async (req, res, next) => {
+  const store = await storeService.getStoreById(req.models, req.params.id);
+  await storeService.deleteStore(req.models, req.params.id);
+
+  // Log Activity
+  if (store) {
+    logActivity(req, {
+      action: 'DELETE_STORE',
+      targetId: store._id,
+      targetName: store.name,
+      details: `Store "${store.name}" deleted.`
+    });
   }
-};
+
+  res.status(200).json({
+    success: true,
+    message: 'Store deleted successfully',
+    data: null
+  });
+});

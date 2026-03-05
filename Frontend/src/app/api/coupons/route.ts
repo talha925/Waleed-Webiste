@@ -19,8 +19,13 @@ export async function GET(req: Request) {
       apiUrl += `?storeId=${storeId}`;
     }
 
+    // For brand-aware Backend detection
+    const host = req.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     // Always fetch fresh data - no caching for coupons/offers
-    const { data: coupons, headers } = await couponsCache.getData(apiUrl, true);
+    const { data: coupons, headers } = await couponsCache.getData(apiUrl, true, { 'x-brand-id': brand.brandId });
 
     return NextResponse.json({ data: coupons }, { headers });
   } catch (error) {

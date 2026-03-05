@@ -66,7 +66,8 @@ export class CacheManager<T> {
   // Get data from cache or fetch fresh
   async getData(
     apiUrl: string,
-    noCache: boolean = false
+    noCache: boolean = false,
+    customHeaders: Record<string, string> = {}
   ): Promise<{ data: T[]; headers: Headers }> {
     const startTime = Date.now();
     const now = Date.now();
@@ -74,6 +75,7 @@ export class CacheManager<T> {
     const cache = cacheStorage.get(this.cacheKey) as CacheEntry<T> | undefined;
 
     // Use in-memory cache if valid and not forcing fresh
+    // Note: We don't cache in-memory with customHeaders variation yet which is fine for now
     if (!noCache && cache && now - cache.timestamp < this.inMemoryDuration) {
       data = cache.data;
       log(`Serving ${this.cacheKey} from in-memory cache`);
@@ -84,11 +86,19 @@ export class CacheManager<T> {
     } else {
       // Fetch fresh data
       const fetchOptions: RequestInit = noCache || this.isrRevalidate === 0
-        ? { cache: 'no-store' }
+        ? {
+          cache: 'no-store',
+          headers: {
+            ...customHeaders
+          }
+        }
         : {
           next: {
             revalidate: this.isrRevalidate,
             tags: this.tags
+          },
+          headers: {
+            ...customHeaders
           }
         };
 

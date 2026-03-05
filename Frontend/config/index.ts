@@ -21,12 +21,9 @@ import brandB from './brandB';
 // Order matters — first match wins.
 // The last entry '' is the catch-all fallback.
 const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
+    { match: 'pennyscroll.com', config: brandA },
     { match: 'blogzenix.com', config: brandB },
-    // { match: 'brandC.com',   config: brandC },
     // ↑ Add new domains here
-
-    // Fallback — must always be last
-    { match: '', config: brandA },
 ];
 
 /**
@@ -54,8 +51,6 @@ export function getBrandConfig(): BrandConfig {
 
         for (const entry of DOMAIN_MAP) {
             // Strict match: avoid "brand.com" matching "mybrand.com"
-            if (entry.match === '') return entry.config; // Fallback
-
             if (host === entry.match || host.endsWith(`.${entry.match}`)) {
                 return entry.config;
             }
@@ -64,8 +59,8 @@ export function getBrandConfig(): BrandConfig {
         // headers() throws outside of a request context (e.g. build time)
     }
 
-    // Fallback
-    return brandA;
+    // No fallback - throw error if no brand is found
+    throw new Error(`[Brand Config] No matching configuration found. Check your .env or Domain Map.`);
 }
 
 /**
@@ -73,14 +68,25 @@ export function getBrandConfig(): BrandConfig {
  * Useful in middleware, API routes, or anywhere you already have the host.
  */
 export function getBrandConfigByHost(host: string): BrandConfig {
-    for (const entry of DOMAIN_MAP) {
-        if (entry.match === '') return entry.config; // Fallback
+    // Priority 1: Environment Variable Override (for Local Dev)
+    if (process.env.NEXT_PUBLIC_APP_BRAND_ID) {
+        for (const entry of DOMAIN_MAP) {
+            if (entry.config.brandId === process.env.NEXT_PUBLIC_APP_BRAND_ID) {
+                return entry.config;
+            }
+        }
+    }
 
-        if (host === entry.match || host.endsWith(`.${entry.match}`)) {
+    // Priority 2: Domain Matching
+    for (const entry of DOMAIN_MAP) {
+        const hostname = host.split(':')[0]; // Remove port
+        if (hostname === entry.match || hostname.endsWith(`.${entry.match}`)) {
             return entry.config;
         }
     }
-    return brandA;
+
+    // No fallback to brandA - throw error if no brand is found
+    throw new Error(`[Brand Config] No matching configuration found for host: "${host}". Check your .env or Domain Map.`);
 }
 
 // Re-export types and individual brands for convenience

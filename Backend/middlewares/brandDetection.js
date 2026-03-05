@@ -12,21 +12,23 @@
  */
 
 const { getBrandByHost } = require('../config/brands');
-const { getTenantConnection } = require('../config/db');
-// Import a helper that provides models for a given connection
-const { getTenantModels } = require('../models/TenantModels');
+const { getTenantConnection, getCentralConnection } = require('../config/db');
+const { getTenantModels, getCentralModels } = require('../models/TenantModels');
 
 /**
  * Brand & Database Detection Middleware
  */
 async function brandDetection(req, res, next) {
     try {
-        // 1. Resolve Brand from Header or Host
+        // 1. Establish Central Connection first (Required for Auth/Users)
+        const centralConnection = await getCentralConnection();
+        const centralModels = getCentralModels(centralConnection);
+
+        // 2. Resolve Brand from Header or Host
         const brandIdFromHeader = req.headers['x-brand-id'];
         let brand;
 
         if (brandIdFromHeader) {
-            // If explicit brand ID provided, find it in the map
             const { BRAND_MAP } = require('../config/brands');
             brand = BRAND_MAP.find(b => b.brandId === brandIdFromHeader) || getBrandByHost('');
         } else {
@@ -40,27 +42,28 @@ async function brandDetection(req, res, next) {
 
         req.brand = brand;
 
-        // 2. Resolve Database Connection
-        // CRITICAL: We now require a brand-specific URI for secondary brands.
-        // PennyScroll remains the default fallback only if explicitly configured so.
+        // 3. Resolve Tenant Database Connection
         let uri = brand.mongoUri;
 
-        // If brand is strictly defined (like blogzenix) but URI is missing, 
-        // we should fail fast rather than showing another brand's data.
         if (brand.brandId !== 'pennyscroll' && !uri) {
-            console.error(`❌ Missing MONGO_URI for brand: ${brand.brandId}. Check your .env file.`);
+            console.error(`❌ Missing MONGO_URI for brand: ${brand.brandId}`);
             return res.status(500).json({ error: `Configuration missing for ${brand.brandId}` });
         }
 
-        // Fallback to MONGO_URI only for the default brand (pennyscroll)
         if (!uri) uri = process.env.MONGO_URI;
 
-        const connection = await getTenantConnection(brand.brandId, uri);
+        const tenantConnection = await getTenantConnection(brand.brandId, uri);
+        const tenantModels = getTenantModels(tenantConnection);
 
-        // 3. Attach DB-specific Models to the request
-        req.db = connection;
-        req.models = getTenantModels(connection);
-        req.models.brandId = brand.brandId; // Add brandId for service layer access
+        // 4. Attach Unified Model Object to the request
+        req.db = tenantConnection;
+        req.centralDb = centralConnection;
+
+        req.models = {
+            ...tenantModels,      // Store, Coupon, Category, etc.
+            ...centralModels,     // User, ActivityLog (Overrides tenant versions if any)
+            brandId: brand.brandId
+        };
 
         next();
     } catch (error) {

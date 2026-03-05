@@ -1,92 +1,61 @@
 import { NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
+import config from '@/lib/config';
+import { getBrandConfigByHost } from '@config/index';
 
 export const dynamic = 'force-dynamic';
 
-interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-interface LoginResponse {
-  message: string;
-  token: string;
-  user: User;
-}
-
-// In a real application, you would validate against a database
-// This is a simplified example with hardcoded credentials
-const VALID_EMAIL = 'admin@example.com';
-const VALID_PASSWORD = 'admin123';
-
 export async function POST(request: Request) {
   try {
-    const { email, password }: LoginRequest = await request.json();
+    const credentials = await request.json();
+    const host = request.headers.get('host') || '';
+    const brand = getBrandConfigByHost(host);
 
-    // Basic validation
-    if (!email || !password) {
+    // Call REAL Backend API
+    const response = await fetch(`${config.api.baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
       return NextResponse.json(
-        { message: 'Email and password are required' },
-        { status: 400 }
+        { message: data.message || 'Login failed' },
+        { status: response.status }
       );
     }
 
-    // Validate credentials (in a real app, check against database)
-    if (email !== VALID_EMAIL || password !== VALID_PASSWORD) {
-      return NextResponse.json(
-        { message: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
+    const { token, data: userData } = data;
+    const { user } = userData;
 
-    // Create JWT token
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || 'default_secret_replace_in_production'
-    );
-
-    const token = await new SignJWT({
-      id: '1',
-      email: email,
-      name: 'Admin User',
-      role: 'admin'
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('24h')
-      .sign(secret);
-
-    // Set HTTP-only cookie
+    // Set HTTP-only cookie with the REAL token from Backend
     cookies().set({
       name: 'authToken',
       value: token,
       httpOnly: true,
       path: '/',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24, // 24 hours
+      maxAge: 60 * 60 * 24 * 7, // 7 days (match Backend JWT expiry)
       sameSite: 'strict',
     });
 
-    // Return token and user data to client
     return NextResponse.json({
       message: 'Login successful',
       token,
       user: {
-        id: '1',
-        name: 'Admin User',
-        email: email,
-        role: 'admin'
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login proxy error:', error);
     return NextResponse.json(
       { message: 'An error occurred during login' },
       { status: 500 }

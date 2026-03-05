@@ -5,8 +5,11 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = `${config.api.baseUrl}/api/blogs`;
 
-const getBlogs = async (searchParams?: URLSearchParams) => {
+const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
   try {
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     // Build the API URL with query parameters
     const apiUrl = new URL(API_URL);
     if (searchParams) {
@@ -24,6 +27,7 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
       },
@@ -45,7 +49,8 @@ const getBlogs = async (searchParams?: URLSearchParams) => {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const blogs = await getBlogs(searchParams);
+    const host = request.headers.get('host') || '';
+    const blogs = await getBlogs(searchParams, host);
 
     // 🔥 NEW: Explicitly handle backend errors so we don't return [] for connection fails
     if (blogs.error) {
