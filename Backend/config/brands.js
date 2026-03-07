@@ -35,6 +35,12 @@ const BRAND_MAP = [
         mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
+    {
+        match: 'coupon-app-backend.vercel.app',
+        brandId: 'pennyscroll',
+        mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
+        bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+    },
     // { match: 'brandC.com', brandId: 'brandC', mongoUri: process.env.MONGO_URI_BRAND_C || null },
     // ↑ Add new brands here
 

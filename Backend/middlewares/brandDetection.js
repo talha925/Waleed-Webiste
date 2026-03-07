@@ -20,11 +20,7 @@ const { getTenantModels, getCentralModels } = require('../models/TenantModels');
  */
 async function brandDetection(req, res, next) {
     try {
-        // 1. Establish Central Connection first (Required for Auth/Users)
-        const centralConnection = await getCentralConnection();
-        const centralModels = getCentralModels(centralConnection);
-
-        // 2. Resolve Brand from Header or Host
+        // 1. Resolve Brand from Header or Host FIRST (Needed for DB detection)
         const brandIdFromHeader = req.headers['x-brand-id'];
         let brand;
 
@@ -42,18 +38,32 @@ async function brandDetection(req, res, next) {
 
         req.brand = brand;
 
-        // 3. Resolve Tenant Database Connection
+        // 2. Resolve Tenant Database Connection
         let uri = brand.mongoUri;
+        if (!uri) uri = process.env.MONGO_URI;
 
-        if (brand.brandId !== 'pennyscroll' && !uri) {
-            console.error(`❌ Missing MONGO_URI for brand: ${brand.brandId}`);
-            return res.status(500).json({ error: `Configuration missing for ${brand.brandId}` });
+        // Smart Fallback: If no URI found for this brand, try to find ANY Mongo URI from env
+        if (!uri) {
+            const possibleUris = [
+                process.env.BLOGZENIX_MONGO_URI,
+                process.env.PENNYSCROLL_MONGO_URI,
+                process.env.MONGO_URL,
+                process.env.MONGODB_URI
+            ].filter(Boolean);
+            if (possibleUris.length > 0) uri = possibleUris[0];
         }
 
-        if (!uri) uri = process.env.MONGO_URI;
+        if (!uri) {
+            console.error(`❌ NO MONGO_URI found for brand: ${brand.brandId}`);
+            return res.status(500).json({ error: 'Database configuration missing. Please check Vercel environment variables.' });
+        }
 
         const tenantConnection = await getTenantConnection(brand.brandId, uri);
         const tenantModels = getTenantModels(tenantConnection);
+
+        // 3. Establish Central Connection using the same URI if MONGO_URI is missing
+        const centralConnection = await getCentralConnection(uri);
+        const centralModels = getCentralModels(centralConnection);
 
         // 4. Attach Unified Model Object to the request
         req.db = tenantConnection;
@@ -68,9 +78,18 @@ async function brandDetection(req, res, next) {
         next();
     } catch (error) {
         console.error('❌ Brand Detection Error:', error);
-        res.status(500).json({ error: 'Database connection failed' });
+        res.status(500).json({
+            error: 'Database connection failed',
+            details: error.message,
+            _performance: {
+                totalTime: '0ms',
+                breakdown: { database: '0ms', cache: '0ms', processing: '0ms' },
+                timestamp: new Date().toISOString()
+            }
+        });
     }
 }
 
 module.exports = brandDetection;
+
 
