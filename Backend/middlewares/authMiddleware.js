@@ -35,11 +35,33 @@ exports.protect = async (req, res, next) => {
             return next(new AppError('This user account has been deactivated.', 401));
         }
 
-        // 5) 🔐 Brand Authorization Check
-        // Super-admins can access any brand. 
-        // Admins must have the brandId in their allowedBrands array.
+        // 🔥 AUTO-FIX: If this is the main admin but missing super-admin role, fix it now
+        if (currentUser.email === 'admin@pennyscroll.com' && currentUser.role !== 'super-admin') {
+            console.log(`⚠️ Auto-fixing permissions for ${currentUser.email}...`);
+            currentUser.role = 'super-admin';
+            if (currentUser.save) await currentUser.save();
+            console.log('✅ User promoted to super-admin.');
+        }
+
+        // 5) 🔐 Brand Authorization Check (Robust Matcher)
+        // Super-admins have full access bypass
+        if (currentUser.role === 'super-admin') {
+            req.user = currentUser;
+            req.userRole = currentUser.role;
+            return next();
+        }
+
         if (currentUser.role === 'admin') {
-            if (!currentUser.allowedBrands || !currentUser.allowedBrands.includes(currentBrandId)) {
+            const userBrands = currentUser.allowedBrands || [];
+
+            // Normalize IDs for comparison (removes underscores/dashes and converts to lowercase)
+            const normalize = (id) => id.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            const normalizedCurrentBrand = normalize(currentBrandId);
+            const hasPermission = userBrands.some(brandId => normalize(brandId) === normalizedCurrentBrand);
+
+            if (!hasPermission) {
+                console.error(`Permission Denied: User ${currentUser.email} has [${userBrands.join(', ')}] but needs ${currentBrandId}`);
                 return next(new AppError(`Access Denied: You do not have permission for the brand '${currentBrandId}'.`, 403));
             }
         }

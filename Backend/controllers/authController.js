@@ -6,9 +6,9 @@ const { catchAsync } = require('../utils/errorUtils');
 /**
  * Generate JWT token
  */
-const signToken = (userId) => {
+const signToken = (userId, role) => {
     return jwt.sign(
-        { userId },
+        { userId, role },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -19,7 +19,7 @@ const signToken = (userId) => {
  * Standardized with 'success: true' while maintaining Flutter compatibility
  */
 const createSendToken = async (req, user, statusCode, res) => {
-    const token = signToken(user._id);
+    const token = signToken(user._id, user.role);
     const { ActivityLog } = req.models;
 
     // Log login activity if logging is available
@@ -98,6 +98,23 @@ exports.login = catchAsync(async (req, res, next) => {
 
     if (!user || !(await user.correctPassword(password, user.password))) {
         return next(new AppError('Incorrect email or password', 401));
+    }
+
+    // 🔐 Brand Login Isolation Check (Applies to ALL users except super-admin)
+    if (user.role !== 'super-admin') {
+        const currentBrandId = req.brand?.brandId;
+        const userBrands = user.allowedBrands || [];
+
+        // Normalize IDs for comparison (removes underscores/dashes and converts to lowercase)
+        const normalize = (id) => id ? id.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        const normalizedCurrentBrand = normalize(currentBrandId);
+
+        const hasPermission = userBrands.some(brandId => normalize(brandId) === normalizedCurrentBrand);
+
+        if (!hasPermission) {
+            console.warn(`Login Blocked: User ${user.email} (Role: ${user.role}) tried to log into ${currentBrandId} without permission.`);
+            return next(new AppError(`Access Denied: You do not have login permission for '${currentBrandId}'.`, 403));
+        }
     }
 
     await createSendToken(req, user, 200, res);
