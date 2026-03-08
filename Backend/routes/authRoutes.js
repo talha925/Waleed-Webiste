@@ -5,6 +5,7 @@ const router = express.Router();
 
 // Public routes
 router.post('/login', authController.login);
+router.post('/refresh', authController.refreshToken);
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
 // Protected routes (require authentication)

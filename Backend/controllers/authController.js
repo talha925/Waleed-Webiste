@@ -6,11 +6,22 @@ const { catchAsync } = require('../utils/errorUtils');
 /**
  * Generate JWT token
  */
-const signToken = (userId, role) => {
+const signToken = (userId) => {
     return jwt.sign(
-        { userId, role },
+        { userId },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+};
+
+/**
+ * Generate Refresh JWT token
+ */
+const signRefreshToken = (userId) => {
+    return jwt.sign(
+        { userId },
+        process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
     );
 };
 
@@ -19,7 +30,8 @@ const signToken = (userId, role) => {
  * Standardized with 'success: true' while maintaining Flutter compatibility
  */
 const createSendToken = async (req, user, statusCode, res) => {
-    const token = signToken(user._id, user.role);
+    const accessToken = signToken(user._id);
+    const refreshToken = signRefreshToken(user._id);
     const { ActivityLog } = req.models;
 
     // Log login activity if logging is available
@@ -44,12 +56,12 @@ const createSendToken = async (req, user, statusCode, res) => {
         success: true, // Standardized field
         status: 'success', // Compatibility field
         message: statusCode === 201 ? 'User registered successfully' : 'Login successful',
-        token, // Original backend uses 'token'
-        accessToken: token, // Flutter expects accessToken
-        refreshToken: 'mock-refresh-token',
-        expiresIn: 7 * 24 * 60 * 60,
+        token: accessToken, // Original backend uses 'token'
+        accessToken, // Flutter expects accessToken
+        refreshToken,
+        expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SEC) || 7 * 24 * 60 * 60,
         data: { user },
-        user: user // Flutter expects user object directly
+        user // Flutter expects user object directly
     });
 };
 
@@ -305,6 +317,43 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     await user.save();
 
     await createSendToken(req, user, 200, res);
+});
+
+/**
+ * Handle Token Refresh
+ */
+exports.refreshToken = catchAsync(async (req, res, next) => {
+    const { refreshToken } = req.body;
+    const { User } = req.models;
+
+    if (!refreshToken) {
+        return next(new AppError('No refresh token provided', 400));
+    }
+
+    try {
+        // 1. Verify Refresh Token
+        const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+        const decoded = await promisify(jwt.verify)(refreshToken, secret);
+
+        // 2. Check if user still exists
+        const currentUser = await User.findById(decoded.userId);
+        if (!currentUser) {
+            return next(new AppError('User belonging to this token no longer exists', 401));
+        }
+
+        // 3. Issue new Access Token
+        const accessToken = signToken(currentUser._id);
+
+        res.status(200).json({
+            success: true,
+            accessToken,
+            refreshToken, // Keep same refresh token or rotate (keeping same for simplicity)
+            expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SEC) || 7 * 24 * 60 * 60
+        });
+
+    } catch (err) {
+        return next(new AppError('Invalid or expired refresh token', 401));
+    }
 });
 
 /**
