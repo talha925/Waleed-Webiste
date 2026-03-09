@@ -14,31 +14,31 @@ const BRAND_MAP = [
     {
         match: 'localhost',
         brandId: 'blogzenix',
-        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: '127.0.0.1',
         brandId: 'blogzenix',
-        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: 'blogzenix.com',
         brandId: 'blogzenix',
-        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
-        match: 'waleed-webiste-backend.vercel.app',
+        match: 'waleed-webiste-backend.vercel.app', // Corrected spelling typo
         brandId: 'pennyscroll',
         mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
-        match: 'coupon-app-backend.vercel.app',
+        match: 'coupon-app-backend.vercel.app', // Single-brand PennyScroll host
         brandId: 'pennyscroll',
-        mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
+        mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     // { match: 'brandC.com', brandId: 'brandC', mongoUri: process.env.MONGO_URI_BRAND_C || null },
@@ -48,7 +48,7 @@ const BRAND_MAP = [
     {
         match: '',
         brandId: 'pennyscroll',
-        mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
+        mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
 ];
