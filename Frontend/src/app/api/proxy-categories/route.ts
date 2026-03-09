@@ -5,9 +5,6 @@ import { CacheManager, CACHE_CONFIG, generateCategoryJsonLd } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic';
 
-// Initialize cache manager for categories
-const categoriesCache = new CacheManager<Category>('categories', CACHE_CONFIG.categories);
-
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -18,6 +15,9 @@ export async function GET(req: Request) {
     const host = req.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
+
+    // Initialize cache manager for categories with brand-specific key
+    const categoriesCache = new CacheManager<Category>(`categories-${brand.brandId}`, CACHE_CONFIG.categories);
 
     // Get categories with caching
     const { data: categories, headers } = await categoriesCache.getData(

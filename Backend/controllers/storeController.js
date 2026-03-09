@@ -18,6 +18,7 @@ exports.getStores = catchAsync(async (req, res, next) => {
   const result = await storeService.getStores(req.models, req.query);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Stores retrieved successfully',
     data: result.stores,
     metadata: {
@@ -36,6 +37,7 @@ exports.searchStores = catchAsync(async (req, res, next) => {
   const result = await storeService.searchStores(req.models, q, page, limit);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Store search completed',
     data: result.stores,
     metadata: {
@@ -52,6 +54,7 @@ exports.getStoreBySlug = catchAsync(async (req, res, next) => {
   const store = await storeService.getStoreBySlug(req.models, req.params.slug);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Store found by slug',
     data: store
   });
@@ -62,6 +65,7 @@ exports.getStoreById = catchAsync(async (req, res, next) => {
   const store = await storeService.getStoreById(req.models, req.params.id);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Store found by ID',
     data: store
   });
@@ -93,6 +97,7 @@ exports.createStore = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
+    status: 'success',
     message: 'Store created successfully',
     data: newStore
   });
@@ -119,6 +124,7 @@ exports.updateStore = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Store updated successfully',
     data: updatedStore
   });
@@ -141,6 +147,7 @@ exports.deleteStore = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Store deleted successfully',
     data: null
   });

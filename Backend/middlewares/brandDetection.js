@@ -42,27 +42,16 @@ async function brandDetection(req, res, next) {
         let uri = brand.mongoUri;
         if (!uri) uri = process.env.MONGO_URI;
 
-        // Smart Fallback: If no URI found for this brand, try to find ANY Mongo URI from env
-        if (!uri) {
-            const possibleUris = [
-                process.env.BLOGZENIX_MONGO_URI,
-                process.env.PENNYSCROLL_MONGO_URI,
-                process.env.MONGO_URL,
-                process.env.MONGODB_URI
-            ].filter(Boolean);
-            if (possibleUris.length > 0) uri = possibleUris[0];
-        }
-
         if (!uri) {
             console.error(`❌ NO MONGO_URI found for brand: ${brand.brandId}`);
-            return res.status(500).json({ error: 'Database configuration missing. Please check Vercel environment variables.' });
+            return res.status(500).json({ error: `Database configuration missing for ${brand.brandId}. Please check Vercel settings.` });
         }
 
         const tenantConnection = await getTenantConnection(brand.brandId, uri);
         const tenantModels = getTenantModels(tenantConnection);
 
-        // 3. Establish Central Connection using the same URI if MONGO_URI is missing
-        const centralConnection = await getCentralConnection(uri);
+        // 3. Establish Central Connection Strictly
+        const centralConnection = await getCentralConnection();
         const centralModels = getCentralModels(centralConnection);
 
         // 4. Attach Unified Model Object to the request

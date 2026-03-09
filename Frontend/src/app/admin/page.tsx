@@ -24,7 +24,10 @@ export default function AdminLoginPage() {
       }
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-brand-id': process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll'
+        },
         body: JSON.stringify({ email, password }),
       });
       const data = await response.json();

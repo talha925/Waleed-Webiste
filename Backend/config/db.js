@@ -14,18 +14,14 @@ const mongoOptions = {
   family: 4,
 };
 
-/**
- * Get or create the central database connection
- */
-const getCentralConnection = async (fallbackUri) => {
+const getCentralConnection = async () => {
   if (centralConnection && (centralConnection.readyState === 1 || centralConnection.readyState === 2)) {
     return centralConnection;
   }
 
-  const uri = process.env.MONGO_URI || fallbackUri;
+  const uri = process.env.MONGO_URI;
   if (!uri) {
-    console.log('⚠️ MONGO_URI missing, awaiting lazy connection...');
-    return null;
+    throw new Error('❌ MONGO_URI is missing in deployment environment variables. Central connection cannot be established.');
   }
 
   console.log('🔌 Connecting to Central Database...');

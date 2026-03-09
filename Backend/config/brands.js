@@ -31,9 +31,9 @@ const BRAND_MAP = [
     },
     {
         match: 'waleed-webiste-backend.vercel.app',
-        brandId: 'blogzenix',
-        mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
-        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        brandId: 'pennyscroll',
+        mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
+        bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: 'coupon-app-backend.vercel.app',

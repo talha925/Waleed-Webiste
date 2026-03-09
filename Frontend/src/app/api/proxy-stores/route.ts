@@ -5,9 +5,6 @@ import { CacheManager, CACHE_CONFIG, generateStoreJsonLd } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
-// Initialize cache manager for stores
-const storesCache = new CacheManager<Store>('stores', CACHE_CONFIG.stores);
-
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -24,6 +21,9 @@ export async function GET(req: Request) {
     const host = req.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
+
+    // Initialize cache manager for stores with brand-specific key
+    const storesCache = new CacheManager<Store>(`stores-${brand.brandId}`, CACHE_CONFIG.stores);
 
     const { data: stores, headers } = await storesCache.getData(
       apiUrl.toString(),

@@ -10,6 +10,7 @@ exports.getCouponsByStore = catchAsync(async (req, res, next) => {
   const result = await couponService.getCouponsByStore(req.models, req.query, req.params.storeId);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupons for store retrieved successfully',
     data: result.coupons,
     metadata: {
@@ -25,6 +26,7 @@ exports.getCoupons = catchAsync(async (req, res, next) => {
   const result = await couponService.getCoupons(req.models, req.query);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupons retrieved successfully',
     data: result.coupons,
     metadata: {
@@ -58,6 +60,7 @@ exports.createCoupon = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
+    status: 'success',
     message: 'Coupon created successfully',
     data: newCoupon
   });
@@ -84,6 +87,7 @@ exports.updateCoupon = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupon updated successfully',
     data: updatedCoupon
   });
@@ -106,6 +110,7 @@ exports.deleteCoupon = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupon deleted successfully',
     data: null
   });
@@ -116,6 +121,7 @@ exports.trackCouponUrl = catchAsync(async (req, res, next) => {
   const coupon = await couponService.trackCouponUsage(req.models, req.params.couponId);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupon click tracked',
     data: coupon
   });
@@ -126,6 +132,7 @@ exports.getCouponById = catchAsync(async (req, res, next) => {
   const coupon = await couponService.getCouponById(req.models, req.params.id);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupon retrieved successfully',
     data: coupon
   });
@@ -142,6 +149,7 @@ exports.updateCouponOrder = catchAsync(async (req, res, next) => {
   const result = await couponService.updateCouponOrder(req.models, storeId, orderedCouponIds);
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Coupon order updated successfully',
     data: result
   });

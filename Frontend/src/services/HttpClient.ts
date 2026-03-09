@@ -24,6 +24,7 @@ class HttpClient implements IHttpClient {
     this.baseURL = baseURL;
     this.defaultHeaders = {
       'Content-Type': 'application/json',
+      'x-brand-id': process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll'
     };
     this.timeout = 30000; // 30 seconds
   }

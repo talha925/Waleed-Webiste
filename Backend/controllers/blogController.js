@@ -7,6 +7,7 @@ exports.getBlogs = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Blog posts retrieved successfully',
     data: result
   });
@@ -17,6 +18,7 @@ exports.getBlogById = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Blog post retrieved successfully',
     data: blog
   });
@@ -27,6 +29,7 @@ exports.createBlog = catchAsync(async (req, res) => {
 
   res.status(201).json({
     success: true,
+    status: 'success',
     message: 'Blog post created successfully',
     data: blog
   });
@@ -37,6 +40,7 @@ exports.updateBlog = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Blog post updated successfully',
     data: blog
   });
@@ -47,6 +51,7 @@ exports.deleteBlog = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Blog post deleted successfully',
     data: null
   });
@@ -65,6 +70,7 @@ exports.getRelatedPosts = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Related posts retrieved successfully',
     data: relatedPosts
   });
@@ -79,6 +85,7 @@ exports.updateEngagement = catchAsync(async (req, res) => {
 
   res.status(200).json({
     success: true,
+    status: 'success',
     message: 'Engagement metrics updated successfully',
     data: blog
   });

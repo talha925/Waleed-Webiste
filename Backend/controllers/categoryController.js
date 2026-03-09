@@ -7,8 +7,11 @@ exports.getCategories = catchAsync(async (req, res, next) => {
     const result = await categoryService.getCategories(req.models, req.query);
     res.status(200).json({
         success: true,
+        status: 'success',
         message: 'Categories retrieved successfully',
-        data: result.categories,
+        data: {
+            categories: result.categories
+        },
         metadata: {
             totalCategories: result.totalCategories,
             currentPage: result.currentPage,
@@ -22,6 +25,7 @@ exports.createCategory = catchAsync(async (req, res, next) => {
     const newCategory = await categoryService.createCategory(req.models, req.body);
     res.status(201).json({
         success: true,
+        status: 'success',
         message: 'Category created successfully',
         data: newCategory
     });
@@ -32,6 +36,7 @@ exports.getCategoryById = catchAsync(async (req, res, next) => {
     const category = await categoryService.getCategoryById(req.models, req.params.id);
     res.status(200).json({
         success: true,
+        status: 'success',
         message: 'Category retrieved successfully',
         data: category
     });
@@ -42,6 +47,7 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
     const updatedCategory = await categoryService.updateCategory(req.models, req.params.id, req.body);
     res.status(200).json({
         success: true,
+        status: 'success',
         message: 'Category updated successfully',
         data: updatedCategory
     });
@@ -52,6 +58,7 @@ exports.deleteCategory = catchAsync(async (req, res, next) => {
     await categoryService.deleteCategory(req.models, req.params.id);
     res.status(200).json({
         success: true,
+        status: 'success',
         message: 'Category deleted successfully',
         data: null
     });
