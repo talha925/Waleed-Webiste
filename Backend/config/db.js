@@ -21,7 +21,8 @@ const getCentralConnection = async () => {
 
   const uri = process.env.MONGO_URI;
   if (!uri) {
-    throw new Error('❌ MONGO_URI is missing in deployment environment variables. Central connection cannot be established.');
+    console.warn('⚠️ MONGO_URI is missing. skipping central connection.');
+    return null;
   }
 
   console.log('🔌 Connecting to Central Database...');

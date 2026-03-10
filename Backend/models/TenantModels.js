@@ -349,6 +349,9 @@ const modelCache = new Map();
 function getCentralModels(connection) {
     if (modelCache.has('central')) return modelCache.get('central');
 
+    // If no central connection (like in BlogZenix backend), return empty or skip
+    if (!connection) return {};
+
     const models = {
         User: connection.model('User', UserSchema),
         ActivityLog: connection.model('ActivityLog', ActivityLogSchema)
@@ -369,11 +372,13 @@ function getTenantModels(connection) {
     if (modelCache.has(connId)) return modelCache.get(connId);
 
     const models = {
+        User: connection.model('User', UserSchema),
         Category: connection.model('Category', CategorySchema),
         BlogCategory: connection.model('BlogCategory', BlogCategorySchema),
         Store: connection.model('Store', StoreSchema),
         Coupon: connection.model('Coupon', CouponSchema),
         Blog: connection.model('BlogPost', BlogPostSchema),
+        ActivityLog: connection.model('ActivityLog', ActivityLogSchema)
     };
 
     modelCache.set(connId, models);

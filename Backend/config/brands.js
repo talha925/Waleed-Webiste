@@ -30,10 +30,10 @@ const BRAND_MAP = [
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
-        match: 'waleed-webiste-backend.vercel.app', // Corrected spelling typo
-        brandId: 'pennyscroll',
-        mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        match: 'waleed-webiste-backend.vercel.app', // BlogZenix Backend Host
+        brandId: 'blogzenix',
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
     },
     {
         match: 'coupon-app-backend.vercel.app', // Single-brand PennyScroll host
