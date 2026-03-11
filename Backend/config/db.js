@@ -19,9 +19,9 @@ const getCentralConnection = async () => {
     return centralConnection;
   }
 
-  const uri = process.env.MONGO_URI;
+  const uri = process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI;
   if (!uri) {
-    throw new Error('❌ MONGO_URI is missing in deployment environment variables. Central connection cannot be established.');
+    throw new Error('❌ MONGO_URI or BLOGZENIX_MONGO_URI is missing. Central connection cannot be established.');
   }
 
   console.log('🔌 Connecting to Central Database...');

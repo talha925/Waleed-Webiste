@@ -60,7 +60,7 @@ async function brandDetection(req, res, next) {
 
         req.models = {
             ...tenantModels,      // Store, Coupon, Category, etc.
-            ...centralModels,     // User, ActivityLog (Overrides tenant versions if any)
+            ...centralModels,     // User, ActivityLog (Keep central models last to ensure User is central)
             brandId: brand.brandId
         };
 
