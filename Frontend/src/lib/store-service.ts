@@ -7,6 +7,7 @@
 import { cookies } from 'next/headers';
 import config from './config';
 import { Store, Coupon } from './types/store';
+import { getBrandConfig } from '@config/index';
 
 // Dev-only logging for debugging cache behavior
 const log = (msg: string) => {
@@ -22,8 +23,11 @@ async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;
 
+    const brand = getBrandConfig();
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-brand-id': brand.brandId,
     };
 
     if (token) {
@@ -35,7 +39,7 @@ async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
       ? { headers, cache: 'no-store' as const }
       : { headers, next: { revalidate: 60, tags: ['stores'] } };
 
-    const apiUrl = new URL(`${config.api.baseUrl}/api/stores`);
+    const apiUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
     // Use reasonable limit for list fetches; slug uses direct endpoint
     apiUrl.searchParams.set('limit', '50');
     apiUrl.searchParams.set('page', '1');
@@ -80,14 +84,17 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;
 
+    const brand = getBrandConfig();
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-brand-id': brand.brandId,
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const url = `${config.api.baseUrl}/api/stores/slug/${encodeURIComponent(slug)}`;
+    const url = `${brand.apiBaseUrl}/api/stores/slug/${encodeURIComponent(slug)}`;
     const fetchOptions = (forceRefresh)
       ? { headers, cache: 'no-store' as const }
       : { headers, next: { revalidate: 60, tags: [`store-${slug}`] } };
@@ -127,6 +134,8 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
  */
 export async function getStoreBySlug(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
+    const brand = getBrandConfig();
+
     // Attempt to fetch from direct backend slug endpoint
     const store = await fetchStoreBySlugDirect(slug, forceRefresh);
 
@@ -148,7 +157,7 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
         "name": store.name,
         "image": store.image?.url || "",
         "description": store.short_description || "",
-        "url": `${config.api.siteUrl}/store/${store.slug}`
+        "url": `${brand.siteUrl}/store/${store.slug}`
       };
       const finalSeoObject = {
         ...jsonLd,
@@ -163,7 +172,10 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
       // Optimization: Only fetch coupons if they are not already populated
       if (hydratedCoupons.length === 0) {
         try {
-          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          const headers: Record<string, string> = { 
+            'Content-Type': 'application/json',
+            'x-brand-id': brand.brandId
+          };
           const fetchOptions = (forceRefresh)
             ? { headers, cache: 'no-store' as const }
             : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
@@ -171,7 +183,7 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
           try {
-            const listRes = await fetch(`${config.api.baseUrl}/api/coupons?storeId=${store._id}`, {
+            const listRes = await fetch(`${brand.apiBaseUrl}/api/coupons?storeId=${store._id}`, {
               ...fetchOptions,
               signal: controller.signal
             });
@@ -206,7 +218,10 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
               const byId = await Promise.all(
                 storeCouponIds.map(async (id) => {
                   try {
-                    const r = await fetch(`${config.api.baseUrl}/api/coupons/${id}`, fetchOptionsId);
+                    const r = await fetch(`${brand.apiBaseUrl}/api/coupons/${id}`, {
+                      ...fetchOptionsId,
+                      headers: { 'x-brand-id': brand.brandId }
+                    });
                     if (!r.ok) return null;
                     const j = await r.json();
                     return j?.data || null;

@@ -5,24 +5,24 @@ import { CacheManager, CACHE_CONFIG } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
-// Initialize cache manager for coupons (always fresh - no caching)
-const couponsCache = new CacheManager<Coupon>('coupons', CACHE_CONFIG.coupons);
-
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const storeId = searchParams.get('storeId');
 
-    // Build API URL with optional storeId filter
-    let apiUrl = `${config.api.baseUrl}/api/coupons`;
-    if (storeId) {
-      apiUrl += `?storeId=${storeId}`;
-    }
-
     // For brand-aware Backend detection
     const host = req.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
+
+    // Build API URL with optional storeId filter
+    let apiUrl = `${brand.apiBaseUrl}/api/coupons`;
+    if (storeId) {
+      apiUrl += `?storeId=${storeId}`;
+    }
+
+    // Initialize cache manager for coupons with brand-specific key
+    const couponsCache = new CacheManager<Coupon>(`coupons-${brand.brandId}`, CACHE_CONFIG.coupons);
 
     // Always fetch fresh data - no caching for coupons/offers
     const { data: coupons, headers } = await couponsCache.getData(apiUrl, true, { 'x-brand-id': brand.brandId });

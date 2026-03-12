@@ -22,9 +22,23 @@ class HttpClient implements IHttpClient {
 
   constructor(baseURL: string = '') {
     this.baseURL = baseURL;
+    
+    // Resolve brand ID dynamically
+    let brandId = process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll';
+    
+    // On client-side, we can try to resolve from hostname if possible
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host.includes('blogzenix.com') || host.includes('blogzenix-frontend.vercel.app')) {
+        brandId = 'blogzenix';
+      } else if (host.includes('pennyscroll.com') || host.includes('pennyscroll-frontend.vercel.app')) {
+        brandId = 'pennyscroll';
+      }
+    }
+
     this.defaultHeaders = {
       'Content-Type': 'application/json',
-      'x-brand-id': process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll'
+      'x-brand-id': brandId
     };
     this.timeout = 30000; // 30 seconds
   }

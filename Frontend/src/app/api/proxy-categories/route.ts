@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
     // Get categories with caching
     const { data: categories, headers } = await categoriesCache.getData(
-      `${config.api.baseUrl}/api/categories`,
+      `${brand.apiBaseUrl}/api/categories`,
       noCache,
       { 'x-brand-id': brand.brandId }
     );
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
     if (includeJsonLd && categories.length > 0) {
       const jsonLdData = categories.map(category =>
-        generateCategoryJsonLd(category, config.api.siteUrl)
+        generateCategoryJsonLd(category, brand.siteUrl)
       );
       responseData.seo = {
         jsonLd: jsonLdData

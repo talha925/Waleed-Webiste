@@ -124,19 +124,24 @@ class RateLimiter {
 // Authentication helper
 async function authenticateRequest(request: NextRequest): Promise<any> {
   const authorization = request.headers.get('authorization');
-  
+
   if (!authorization || !authorization.startsWith('Bearer ')) {
     throw new AuthenticationError('Missing or invalid Bearer token');
   }
 
   const token = authorization.substring(7);
-  
+
   try {
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     // Validate token with auth service
-    const response = await fetch(`${config.api.baseUrl}/api/auth/validate`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/auth/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
       },
       body: JSON.stringify({ token }),
     });
@@ -160,7 +165,7 @@ function createSuccessResponse<T>(data: T, meta?: any): NextResponse {
     timestamp: new Date().toISOString(),
     ...(meta && { meta })
   };
-  
+
   return NextResponse.json(response);
 }
 
@@ -176,7 +181,7 @@ function createErrorResponse(
     ...(details && { details }),
     ...(code && { code })
   };
-  
+
   return NextResponse.json(response, { status });
 }
 
@@ -193,10 +198,10 @@ export function createApiHandler(
       PATCH?: HandlerFunction;
     }
   ) {
-    return async function(request: NextRequest, context: { params?: any } = {}) {
+    return async function (request: NextRequest, context: { params?: any } = {}) {
       const method = request.method;
       const startTime = Date.now();
-      
+
       try {
         // Method validation
         if (config.allowedMethods && !config.allowedMethods.includes(method)) {
@@ -223,7 +228,7 @@ export function createApiHandler(
         if (config.rateLimit) {
           const clientId = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
           const rateLimitKey = `${clientId}:${request.nextUrl.pathname}`;
-          
+
           if (!RateLimiter.check(
             rateLimitKey,
             config.rateLimit.requests,
@@ -301,7 +306,7 @@ export function createApiHandler(
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout')), config.timeout);
           });
-          
+
           result = await Promise.race([handlerPromise, timeoutPromise]);
         } else {
           result = await handlerPromise;
@@ -315,15 +320,15 @@ export function createApiHandler(
         // Create success response
         const processingTime = Date.now() - startTime;
         const response = createSuccessResponse(result);
-        
+
         // Add performance headers
         response.headers.set('X-Processing-Time', `${processingTime}ms`);
-        
+
         return response;
 
       } catch (error) {
         console.error(`API Error in ${method} ${request.nextUrl.pathname}:`, error);
-        
+
         // Handle known error types
         if (error instanceof ApiError) {
           return createErrorResponse(
@@ -377,7 +382,7 @@ export function createProxyHandler(
       const endpoint = request.nextUrl.pathname.replace('/api/', '');
       const queryString = searchParams?.toString();
       const url = `${targetBaseUrl}/${endpoint}${queryString ? `?${queryString}` : ''}`;
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {

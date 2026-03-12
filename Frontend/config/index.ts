@@ -47,11 +47,15 @@ export function getBrandConfig(): BrandConfig {
     // 2. Runtime Header Check (Fallback for specialized multi-tenant setups)
     try {
         const headersList = headers();
-        const host = headersList.get('host') || headersList.get('x-forwarded-host') || '';
+        const host = (headersList.get('host') || headersList.get('x-forwarded-host') || '').toLowerCase();
 
         for (const entry of DOMAIN_MAP) {
-            // Strict match: avoid "brand.com" matching "mybrand.com"
+            // Strict match or ends with (for www etc)
             if (host === entry.match || host.endsWith(`.${entry.match}`)) {
+                return entry.config;
+            }
+            // Logic for Vercel preview/branch domains (e.g. blogzenix-frontend.vercel.app)
+            if (host.includes(entry.config.brandId) && host.includes('vercel.app')) {
                 return entry.config;
             }
         }
@@ -78,9 +82,13 @@ export function getBrandConfigByHost(host: string): BrandConfig {
     }
 
     // Priority 2: Domain Matching
+    const hostname = host.split(':')[0].toLowerCase(); // Remove port and lowercase
     for (const entry of DOMAIN_MAP) {
-        const hostname = host.split(':')[0]; // Remove port
         if (hostname === entry.match || hostname.endsWith(`.${entry.match}`)) {
+            return entry.config;
+        }
+        // Logic for Vercel preview/branch domains (e.g. blogzenix-frontend.vercel.app)
+        if (hostname.includes(entry.config.brandId) && hostname.includes('vercel.app')) {
             return entry.config;
         }
     }

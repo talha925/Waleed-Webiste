@@ -11,16 +11,16 @@ export async function GET(req: Request) {
     const noCache = searchParams.get('noCache') === 'true';
     const includeJsonLd = searchParams.get('jsonLd') === 'true';
 
-    // Get stores with caching
-    const apiUrl = new URL(`${config.api.baseUrl}/api/stores`);
-    // Fetch more stores to improve local search accuracy
-    apiUrl.searchParams.set('limit', '1000');
-    apiUrl.searchParams.set('page', '1');
-
     // For brand-aware Backend detection
     const host = req.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
+
+    // Get stores with caching
+    const apiUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
+    // Fetch more stores to improve local search accuracy
+    apiUrl.searchParams.set('limit', '1000');
+    apiUrl.searchParams.set('page', '1');
 
     // Initialize cache manager for stores with brand-specific key
     const storesCache = new CacheManager<Store>(`stores-${brand.brandId}`, CACHE_CONFIG.stores);
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
     if (includeJsonLd && stores.length > 0) {
       const jsonLdData = stores.map(store =>
-        generateStoreJsonLd(store, config.api.siteUrl)
+        generateStoreJsonLd(store, brand.siteUrl)
       );
       responseData.seo = {
         jsonLd: jsonLdData

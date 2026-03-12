@@ -60,18 +60,19 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
 
   console.log('Authentication successful');
 
-  // Check if required environment variables are set
-  if (!process.env.AWS_S3_BUCKET_NAME) {
-    console.error('AWS_S3_BUCKET_NAME environment variable is not set');
-    return NextResponse.json({ message: 'Server configuration error: S3 bucket not configured' }, { status: 500 });
-  }
-
-  if (!process.env.AWS_S3_ACCESS_KEY_ID || !process.env.AWS_S3_SECRET_ACCESS_KEY) {
-    console.error('AWS credentials not properly configured');
-    return NextResponse.json({ message: 'Server configuration error: AWS credentials not configured' }, { status: 500 });
-  }
-
   try {
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
+    const bucketName = brand.bucketName || process.env.AWS_S3_BUCKET_NAME;
+    const imageDomain = brand.imageDomain || config.images.domain;
+
+    if (!bucketName) {
+      console.error(`AWS_S3_BUCKET_NAME environment variable is not set for brand: ${brand.brandId}`);
+      return NextResponse.json({ message: 'Server configuration error: S3 bucket not configured' }, { status: 500 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -86,7 +87,7 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
     }
 
     // Validate file size (e.g., max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024; // Increased to 10MB to be safer
     if (file.size > maxSize) {
       return NextResponse.json({ message: 'File size too large' }, { status: 400 });
     }
@@ -101,14 +102,14 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
     const buffer = Buffer.from(arrayBuffer);
 
     const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Bucket: bucketName,
       Key: finalFilename,
       Body: buffer,
       ContentType: file.type,
       // ACL removed - bucket doesn't support Access Control Lists
     };
 
-    console.log('Attempting to upload to S3 with params:', {
+    console.log('Attempting to upload to S3 for brand:', brand.brandId, 'with params:', {
       Bucket: uploadParams.Bucket,
       Key: uploadParams.Key,
       ContentType: uploadParams.ContentType,
@@ -118,7 +119,7 @@ export async function POST(request: Request): Promise<NextResponse<UploadRespons
     const command = new PutObjectCommand(uploadParams);
     await s3Client.send(command);
 
-    const imageUrl = `https://${config.images.domain}/${finalFilename}`;
+    const imageUrl = `https://${imageDomain}/${finalFilename}`;
 
     console.log('Generated Image URL:', imageUrl);
 

@@ -51,10 +51,13 @@ function decodeRecursively(text: string): string {
 
 
 
+import { getBrandConfig } from '@config/index';
+
 async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
   const FETCH_TIMEOUT = 10000;
   try {
-    console.log(`[Blog Fetch] Fetching blog details for: ${slugOrId}`);
+    const brand = getBrandConfig();
+    console.log(`[Blog Fetch] Fetching blog details for: ${slugOrId} (Brand: ${brand.brandId})`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
@@ -62,7 +65,10 @@ async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
     try {
       // Step 1: Direct Fetch! The backend now natively supports finding by Slug or ID.
       // This eliminates downloading 1000 blogs just to find the ID.
-      const detailRes = await fetch(`${config.api.baseUrl}/api/blogs/${slugOrId}`, {
+      const detailRes = await fetch(`${brand.apiBaseUrl}/api/blogs/${slugOrId}`, {
+        headers: {
+          'x-brand-id': brand.brandId
+        },
         next: {
           revalidate: 60,
           tags: [`blog-${slugOrId}`]
@@ -172,7 +178,8 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
   }
 
 
-  const fullUrl = `${config.api.baseUrl}/blog/${blog.slug || params.id}`;
+  const brand = getBrandConfig();
+  const fullUrl = `${brand.siteUrl}/blog/${blog.slug || params.id}`;
 
   return (
     <div className="min-h-screen bg-background">

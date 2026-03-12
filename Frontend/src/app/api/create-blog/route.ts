@@ -4,22 +4,21 @@ import config from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-const API_URL = `${config.api.baseUrl}/api/blogs`;
-
-const createBlog = async (blogData: any) => {
+const createBlog = async (blogData: any, brand: any) => {
   try {
     const { cookies } = await import('next/headers');
     const token = cookies().get('authToken')?.value;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-brand-id': brand.brandId,
     };
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs`, {
       method: 'POST',
       headers,
       body: JSON.stringify(blogData),
@@ -54,6 +53,10 @@ const createBlog = async (blogData: any) => {
 
 export async function POST(request: NextRequest) {
   try {
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     const blogData = await request.json();
 
     // Validate required fields
@@ -273,7 +276,7 @@ export async function POST(request: NextRequest) {
     console.log('Store URL being sent:', cleanedBlogData.store?.url);
     console.log('Meta keywords being sent:', cleanedBlogData.meta?.keywords);
 
-    const result = await createBlog(cleanedBlogData);
+    const result = await createBlog(cleanedBlogData, brand);
 
     // Revalidate blog-related pages and tags after creation
     // Use dynamic route pattern to cover all blog detail pages
@@ -333,8 +336,7 @@ export async function POST(request: NextRequest) {
       {
         error: errorMessage,
         details: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-        apiUrl: API_URL
+        timestamp: new Date().toISOString()
       },
       { status: statusCode }
     );

@@ -61,14 +61,21 @@ const BRAND_MAP = [
 function getBrandByHost(host) {
     if (!host) return BRAND_MAP[BRAND_MAP.length - 1];
 
-    // Remove port if present
-    const hostname = host.split(':')[0];
+    // Remove port if present and lowercase
+    const hostname = host.split(':')[0].toLowerCase();
 
     for (const entry of BRAND_MAP) {
         if (entry.match === '') continue; // Skip empty match here, handle as last resort
 
+        // Strict match or ends with (wildcard support)
         if (hostname === entry.match || hostname.endsWith(`.${entry.match}`)) {
             console.log(`[BrandDetection] Matched: ${hostname} -> ${entry.brandId} (Bucket: ${entry.bucketName})`);
+            return entry;
+        }
+
+        // Vercel Preview/Branch domains logic (e.g. blogzenix-backend-*.vercel.app)
+        if (hostname.includes(entry.brandId) && hostname.includes('vercel.app')) {
+            console.log(`[BrandDetection] Vercel Match: ${hostname} -> ${entry.brandId}`);
             return entry;
         }
     }

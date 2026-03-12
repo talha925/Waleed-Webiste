@@ -3,14 +3,12 @@ import config from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-const API_URL = `${config.api.baseUrl}/api/blogCategories`;
-
 const getBlogCategories = async (host: string = '') => {
   try {
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
 
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogCategories`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

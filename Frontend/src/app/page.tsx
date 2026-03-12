@@ -25,13 +25,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Fetch data at build time or with revalidation
-async function fetchFeaturedBlogs() {
+async function fetchFeaturedBlogs(brand: any) {
   const FETCH_TIMEOUT = 5000; // 5s: fast fail during build, ISR will retry on first request
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    const response = await fetch(`${config.api.baseUrl}/api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9`, {
+      headers: {
+        'x-brand-id': brand.brandId
+      },
       signal: controller.signal,
       next: { revalidate: 3600 } // Revalidate every hour
     });
@@ -51,8 +54,9 @@ async function fetchFeaturedBlogs() {
 }
 
 export default async function Blogs() {
+  const brand = getBrandConfig();
   // Fetch data server-side
-  const featuredBlogs = await fetchFeaturedBlogs();
+  const featuredBlogs = await fetchFeaturedBlogs(brand);
 
   return (
     <div className="w-full min-h-screen bg-background">

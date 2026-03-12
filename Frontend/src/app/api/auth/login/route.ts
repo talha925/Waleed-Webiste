@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const brand = getBrandConfigByHost(host);
 
     // Call REAL Backend API
-    const response = await fetch(`${config.api.baseUrl}/api/auth/login`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

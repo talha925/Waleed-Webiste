@@ -3,15 +3,13 @@ import config from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-const API_URL = `${config.api.baseUrl}/api/blogs`;
-
 const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
   try {
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
 
     // Build the API URL with query parameters
-    const apiUrl = new URL(API_URL);
+    const apiUrl = new URL(`${brand.apiBaseUrl}/api/blogs`);
     if (searchParams) {
       // Forward supported query parameters to the external API
       const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status', 'sort', 'slug'];

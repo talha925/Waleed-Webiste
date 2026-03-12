@@ -4,8 +4,6 @@ import config from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-const API_URL = `${config.api.baseUrl}/api/blogs`;
-
 // GET /api/blogs/[id]
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const { id } = params;
@@ -15,10 +13,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 
   try {
-    const response = await fetch(`${API_URL}/${id}`, {
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
       },
       cache: 'no-store',
     });
@@ -55,8 +58,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { cookies } = await import('next/headers');
     const token = cookies().get('authToken')?.value;
 
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-brand-id': brand.brandId,
       'Cache-Control': 'no-cache',
     };
 
@@ -64,8 +72,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    console.log(`[PUT /api/blogs/${id}] Forwarding to backend: ${API_URL}/${id}`);
-    const response = await fetch(`${API_URL}/${id}`, {
+    console.log(`[PUT /api/blogs/${id}] Forwarding to backend: ${brand.apiBaseUrl}/api/blogs/${id}`);
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs/${id}`, {
       method: 'PUT',
       headers,
       body: JSON.stringify(formData),
@@ -119,15 +127,20 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const { cookies } = await import('next/headers');
     const token = cookies().get('authToken')?.value;
 
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-brand-id': brand.brandId,
     };
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}/${id}`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs/${id}`, {
       method: 'DELETE',
       headers,
       cache: 'no-store',

@@ -38,7 +38,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Use optimized backend search endpoint
-    const searchUrl = new URL(`${config.api.baseUrl}/api/stores/search`);
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
+    const searchUrl = new URL(`${brand.apiBaseUrl}/api/stores/search`);
     searchUrl.searchParams.set('query', sanitizedQuery);
     searchUrl.searchParams.set('page', pageNum.toString());
     searchUrl.searchParams.set('limit', limitNum.toString());
@@ -47,6 +51,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
       next: {
@@ -61,10 +66,13 @@ export async function GET(request: NextRequest) {
 
       // Fallback: fetch directly from backend API to avoid internal proxy issues
       try {
-        const fallbackUrl = new URL(`${config.api.baseUrl}/api/stores`);
+        const fallbackUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
         fallbackUrl.searchParams.set('limit', '1000');
 
         const fallbackRes = await fetch(fallbackUrl.toString(), {
+          headers: {
+            'x-brand-id': brand.brandId,
+          },
           next: { revalidate: 600, tags: ['stores'] }
         });
         if (fallbackRes.ok) {
@@ -152,10 +160,17 @@ export async function GET(request: NextRequest) {
 
     // Attempt fallback search via direct backend API on error
     try {
-      const fallbackUrl = new URL(`${config.api.baseUrl}/api/stores`);
+      const host = request.headers.get('host') || '';
+      const { getBrandConfigByHost } = await import('@config/index');
+      const brand = getBrandConfigByHost(host);
+
+      const fallbackUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
       fallbackUrl.searchParams.set('limit', '1000');
 
       const fallbackRes = await fetch(fallbackUrl.toString(), {
+        headers: {
+          'x-brand-id': brand.brandId,
+        },
         next: { revalidate: 600, tags: ['stores'] }
       });
       if (fallbackRes.ok) {

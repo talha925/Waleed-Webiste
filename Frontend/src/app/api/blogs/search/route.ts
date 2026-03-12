@@ -41,7 +41,11 @@ export async function GET(request: NextRequest) {
     // This ensures accurate search results with proper relevance scoring
     // Use dedicated backend search endpoint for blogs
     // FALLBACK: If this fails, we fetch from the main blogs endpoint and filter locally
-    const searchUrl = new URL(`${config.api.baseUrl}/api/blogs/search`);
+    const host = request.headers.get('host') || '';
+    const { getBrandConfigByHost } = await import('@config/index');
+    const brand = getBrandConfigByHost(host);
+
+    const searchUrl = new URL(`${brand.apiBaseUrl}/api/blogs/search`);
     searchUrl.searchParams.set('query', sanitizedQuery);
     searchUrl.searchParams.set('limit', limitNum.toString());
     searchUrl.searchParams.set('page', pageNum.toString());
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId,
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
       },
       next: {
@@ -63,10 +68,13 @@ export async function GET(request: NextRequest) {
     // If dedicated search fails, fallback to fetching all blogs and filtering locally
     if (!fetchResponse.ok) {
       console.warn(`Blog search endpoint failed, falling back to local filter`);
-      const fallbackUrl = new URL(`${config.api.baseUrl}/api/blogs`);
+      const fallbackUrl = new URL(`${brand.apiBaseUrl}/api/blogs`);
       fallbackUrl.searchParams.set('limit', '500'); // Fetch a large enough sample
 
       const fallbackRes = await fetch(fallbackUrl.toString(), {
+        headers: {
+          'x-brand-id': brand.brandId,
+        },
         next: { revalidate: 600, tags: ['blogs'] }
       });
 
