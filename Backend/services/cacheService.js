@@ -416,7 +416,8 @@ class CacheService {
     }
 
     // ✅ SAFETY: Prevent accidental deletion of all keys
-    if (!pattern.startsWith('coupon_backend')) {
+    // Allow patterns that start with coupon_backend OR contains it (for multi-brand prefixes like "pennyscroll:coupon_backend")
+    if (!pattern.startsWith('coupon_backend') && !pattern.includes(':coupon_backend')) {
       console.warn(`⚠️ Unsafe pattern blocked: ${pattern}`);
       return 0;
     }

@@ -48,8 +48,21 @@ router.post('/', upload.single('image'), async (req, res) => {
     };
 
     console.log(`Uploading to S3 Bucket [${bucketName}] with params:`, uploadParams);
-    const command = new PutObjectCommand(uploadParams);
-    await s3.send(command);
+    
+    try {
+      const command = new PutObjectCommand(uploadParams);
+      await s3.send(command);
+    } catch (s3Error) {
+      if (s3Error.name === 'AccessControlListNotSupported' || s3Error.code === 'AccessControlListNotSupported') {
+        console.warn('⚠️ S3 Bucket does not support ACLs (Object Ownership might be set to Bucket Owner Enforced). Retrying without ACL...');
+        const saferParams = { ...uploadParams };
+        delete saferParams.ACL;
+        const saferCommand = new PutObjectCommand(saferParams);
+        await s3.send(saferCommand);
+      } else {
+        throw s3Error; // Re-throw if it's not an ACL issue
+      }
+    }
 
     const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
     console.log('Image URL:', imageUrl);
