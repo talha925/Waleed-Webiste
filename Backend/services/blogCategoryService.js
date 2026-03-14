@@ -11,7 +11,7 @@ exports.findAll = async (models, queryParams = {}) => {
         const cached = await cacheService.get(cacheKey);
         if (cached) return cached;
 
-        const total = await BlogCategory.countDocuments();
+        const total = await BlogCategory.estimatedDocumentCount();
         const categories = await BlogCategory.find()
             .sort(sort)
             .skip((parseInt(page) - 1) * parseInt(limit))

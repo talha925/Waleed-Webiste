@@ -17,7 +17,11 @@ import dynamic from "next/dynamic";
 const NotificationToast = dynamic(() => import("@/components/ui/NotificationToast"), { ssr: false });
 const HeaderMobileMenu = dynamic(() => import("@/components/HeaderMobileMenu"), { ssr: false });
 
-export default function Header() {
+interface HeaderProps {
+  categories?: any[];
+}
+
+export default function Header({ categories = [] }: HeaderProps) {
   const { user, isAuthenticated, logout, isLoading } = useUnifiedAuth();
   const { state } = useApp();
   const brand = useBrand();
@@ -25,8 +29,8 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Static Categories
-  const STATIC_CATEGORIES = [
+  // Fallback Static Categories if none provided
+  const STATIC_CATEGORIES = categories.length > 0 ? categories : [
     { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty' },
     { _id: '2', name: 'Home and Tech', slug: 'home-and-tech' },
     { _id: '3', name: 'Lifestyle', slug: 'lifestyle' },

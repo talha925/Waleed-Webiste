@@ -18,7 +18,7 @@ const log = (msg: string) => {
  * Fetch all stores from external API
  * Uses Next.js native caching
  */
-async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
+export async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('authToken')?.value;

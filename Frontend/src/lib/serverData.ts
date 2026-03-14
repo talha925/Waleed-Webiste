@@ -4,32 +4,11 @@ import config from './config';
 // Server-side data fetching utilities
 export async function fetchStoresServer({ noCache = false }: { noCache?: boolean } = {}) {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('authToken')?.value;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const url = noCache
-      ? `${config.api.siteUrl}/api/proxy-stores?noCache=true`
-      : `${config.api.siteUrl}/api/proxy-stores`;
-
-    const response = await fetch(url, {
-      headers,
-    });
-
-    if (!response.ok) {
-      console.error('Failed to fetch stores server-side:', response.status);
-      return { data: [], error: `HTTP ${response.status}` };
-    }
-
-    const data = await response.json();
-    return { data: data.data || [], error: null };
+    // Import direct service to bypass API routes for better performance and correct brand propagation
+    const { fetchAllStores } = await import('./store-service');
+    const stores = await fetchAllStores(noCache);
+    
+    return { data: stores || [], error: null };
   } catch (error) {
     console.error('Server-side stores fetch error:', error);
     return { data: [], error: 'Failed to fetch stores' };
@@ -38,38 +17,48 @@ export async function fetchStoresServer({ noCache = false }: { noCache?: boolean
 
 export async function fetchCategoriesServer() {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('authToken')?.value;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Disable caching for instant data updates
-    const response = await fetch(`${config.api.siteUrl}/api/proxy-categories`, {
-      headers,
-      cache: 'no-store' // Always fetch fresh data
+    const { getBrandConfig } = await import('@config/index');
+    const brand = getBrandConfig();
+    
+    // Fetch directly from backend to avoid local proxy overhead
+    const response = await fetch(`${brand.apiBaseUrl}/api/categories`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId
+      },
+      next: { revalidate: 300 } // Cache for 5 minutes
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch categories server-side:', response.status);
-      return { data: [], error: `HTTP ${response.status}` };
+        return { data: [], error: `HTTP ${response.status}` };
     }
 
-    const parsedData = await response.json();
-    const categoriesArray = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
-      Array.isArray(parsedData.data) ? parsedData.data :
-        Array.isArray(parsedData.categories) ? parsedData.categories :
-          Array.isArray(parsedData) ? parsedData : [];
-
-    return { data: categoriesArray, error: null };
+    const result = await response.json();
+    return { data: result.data || [], error: null };
   } catch (error) {
     console.error('Server-side categories fetch error:', error);
     return { data: [], error: 'Failed to fetch categories' };
+  }
+}
+
+export async function fetchBlogCategoriesServer() {
+  try {
+    const { getBrandConfig } = await import('@config/index');
+    const brand = getBrandConfig();
+    
+    const response = await fetch(`${brand.apiBaseUrl}/api/blog-categories`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-brand-id': brand.brandId
+      },
+      next: { revalidate: 600 }
+    });
+
+    if (!response.ok) return { data: [], error: `HTTP ${response.status}` };
+    const result = await response.json();
+    return { data: result.data || [], error: null };
+  } catch (error) {
+    return { data: [], error: 'Failed to fetch blog categories' };
   }
 }
 

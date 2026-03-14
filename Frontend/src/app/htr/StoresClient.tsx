@@ -11,7 +11,7 @@ interface StoresClientProps {
 
 export function StoresClient({ initialStores, serverError }: StoresClientProps) {
   // Use server-provided data directly
-  const [stores] = useState<Store[]>(initialStores);
+  const [stores] = useState<Store[]>(initialStores || []);
   const [error] = useState<string | null>(serverError);
   const [isLoading, setIsLoading] = useState(false);
 

@@ -79,9 +79,13 @@ exports.findAll = async (models, queryParams = {}) => {
     if (category) query['category.slug'] = category;
     if (storeId) query['store.id'] = storeId;
     if (slug) query.slug = slug;
-    if (search) query.title = { $regex: search, $options: 'i' };
+    if (search) {
+      query.$text = { $search: search };
+    }
 
-    const total = await BlogPost.countDocuments(query);
+    const total = (Object.keys(query).length === 1 && query.status === 'published')
+      ? await BlogPost.estimatedDocumentCount()
+      : await BlogPost.countDocuments(query);
     const blogs = await BlogPost.find(query)
       .sort(sort)
       .skip((parseInt(page) - 1) * parseInt(limit))
@@ -94,7 +98,7 @@ exports.findAll = async (models, queryParams = {}) => {
       pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)), limit: parseInt(limit) }
     };
 
-    await cacheService.set(cacheKey, result, 300);
+    await cacheService.set(cacheKey, result, cacheService.defaultTTL.blogPost);
     return result;
   } catch (error) {
     throw new AppError('Failed to fetch blog posts', 500);

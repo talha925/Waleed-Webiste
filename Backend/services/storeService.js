@@ -22,66 +22,28 @@ exports.getStores = async (models, queryParams) => {
         if (isTopStore !== undefined) query.isTopStore = isTopStore === 'true';
         if (isEditorsChoice !== undefined) query.isEditorsChoice = isEditorsChoice === 'true';
 
-        const aggregation = [
-            { $match: query },
-            {
-                $facet: {
-                    stores: [
-                        { $sort: { createdAt: -1 } },
-                        { $skip: (parseInt(page) - 1) * parseInt(limit) },
-                        { $limit: parseInt(limit) },
-                        {
-                            $lookup: {
-                                from: 'categories',
-                                localField: 'categories',
-                                foreignField: '_id',
-                                as: 'categories'
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: 'coupons',
-                                let: { storeId: '$_id' },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: { $eq: ['$store', '$$storeId'] },
-                                            isValid: true,
-                                            $or: [
-                                                { active: true },
-                                                { code: { $exists: true, $ne: '' } }
-                                            ]
-                                        }
-                                    },
-                                    { $sort: { order: 1, createdAt: -1 } },
-                                    {
-                                        $project: {
-                                            _id: 1,
-                                            offerDetails: 1,
-                                            code: 1,
-                                            active: 1,
-                                            isValid: 1,
-                                            order: 1,
-                                            featuredForHome: 1,
-                                            hits: 1,
-                                            lastAccessed: 1
-                                        }
-                                    }
-                                ],
-                                as: 'coupons'
-                            }
-                        }
-                    ],
-                    totalCount: [
-                        { $count: 'count' }
-                    ]
-                }
-            }
-        ];
+        const totalStores = (Object.keys(query).length === 1 && query.language === 'English')
+            ? await Store.estimatedDocumentCount()
+            : await Store.countDocuments(query);
 
-        const result = await Store.aggregate(aggregation).exec();
-        const stores = result[0]?.stores || [];
-        const totalStores = result[0]?.totalCount[0]?.count || 0;
+        const stores = await Store.find(query)
+            .sort({ createdAt: -1 })
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .limit(parseInt(limit))
+            .populate('categories')
+            .populate({
+                path: 'coupons',
+                select: '_id offerDetails code active isValid order featuredForHome hits lastAccessed',
+                match: { 
+                    isValid: true, 
+                    $or: [
+                        { active: true }, 
+                        { code: { $exists: true, $ne: '' } }
+                    ] 
+                },
+                options: { sort: { order: 1, createdAt: -1 } }
+            })
+            .lean();
 
         const response = {
             stores,
@@ -89,7 +51,7 @@ exports.getStores = async (models, queryParams) => {
             timestamp: new Date().toISOString()
         };
 
-        await cacheService.set(cacheKey, response, 300);
+        await cacheService.set(cacheKey, response, cacheService.defaultTTL.stores);
         return response;
     } catch (error) {
         console.error('Error in storeService.getStores:', error);
@@ -116,7 +78,7 @@ exports.getStoreBySlug = async (models, slug) => {
 
         if (!store) throw new AppError('Store not found', 404);
 
-        await cacheService.set(cacheKey, store, 300);
+        await cacheService.set(cacheKey, store, cacheService.defaultTTL.store_detail);
         return store;
     } catch (error) {
         console.error('Error in storeService.getStoreBySlug:', error);
@@ -160,10 +122,8 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         if (cachedData) return cachedData;
 
         const searchQuery = {
-            $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { short_description: { $regex: query, $options: 'i' } }
-            ]
+            $text: { $search: query },
+            language: 'English' // Keep search brand-relevant
         };
 
         const stores = await Store.find(searchQuery)

@@ -13,12 +13,18 @@ interface ProvidersProps {
 
 export const Providers: React.FC<ProvidersProps> = ({ children, initialToken, brand }) => {
   useEffect(() => {
-    // Remove any data attributes potentially injected on SSR that could cause hydration mismatches
+    // 1. Initialize Auth Service with initial token if provided
+    if (initialToken) {
+      const { authService } = require('@/services/AuthService');
+      authService.initializeWithToken(initialToken);
+    }
+
+    // 2. Remove any data attributes potentially injected on SSR that could cause hydration mismatches
     const htmlEl = document.documentElement;
     if (htmlEl.hasAttribute('data-server-rendered')) {
       htmlEl.removeAttribute('data-server-rendered');
     }
-  }, []);
+  }, [initialToken]);
 
   return (
     <BrandProvider brand={brand}>

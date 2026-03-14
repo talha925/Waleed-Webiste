@@ -53,6 +53,47 @@ class AuthService implements IAuthService {
     return AuthService.instance;
   }
 
+  /**
+   * Hydrate the auth state with a token from the server
+   * Prevents "flash" of unauthenticated state on first load
+   */
+  public async initializeWithToken(token: string | null): Promise<void> {
+    if (!token || typeof window === 'undefined') return;
+
+    try {
+      // If we already have a valid session and it matches the token, skip
+      if (this.authState.isAuthenticated && this.authState.token?.accessToken === token) {
+        return;
+      }
+
+      this.authState.isLoading = true;
+      this.notifyAuthStateChange();
+
+      // Simple token structure for initial hydration
+      // The full user will be fetched by the background process or on next API call
+      this.authState.token = {
+        accessToken: token,
+        refreshToken: '', // Will be updated on first refresh
+        expiresAt: Date.now() + this.sessionConfig.timeoutDuration,
+        tokenType: 'Bearer'
+      };
+      this.authState.isAuthenticated = true;
+      this.authState.isLoading = false;
+      
+      this.startSessionTimer();
+      this.notifyAuthStateChange();
+      
+      // Try to fetch the full user profile in the background
+      this.getCurrentUser().catch(() => {
+        // Silently fail, we still have the token
+      });
+    } catch (error) {
+      console.error('Failed to initialize with token:', error);
+      this.authState.isLoading = false;
+      this.notifyAuthStateChange();
+    }
+  }
+
   private initializeFromStorage(): void {
     // Skip initialization during SSR
     if (typeof window === 'undefined') {

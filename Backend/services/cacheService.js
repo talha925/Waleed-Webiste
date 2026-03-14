@@ -10,9 +10,9 @@ class CacheService {
       categories: 3600,        // 1 hour
       frontBannerBlogs: 900,   // 15 minutes
       blogPost: 1800,          // 30 minutes
-      stores: 300,             // 5 minutes (Optimized for freshness)
+      stores: 1800,            // 30 minutes (Increased for better hit rate)
       coupons: 1800,           // 30 minutes
-      store_detail: 300,       // 5 minutes (Optimized for freshness)
+      store_detail: 1800,      // 30 minutes (Increased for better hit rate)
       coupon_detail: 3600,     // 1 hour
       homepage: 600            // 10 minutes
     };

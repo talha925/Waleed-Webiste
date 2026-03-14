@@ -63,8 +63,9 @@ export function getBrandConfig(): BrandConfig {
         // headers() throws outside of a request context (e.g. build time)
     }
 
-    // No fallback - throw error if no brand is found
-    throw new Error(`[Brand Config] No matching configuration found. Check your .env or Domain Map.`);
+    // Fallback to first brand instead of throwing (better for build time and local dev)
+    console.warn(`[Brand Config] No match for host. Falling back to default: ${DOMAIN_MAP[0].config.brandId}`);
+    return DOMAIN_MAP[0].config;
 }
 
 /**
@@ -93,8 +94,9 @@ export function getBrandConfigByHost(host: string): BrandConfig {
         }
     }
 
-    // No fallback to brandA - throw error if no brand is found
-    throw new Error(`[Brand Config] No matching configuration found for host: "${host}". Check your .env or Domain Map.`);
+    // Fallback to first brand
+    console.warn(`[Brand Config] No matching configuration found for host: "${host}". Falling back to default.`);
+    return DOMAIN_MAP[0].config;
 }
 
 // Re-export types and individual brands for convenience

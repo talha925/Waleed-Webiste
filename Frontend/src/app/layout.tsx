@@ -11,6 +11,8 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 import config from '@/lib/config'
 import { getBrandConfig } from '@config/index'
+import { fetchBlogCategoriesServer } from '@/lib/serverData'
+import React from 'react'
 
 // Dynamically import WebSocket components for real-time functionality
 const RealTimeUpdates = dynamic(
@@ -96,7 +98,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
@@ -107,7 +109,22 @@ export default function RootLayout({
 
   // Resolve brand config for this request
   const brand = getBrandConfig();
-
+  
+  // Fetch dynamic categories for the header
+  const fetchCategories = async () => {
+    try {
+      const { data } = await fetchBlogCategoriesServer();
+      return data;
+    } catch {
+      return [];
+    }
+  };
+  
+  // Note: Since this is RootLayout, we can't easily await here without making the whole layout blocking.
+  // We'll use the Suspense pattern or just accept that it will be blocking for the first byte.
+  // For now, let's keep it simple.
+  const categories = await fetchCategories();
+  
   // Build gtag inline script dynamically per brand
   const gtagScript = `
     window.dataLayer = window.dataLayer || [];
@@ -168,11 +185,15 @@ export default function RootLayout({
         <Providers initialToken={initialToken} brand={brand}>
           <ErrorBoundary>
             <div className="flex flex-col min-h-screen">
-              <Header />
+              <React.Suspense fallback={<div className="h-20 bg-background-elevated" />}>
+                <Header categories={categories} />
+              </React.Suspense>
               <main className="flex-grow">
                 {children}
               </main>
-              <ConditionalFooter />
+              <React.Suspense fallback={null}>
+                <ConditionalFooter />
+              </React.Suspense>
               {/* Performance monitoring is available in admin dashboard only */}
               {/* Real-time updates notifications */}
               <RealTimeUpdates />
