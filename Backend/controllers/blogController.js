@@ -9,7 +9,36 @@ exports.getBlogs = catchAsync(async (req, res) => {
     success: true,
     status: 'success',
     message: 'Blog posts retrieved successfully',
-    data: result
+    data: result.blogs,
+    metadata: result.pagination
+  });
+});
+
+exports.searchBlogs = catchAsync(async (req, res) => {
+  const { q, search, query, page, limit } = req.query;
+  const searchTerm = q || search || query;
+
+  if (!searchTerm) {
+    return res.status(200).json({
+      success: true,
+      data: [],
+      metadata: { total: 0, page: 1, limit: limit || 10 }
+    });
+  }
+
+  const result = await BlogService.findAll(req.models, {
+    ...req.query,
+    search: searchTerm,
+    page: page || 1,
+    limit: limit || 10
+  });
+
+  res.status(200).json({
+    success: true,
+    status: 'success',
+    message: 'Blog search completed',
+    data: result.blogs,
+    metadata: result.pagination
   });
 });
 

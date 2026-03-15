@@ -290,12 +290,12 @@ const BlogPostSchema = new mongoose.Schema({
 
 // Blog Indexes
 BlogPostSchema.index({ title: 'text', shortDescription: 'text' });
-BlogPostSchema.index({ status: 1, createdAt: -1 });
-BlogPostSchema.index({ isFeaturedForHome: 1, status: 1, createdAt: -1 });
-BlogPostSchema.index({ FrontBanner: 1, status: 1, createdAt: -1 });
-BlogPostSchema.index({ 'category.id': 1, status: 1, createdAt: -1 });
-BlogPostSchema.index({ 'store.id': 1, status: 1, createdAt: -1 });
-BlogPostSchema.index({ 'category.slug': 1, status: 1, createdAt: -1 }); // 🔥 FIX: Slow category slug queries
+BlogPostSchema.index({ status: 1, publishDate: -1 });
+BlogPostSchema.index({ isFeaturedForHome: 1, status: 1, publishDate: -1 });
+BlogPostSchema.index({ FrontBanner: 1, status: 1, publishDate: -1 });
+BlogPostSchema.index({ 'category.id': 1, status: 1, publishDate: -1 });
+BlogPostSchema.index({ 'store.id': 1, status: 1, publishDate: -1 });
+BlogPostSchema.index({ 'category.slug': 1, status: 1, publishDate: -1 }); // 🔥 FIX: Slow category slug queries
 BlogPostSchema.index({ slug: 1 }, { unique: true }); // Fast slug lookup index
 
 function safeHtml(input) {
@@ -339,10 +339,20 @@ BlogPostSchema.pre('save', function (next) {
         this.engagement.wordCount = wordCount;
         this.engagement.readingTime = `${Math.ceil(wordCount / 200)} min read`;
     }
+    
+    // Auto-set publishDate if published and not set
+    if (this.status === 'published' && !this.publishDate) {
+        this.publishDate = new Date();
+    }
+
     this.robots = this.status === 'published' ? 'index, follow' : 'noindex, nofollow';
     this.lastUpdated = new Date();
     next();
 });
+
+// General purpose sorting index
+BlogPostSchema.index({ createdAt: -1 });
+BlogPostSchema.index({ publishDate: -1 });
 
 const ActivityLogSchema = require('./activityLogModel');
 

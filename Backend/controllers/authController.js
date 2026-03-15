@@ -7,9 +7,9 @@ const { catchAsync } = require('../utils/errorUtils');
 /**
  * Generate JWT token
  */
-const signToken = (userId) => {
+const signToken = (userId, role) => {
     return jwt.sign(
-        { userId },
+        { userId, role },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -18,9 +18,9 @@ const signToken = (userId) => {
 /**
  * Generate Refresh JWT token
  */
-const signRefreshToken = (userId) => {
+const signRefreshToken = (userId, role) => {
     return jwt.sign(
-        { userId },
+        { userId, role },
         process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
     );
@@ -31,8 +31,8 @@ const signRefreshToken = (userId) => {
  * Standardized with 'success: true' while maintaining Flutter compatibility
  */
 const createSendToken = async (req, user, statusCode, res) => {
-    const accessToken = signToken(user._id);
-    const refreshToken = signRefreshToken(user._id);
+    const accessToken = signToken(user._id, user.role);
+    const refreshToken = signRefreshToken(user._id, user.role);
     const { ActivityLog } = req.models;
 
     // Log login activity if logging is available
@@ -343,7 +343,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
         }
 
         // 3. Issue new Access Token
-        const accessToken = signToken(currentUser._id);
+        const accessToken = signToken(currentUser._id, currentUser.role);
 
         res.status(200).json({
             success: true,

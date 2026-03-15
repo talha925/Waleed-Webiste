@@ -199,11 +199,16 @@ export default function ContactPage() {
 
         {/* Bottom Section */}
         <div className="mt-16 text-center">
-          <div className="bg-gradient-blue-to-purple rounded-3xl p-8 text-white shadow-2xl">
-            <h3 className="text-2xl font-bold mb-4">Thank You for Visiting {brand.siteName}!</h3>
-            <p className="text-lg opacity-90 max-w-2xl mx-auto">
-              We appreciate your interest in connecting with us. Your messages help us improve and serve you better.
-            </p>
+          <div className="bg-gradient-to-br from-brand-primary to-brand-accent rounded-3xl p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
+            {/* Decorative background element */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+            
+            <div className="relative z-10">
+              <h3 className="text-3xl font-black mb-4 tracking-tight">Thank You for Visiting {brand.siteName}!</h3>
+              <p className="text-lg text-white/90 max-w-2xl mx-auto font-medium leading-relaxed">
+                We appreciate your interest in connecting with us. Your messages help us improve and serve you better.
+              </p>
+            </div>
           </div>
         </div>
       </div>

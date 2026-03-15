@@ -14,7 +14,7 @@ export async function GET() {
     '',
     '/blog',
     '/stores',
-    '/Categories',
+    '/categories',
   ];
 
   // Fetch dynamic blog posts
@@ -32,7 +32,7 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      blogPosts = data.blogs?.blogs || data.data?.blogs || [];
+      blogPosts = data.data || [];
     }
   } catch (error) {
     console.error('Error fetching blogs for sitemap:', error);
@@ -53,7 +53,7 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      stores = data.stores || [];
+      stores = data.data || [];
     }
   } catch (error) {
     console.error('Error fetching stores for sitemap:', error);

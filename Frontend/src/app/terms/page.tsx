@@ -14,7 +14,7 @@ export default function TermsPage() {
   const brand = getBrandConfig();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-background">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full opacity-30"></div>
@@ -31,8 +31,8 @@ export default function TermsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-purple-600 mb-4">
-            Terms & Conditions
+          <h1 className={`text-4xl md:text-5xl font-black text-slate-900 mb-4`}>
+            Terms & <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-accent">Conditions</span>
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
             Welcome to {brand.siteName}. By using our website, you agree to the following terms and conditions.
@@ -44,9 +44,10 @@ export default function TermsPage() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
 
             {/* Terms Header */}
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 text-white">
-              <h2 className="text-3xl font-bold text-center">Legal Terms & Conditions</h2>
-              <p className="text-center mt-2 text-indigo-100 text-lg">Effective and binding agreement</p>
+            <div className="bg-gradient-to-r from-brand-primary to-brand-accent p-8 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+              <h2 className="text-3xl font-black text-center relative z-10">Legal Terms & Conditions</h2>
+              <p className="text-center mt-2 text-white/80 text-lg font-medium relative z-10">Effective and binding agreement for {brand.siteName}</p>
             </div>
 
             <div className="p-8 md:p-10 space-y-8">
@@ -205,7 +206,7 @@ export default function TermsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-purple-600 mb-4">Questions About Our Terms?</h3>
+            <h3 className="text-2xl font-black text-slate-900 mb-4">Questions About Our Terms?</h3>
             <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
               If you have any questions or concerns about these terms and conditions,
               our team is here to help you understand everything clearly.
@@ -213,7 +214,7 @@ export default function TermsPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/contact"
-                className="inline-flex items-center justify-center bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-semibold py-4 px-8 rounded-xl hover:opacity-90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-brand-primary to-brand-accent text-white font-black py-4 px-8 rounded-xl hover:opacity-90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

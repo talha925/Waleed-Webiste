@@ -73,7 +73,7 @@ class RedisConfig {
             await Promise.race([
                 this.client.connect(),
                 new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Connection timeout')), 3000)
+                    setTimeout(() => reject(new Error('Connection timeout')), 6000)
                 )
             ]);
 

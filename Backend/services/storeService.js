@@ -11,7 +11,9 @@ const mongoose = require('mongoose');
 exports.getStores = async (models, queryParams) => {
     const { Store, brandId } = models;
     try {
-        const cacheKey = cacheService.generateKey('store', { ...queryParams, brandId });
+        // Strip cache-busting params before generating cache key
+        const { _ts, ...cacheParams } = queryParams;
+        const cacheKey = cacheService.generateKey('store', { ...cacheParams, brandId });
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData) return cachedData;
 
@@ -34,12 +36,12 @@ exports.getStores = async (models, queryParams) => {
             .populate({
                 path: 'coupons',
                 select: '_id offerDetails code active isValid order featuredForHome hits lastAccessed',
-                match: { 
-                    isValid: true, 
+                match: {
+                    isValid: true,
                     $or: [
-                        { active: true }, 
+                        { active: true },
                         { code: { $exists: true, $ne: '' } }
-                    ] 
+                    ]
                 },
                 options: { sort: { order: 1, createdAt: -1 } }
             })
@@ -121,16 +123,41 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData) return cachedData;
 
+        // Use text search for indexed fields
         const searchQuery = {
             $text: { $search: query },
-            language: 'English' // Keep search brand-relevant
+            language: 'English'
         };
 
         const stores = await Store.find(searchQuery)
+            .select({ score: { $meta: 'textScore' } })
+            .sort({ score: { $meta: 'textScore' } })
             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit))
             .populate('categories')
             .lean();
+
+        // Fallback or secondary sorting refinement
+        if (stores.length === 0) {
+            // If text search yields no results (e.g. partial matches), fallback to regex
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escapedQuery, 'i');
+            const regexQuery = {
+                $or: [
+                    { name: { $regex: regex } },
+                    { slug: { $regex: regex } }
+                ],
+                language: 'English'
+            };
+
+            const regexStores = await Store.find(regexQuery)
+                .limit(parseInt(limit))
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .populate('categories')
+                .lean();
+
+            stores.push(...regexStores);
+        }
 
         const totalStores = await Store.countDocuments(searchQuery);
 
@@ -146,6 +173,7 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         await cacheService.set(cacheKey, result, 300);
         return result;
     } catch (error) {
+        console.error('Error in searchStores:', error);
         throw error;
     }
 };

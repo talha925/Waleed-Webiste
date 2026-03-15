@@ -14,18 +14,18 @@ export default function PrivacyPage() {
   const brand = getBrandConfig();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
 
         {/* Header Section */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-brand-primary to-brand-accent rounded-3xl mb-8 shadow-xl rotate-3">
+            <svg className="w-12 h-12 text-white -rotate-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-            Privacy Policy
+          <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-6">
+            Privacy <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-accent">Policy</span>
           </h1>
           <p className="text-base text-slate-700 max-w-3xl mx-auto leading-relaxed">
             At {brand.siteName}, your privacy is very important to us. This Privacy Policy explains what information we collect when you visit our website, how we use it, and how we keep it safe.
@@ -187,20 +187,21 @@ export default function PrivacyPage() {
           </section>
 
           {/* Contact Information */}
-          <section className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white text-center">
-            <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
-            <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
-              If you have any questions, suggestions, or concerns about this Privacy Policy, please contact us at:
+          <section className="bg-gradient-to-br from-brand-primary to-brand-accent rounded-3xl p-10 md:p-16 text-white text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+            <h2 className="text-4xl font-black mb-6 relative z-10">Have Questions?</h2>
+            <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto font-medium leading-relaxed relative z-10">
+              If you have any questions, suggestions, or concerns about this Privacy Policy, please don't hesitate to reach out. We're here to help.
             </p>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center relative z-10">
               <a
                 href={`mailto:${brand.contactEmail}`}
-                className="flex items-center space-x-2 bg-white/20 rounded-full px-8 py-4 hover:bg-white/30 transition-all duration-300 transform hover:scale-105"
+                className="flex items-center space-x-3 bg-white text-brand-primary rounded-2xl px-10 py-5 hover:bg-slate-50 transition-all duration-300 transform hover:scale-105 shadow-xl group"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span className="text-lg font-medium">{brand.contactEmail}</span>
+                <span className="text-xl font-black">{brand.contactEmail}</span>
               </a>
             </div>
           </section>

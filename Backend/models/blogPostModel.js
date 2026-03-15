@@ -120,12 +120,14 @@ const blogPostSchema = new mongoose.Schema({
 
 // Text search index for title and description
 blogPostSchema.index({ title: 'text', shortDescription: 'text' });
+blogPostSchema.index({ title: 1 }); // Regular index for regex search performance
 
 // CRITICAL: Compound indexes for common query patterns
 blogPostSchema.index({ status: 1, publishDate: -1 }); // Most common: published posts by date
 blogPostSchema.index({ FrontBanner: 1, status: 1, publishDate: -1 }); // Critical for front banner queries
 blogPostSchema.index({ isFeaturedForHome: 1, status: 1, publishDate: -1 }); // Featured posts
 blogPostSchema.index({ 'category.id': 1, status: 1, publishDate: -1 }); // Category filtering
+blogPostSchema.index({ 'category.slug': 1, status: 1, publishDate: -1 }); // Category slug filtering
 blogPostSchema.index({ 'store.id': 1, status: 1, publishDate: -1 }); // Store filtering
 
 // Additional performance indexes

@@ -477,6 +477,7 @@ class CacheService {
     try {
       await Promise.all([
         this.delPattern(`${prefix}coupon_backend:blog_post*`),
+        this.delPattern(`${prefix}coupon_backend:blog_detail*`),
         this.delPattern(`${prefix}coupon_backend:blogs*`),
         this.delPattern(`${prefix}coupon_backend:frontBannerBlogs*`),
         this.delPattern(`${prefix}coupon_backend:related*`)

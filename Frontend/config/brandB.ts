@@ -69,7 +69,7 @@ const brandB: BrandConfig = {
     copyrightText: '© 2026 Blogzenix — Unlocking Insights, One Story at a Time.',
 
     // ─── Contact ─────────────────────────────────────────────
-    contactEmail: 'contact@blogzenix.com',
+    contactEmail: 'blogzenixx@gmail.com',
 };
 
 export default brandB;

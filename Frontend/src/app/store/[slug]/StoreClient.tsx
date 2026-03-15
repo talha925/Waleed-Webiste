@@ -3,7 +3,7 @@
 'use client';
 
 import SafeImage from '@/components/ui/SafeImage';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
@@ -222,21 +222,7 @@ const SmartDescription = ({ text }: { text: string | undefined }) => {
         )}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[10px] shadow-sm" style={{ background: 'linear-gradient(135deg, hsl(var(--brand-primary)), hsl(var(--brand-primary) / 0.7))' }}>
-            {brand.siteName.substring(0, 2).toUpperCase()}
-          </div>
-          <div className="text-xs">
-            <div className="font-bold text-slate-900">{brand.siteName} Editors</div>
-            <div className="text-slate-400">Curated & Verified</div>
-          </div>
-        </div>
-        <button className="text-[10px] text-brand-primary font-black uppercase tracking-[0.2em] hover:text-brand-accent transition-all duration-300 flex items-center gap-1.5" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          Back to Top
-          <span className="text-sm">↑</span>
-        </button>
-      </div>
+
     </div>
   );
 };
@@ -247,6 +233,8 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const [showModal, setShowModal] = useState(false);
   const [isLoading] = useState(false);
   const [areCouponsUnlocked, setAreCouponsUnlocked] = useState(false);
+  const [revealedCoupons, setRevealedCoupons] = useState<Record<string, boolean>>({});
+  const hasRedirected = useRef(false);
 
   const activeCoupons = useMemo(() => initialStore?.coupons?.filter(c => c.isValid) || [], [initialStore?.coupons]);
   const totalCoupons = useMemo(() => initialStore?.coupons?.length || 0, [initialStore?.coupons]);
@@ -255,19 +243,32 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
   const handleGetDeal = useCallback((coupon: Coupon, e: React.MouseEvent) => {
     if (!initialStore) return;
+
+    const isAlreadyRevealed = revealedCoupons[coupon._id];
+
     if (coupon.code) {
       setAreCouponsUnlocked(true);
+      setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
       navigator.clipboard.writeText(coupon.code)
         .then(() => toast.success('Code copied to clipboard!'))
         .catch((err) => console.error('Failed to copy code:', err));
       setSelectedCode(coupon.code);
       setShowModal(true);
-      if (initialStore.trackingUrl) window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+
+      if (initialStore.trackingUrl && !hasRedirected.current) {
+        const storeUrl = decodeHTML(initialStore.trackingUrl);
+        window.open(storeUrl, '_blank', 'noopener,noreferrer');
+        // Wait 15 seconds before marking as done
+        // Gives user enough time to close tab + come back + click again if needed
+        setTimeout(() => {
+          hasRedirected.current = true;
+        }, 7000);
+      }
     } else {
       if (initialStore.trackingUrl) window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
       toast.success('Deal activated! Redirecting...');
     }
-  }, [initialStore]);
+  }, [initialStore, revealedCoupons]);
 
   const handleCloseModal = useCallback(() => { setShowModal(false); setSelectedCode(null); }, []);
 
@@ -409,10 +410,10 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
             <div className="flex-1 min-w-0">
               {/* Section Header */}
               <div className="flex flex-col items-start mb-8">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] sm:text-white drop-shadow-sm">Top Deals & Coupons</h2>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-sm">Top Deals & Coupons</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                  <p className="text-xs sm:text-sm text-slate-400 sm:text-white/60 font-medium tracking-wide">Last verified today • {totalCoupons} offers available</p>
+                  <p className="text-xs sm:text-sm text-white/70 font-medium tracking-wide">Last verified today • {totalCoupons} offers available</p>
                 </div>
               </div>
 
@@ -480,9 +481,12 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                               {coupon.code ? (
                                 <button
                                   onClick={(e) => handleGetDeal(coupon, e)}
-                                  className="h-11 px-6 bg-brand-accent text-[#111827] border-2 border-[#111827] text-[12px] font-black uppercase tracking-[0.05em] rounded-xl shadow-[4px_4px_0_0_#111827] hover:shadow-[1px_1px_0_0_#111827] hover:translate-x-[3px] hover:translate-y-[3px] transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none whitespace-nowrap"
+                                  className={`h-11 px-6 border-2 text-[12px] font-black uppercase tracking-[0.05em] rounded-xl transition-all whitespace-nowrap ${revealedCoupons[coupon._id]
+                                      ? 'bg-green-100 text-green-800 border-green-800 shadow-[4px_4px_0_0_#166534] hover:shadow-[1px_1px_0_0_#166534] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                                      : 'bg-brand-accent text-[#111827] border-[#111827] shadow-[4px_4px_0_0_#111827] hover:shadow-[1px_1px_0_0_#111827] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                                    }`}
                                 >
-                                  Show Code
+                                  {revealedCoupons[coupon._id] ? coupon.code : 'Show Code'}
                                 </button>
                               ) : (
                                 <button

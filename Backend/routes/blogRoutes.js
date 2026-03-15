@@ -7,6 +7,7 @@ const blogValidator = require('../validators/blogValidator');
 
 // Public routes - no authentication middleware
 router.get('/', blogController.getBlogs);
+router.get('/search', blogController.searchBlogs);
 router.get('/:id', blogController.getBlogById);
 router.get('/:id/related', blogController.getRelatedPosts);
 

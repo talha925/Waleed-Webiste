@@ -127,10 +127,8 @@ const SearchBar = React.memo(function SearchBar({
 
   const placeholderText = useMemo(() => {
     if (placeholder) return placeholder;
-    return searchType === 'stores'
-      ? 'Search stores and coupons...'
-      : 'Search blog articles...';
-  }, [placeholder, searchType]);
+    return 'Search blogs...';
+  }, [placeholder]);
 
   const hasCurrentResults = useMemo(() => {
     if (searchType === 'stores') {
@@ -299,13 +297,6 @@ const SearchBar = React.memo(function SearchBar({
           )}
         />
         
-        {/* Shortcut Hint - Hide when typing or focused */}
-        {!query && !isFocused && !isMobile && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none opacity-40 group-hover:opacity-60 transition-opacity">
-            <kbd className="px-1.5 py-0.5 rounded border border-slate-300 bg-white text-[10px] font-sans font-bold">Ctrl</kbd>
-            <kbd className="px-1.5 py-0.5 rounded border border-slate-300 bg-white text-[10px] font-sans font-bold">K</kbd>
-          </div>
-        )}
 
         {query && (
           <button

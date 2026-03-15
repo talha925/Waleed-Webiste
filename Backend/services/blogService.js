@@ -20,7 +20,7 @@ exports.getRelatedPosts = async (models, categoryId, storeId, excludeId, limit =
     if (query.$or.length === 0) delete query.$or;
 
     const relatedPosts = await BlogPost.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ publishDate: -1 })
       .limit(limit)
       .select('title slug shortDescription image.url image.alt publishDate engagement.readingTime')
       .lean();
@@ -48,8 +48,8 @@ exports.findAll = async (models, queryParams = {}) => {
       frontBanner,
       isFeaturedForHome,
       featured,
-      slug, // 🔥 Added direct slug lookup for massive performance boost
-      sort = '-createdAt'
+      slug,
+      sort = '-publishDate' // Default to publishDate to match compound indexes
     } = queryParams;
 
     const cacheKey = cacheService.generateKey('blogs', { ...queryParams, brandId });
@@ -59,18 +59,23 @@ exports.findAll = async (models, queryParams = {}) => {
     const query = {};
     if (status && status !== 'all') query.status = status;
 
-    // Normalize FrontBanner / frontBanner (case-insensitive and type-safe)
+    // Use text search for indexed fields if search query is provided
+    let isTextSearch = false;
+    if (search && search.trim()) {
+      isTextSearch = true;
+      query.$text = { $search: search };
+    }
+
+    // Normalize FrontBanner / frontBanner
     const bannerVal = FrontBanner !== undefined ? FrontBanner : frontBanner;
     if (bannerVal !== undefined) {
       query.FrontBanner = bannerVal === 'true' || bannerVal === true;
     }
 
-    // Support isFeaturedForHome filtering
     if (isFeaturedForHome !== undefined) {
       query.isFeaturedForHome = isFeaturedForHome === 'true' || isFeaturedForHome === true;
     }
 
-    // Support generic featured filtering
     if (featured !== undefined) {
       query.isFeatured = featured === 'true' || featured === true;
     }
@@ -79,19 +84,61 @@ exports.findAll = async (models, queryParams = {}) => {
     if (category) query['category.slug'] = category;
     if (storeId) query['store.id'] = storeId;
     if (slug) query.slug = slug;
-    if (search) {
-      query.$text = { $search: search };
-    }
 
+    // Optimised Count: Use estimatedDocumentCount when possible
     const total = (Object.keys(query).length === 1 && query.status === 'published')
       ? await BlogPost.estimatedDocumentCount()
       : await BlogPost.countDocuments(query);
-    const blogs = await BlogPost.find(query)
-      .sort(sort)
+
+    let mongoQuery = BlogPost.find(query);
+
+    if (isTextSearch) {
+      // Sort by text relevance score if performing text search
+      mongoQuery = mongoQuery
+        .select({ score: { $meta: 'textScore' } })
+        .sort({ score: { $meta: 'textScore' } });
+    } else {
+      mongoQuery = mongoQuery.sort(sort);
+    }
+
+    let blogs = await mongoQuery
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .select('title slug shortDescription image.url image.alt author.name category.name category.slug category.id store.id status publishDate engagement.readingTime FrontBanner isFeaturedForHome isFeatured createdAt')
       .lean();
+
+    // Fallback if text search yields no results (handle partial matches)
+    if (isTextSearch && blogs.length === 0) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedSearch, 'i');
+      const fallbackQuery = {
+        $or: [
+          { title: { $regex: regex } },
+          { slug: { $regex: regex } }
+        ],
+        status: status === 'all' ? { $exists: true } : status
+      };
+      
+      blogs = await BlogPost.find(fallbackQuery)
+        .sort({ publishDate: -1 })
+        .limit(parseInt(limit))
+        .select('title slug shortDescription image.url image.alt author.name category.name category.slug category.id store.id status publishDate engagement.readingTime FrontBanner isFeaturedForHome isFeatured createdAt')
+        .lean();
+    }
+
+    // Secondary sorting: If it's a non-text search or we need JS-side refinement
+    if (search && !isTextSearch) {
+      const searchLower = search.toLowerCase();
+      blogs.sort((a, b) => {
+        const aTitle = (a.title || '').toLowerCase();
+        const bTitle = (b.title || '').toLowerCase();
+        if (aTitle === searchLower && bTitle !== searchLower) return -1;
+        if (bTitle === searchLower && aTitle !== searchLower) return 1;
+        if (aTitle.startsWith(searchLower) && !bTitle.startsWith(searchLower)) return -1;
+        if (bTitle.startsWith(searchLower) && !aTitle.startsWith(searchLower)) return 1;
+        return 0;
+      });
+    }
 
     const result = {
       blogs,
@@ -106,10 +153,14 @@ exports.findAll = async (models, queryParams = {}) => {
 };
 
 exports.findById = async (models, id) => {
-  const { Blog: BlogPost } = models;
+  const { Blog: BlogPost, brandId } = models;
   const mongoose = require('mongoose');
   try {
     if (!id || id === 'undefined') throw new AppError('Valid ID or Slug is required', 400);
+
+    const cacheKey = cacheService.generateKey('blog_detail', { id, brandId });
+    const cached = await cacheService.get(cacheKey);
+    if (cached) return cached;
 
     const isObjectId = mongoose.Types.ObjectId.isValid(id);
     const query = isObjectId ? { _id: id } : { slug: id };
@@ -125,7 +176,9 @@ exports.findById = async (models, id) => {
       console.error(`[BlogService.findById] Non-fatal error fetching related posts:`, relErr.message);
     }
 
-    return { ...blog, relatedPosts };
+    const result = { ...blog, relatedPosts };
+    await cacheService.set(cacheKey, result, cacheService.defaultTTL.blogPost || 3600);
+    return result;
   } catch (error) {
     console.error(`[BlogService.findById] Error fetching blog [${id}]:`, error);
     throw error;
@@ -189,11 +242,8 @@ exports.delete = async (models, id) => {
   const isObjectId = mongoose.Types.ObjectId.isValid(id);
   const query = isObjectId ? { _id: id } : { slug: id };
 
-  const blog = await BlogPost.findOne(query);
+  const blog = await BlogPost.findOneAndDelete(query);
   if (!blog) throw new AppError('Blog post not found', 404);
-
-  const blogId = blog._id;
-  await BlogPost.findByIdAndDelete(blogId);
 
   // Clean up image from S3 on deletion
   if (blog.image && blog.image.url) {

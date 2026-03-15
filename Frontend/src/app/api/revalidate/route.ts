@@ -16,11 +16,12 @@ export async function POST(request: NextRequest) {
       path,
       tag,
       blogId,
+      identifier, // Used by backend services
       storeSlug,
       couponId,
       categorySlug,
       secret,
-      source = 'api' // Track if revalidation is from WebSocket or direct API call
+      source = 'api'
     } = await request.json();
 
     // Verify secret token for security
@@ -114,11 +115,15 @@ export async function POST(request: NextRequest) {
         });
 
       case 'categories':
+      case 'blogCategory':
         // Revalidate categories-related pages and tags
-        revalidatePath('/Categories');
+        revalidatePath('/categories');
         revalidateTag('categories');
-        if (categorySlug) {
-          revalidateTag(`category-${categorySlug}`);
+        revalidateTag('blog-categories');
+        if (categorySlug || identifier) {
+          const slug = categorySlug || identifier;
+          revalidateTag(`category-${slug}`);
+          revalidatePath(`/blog/category/${slug}`);
         }
         return NextResponse.json({
           message: 'Revalidated categories pages',
@@ -132,7 +137,7 @@ export async function POST(request: NextRequest) {
         revalidateTag('blogs');
         revalidatePath('/stores');
         revalidateTag('stores');
-        revalidatePath('/Categories');
+        revalidatePath('/categories');
         revalidateTag('categories');
         revalidateTag('coupons');
         // Also clear service-layer caches globally

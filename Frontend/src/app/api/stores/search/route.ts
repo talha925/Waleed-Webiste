@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const brand = getBrandConfigByHost(host);
 
     const searchUrl = new URL(`${brand.apiBaseUrl}/api/stores/search`);
-    searchUrl.searchParams.set('query', sanitizedQuery);
+    searchUrl.searchParams.set('q', sanitizedQuery);
     searchUrl.searchParams.set('page', pageNum.toString());
     searchUrl.searchParams.set('limit', limitNum.toString());
 

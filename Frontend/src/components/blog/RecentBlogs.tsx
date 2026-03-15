@@ -111,7 +111,7 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
                         width={96}
                         height={64}
                         className="rounded-lg object-cover w-24 h-16"
-                        fallbackSrc="/image/travel1.jpg"
+                        fallbackSrc="/image/travel_cat.png"
                       />
                     </div>
                   )}

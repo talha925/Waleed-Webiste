@@ -39,18 +39,20 @@ export default function Header({ categories = [] }: HeaderProps) {
   ];
 
   // Static nav items
-  const staticNavItems = [
-    ['Home', '/'],
-    ['Blog', '/blog'],
-  ];
+  const homeItem = ['Home', '/'];
+  const blogItem = ['Blogs', '/blog'];
 
-  // Combine static nav items with static blog categories
+  // Categories come after Home
+  const categoriesItems = STATIC_CATEGORIES.map(category => [
+    category.name,
+    `/blog/category/${category.slug}`
+  ]);
+
+  // Combine: Home -> Categories -> Blog
   const navItems = [
-    ...staticNavItems,
-    ...STATIC_CATEGORIES.map(category => [
-      category.name,
-      `/blog/category/${category.slug}`
-    ])
+    homeItem,
+    ...categoriesItems,
+    blogItem
   ];
 
   // Prevent hydration mismatch by only showing dynamic content after hydration
@@ -89,68 +91,59 @@ export default function Header({ categories = [] }: HeaderProps) {
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-2">
-              {/* Static Navigation Items */}
-              {staticNavItems.map(([name, href]) => (
-                <Link
-                  key={name}
-                  href={href}
-                  className={`relative px-4 py-2 hover:text-foreground transition-all duration-300 group ${pathname === href ? 'text-foreground' : 'text-foreground-secondary'
-                    }`}
-                >
-                  <span className="relative z-10 font-bold">{name}</span>
-                  <div className={`absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                  <div className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 h-1 bg-gradient-to-r from-brand-primary via-brand-secondary to-brand-accent transition-all duration-500 rounded-full ${pathname === href ? 'w-[70%]' : 'w-0 group-hover:w-[70%]'
-                    }`} />
-                </Link>
-              ))}
+            {/* Desktop Navigation - Premium Minimalist Design (Visible from 1024px) */}
+            <nav className="hidden lg:flex items-center p-1 bg-background-elevated/40 backdrop-blur-xl border border-white/5 rounded-2xl shadow-inner-white">
+              {/* Home Link */}
+              <Link
+                href="/"
+                className={`relative px-3 py-2 hover:text-foreground transition-all duration-300 group ${pathname === '/' ? 'text-foreground' : 'text-foreground-secondary'}`}
+              >
+                <span className="relative z-10 text-[12px] font-bold tracking-wide uppercase">Home</span>
+                {pathname === '/' && (
+                  <div className="absolute inset-0 bg-white/5 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.05)]" />
+                )}
+              </Link>
 
-              {/* Categories Dropdown */}
-              {STATIC_CATEGORIES.length > 0 && (
-                <div className="relative group">
-                  <button
-                    className="relative px-4 py-2 text-foreground-secondary hover:text-foreground transition-all duration-300 group flex items-center space-x-1"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                    aria-label="Blog categories menu"
-                  >
-                    <span className="relative z-10 font-bold">Categories</span>
-                    <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                    </svg>
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/10 via-brand-secondary/10 to-brand-accent/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </button>
+              {/* Minimal Divider */}
+              <div className="w-px h-3 bg-white/10 mx-1.5" />
 
-                  {/* Dropdown Menu */}
-                  <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-72 bg-background-elevated/95 backdrop-blur-2xl border border-white/20 rounded-[2rem] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 z-50 p-2 overflow-hidden ring-1 ring-black/5"
-                    role="menu"
-                    aria-label="Blog categories"
+              {/* Categories Group */}
+              <div className="flex items-center space-x-0.5">
+                {categoriesItems.map(([name, href]) => (
+                  <Link
+                    key={name as string}
+                    href={href as string}
+                    className={`relative px-2.5 py-1.5 hover:text-foreground transition-all duration-300 group whitespace-nowrap ${pathname === href ? 'text-foreground' : 'text-foreground-secondary'}`}
                   >
-                    <div className="relative z-10 grid grid-cols-1 gap-1">
-                      {STATIC_CATEGORIES.map((category) => (
-                        <Link
-                          key={category._id}
-                          href={`/blog/category/${category.slug}`}
-                          className="flex items-center space-x-3 px-5 py-4 text-foreground-secondary hover:text-foreground hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 rounded-2xl transition-all duration-300 group/item relative overflow-hidden"
-                          role="menuitem"
-                          aria-label={`View ${category.name} blog posts`}
-                        >
-                          <div className={`w-2 h-2 rounded-full bg-gradient-brand-to-accent opacity-0 group-hover/item:opacity-100 transition-opacity`} />
-                          <span className="font-semibold">{category.name}</span>
-                          <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/5 via-brand-secondary/5 to-brand-accent/5 opacity-0 group-hover/item:opacity-100 transition-opacity -z-10" />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                    <span className="relative z-10 text-[12px] font-semibold tracking-tight">{name as string}</span>
+                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-brand-accent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full opacity-50" />
+                  </Link>
+                ))}
+              </div>
+
+              {/* Minimal Divider */}
+              <div className="w-px h-3 bg-white/10 mx-1.5" />
+
+              {/* Blog Link - Placed at the end */}
+              <Link
+                href="/blog"
+                className={`relative px-3 py-2 hover:text-foreground transition-all duration-300 group ${pathname === '/blog' ? 'text-foreground' : 'text-foreground-secondary'}`}
+              >
+                <span className="relative z-10 text-[12px] font-bold tracking-wide uppercase">Blogs</span>
+                {pathname === '/blog' && (
+                  <div className="absolute inset-0 bg-white/5 rounded-xl" />
+                )}
+              </Link>
             </nav>
 
-            {/* Search Bar - Desktop */}
-            <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-              <SearchBar className="w-full" />
+            {/* Space Filler for fixed spacing */}
+            <div className="flex-1 lg:hidden" />
+
+            {/* Desktop Search Bar - Always visible on larger screens where space allows */}
+            <div className="hidden md:flex items-center flex-1 justify-end mx-6 max-w-md">
+              <div className="w-full animate-in fade-in duration-500">
+                <SearchBar className="w-full" />
+              </div>
             </div>
 
             {/* Right Side Actions */}

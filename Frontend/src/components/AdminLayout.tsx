@@ -16,7 +16,7 @@ const navLinks = [
 const topNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/stores', label: 'Stores' },
-  { href: '/Categories', label: 'Categories' },
+  { href: '/categories', label: 'Categories' },
   { href: '/blog', label: 'Blog' },
 ];
 
