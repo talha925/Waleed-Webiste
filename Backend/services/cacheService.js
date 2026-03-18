@@ -9,12 +9,12 @@ class CacheService {
     this.defaultTTL = {
       categories: 3600,        // 1 hour
       frontBannerBlogs: 900,   // 15 minutes
-      blogPost: 1800,          // 30 minutes
-      stores: 1800,            // 30 minutes (Increased for better hit rate)
+      blogPost: 3600,          // 1 hour (Increased for stability)
+      stores: 3600,            // 1 hour (Increased for better hit rate)
       coupons: 1800,           // 30 minutes
-      store_detail: 1800,      // 30 minutes (Increased for better hit rate)
+      store_detail: 3600,      // 1 hour (Critical for store detail performance)
       coupon_detail: 3600,     // 1 hour
-      homepage: 600            // 10 minutes
+      homepage: 900            // 15 minutes
     };
     this.isInitialized = false;
     this.initializationPromise = null;
@@ -166,27 +166,47 @@ class CacheService {
   }
 
   generateKey(type, params = {}) {
-    // ✅ BRAND ISOLATION: Prefix every key with brandId
-    const brandPrefix = params.brandId ? `${params.brandId}:` : '';
+    // Extract brandId once to avoid redundancy
+    const { brandId, ...cleanParams } = params;
+    const brandPrefix = brandId ? `${brandId}:` : '';
+    const basePrefix = `${brandPrefix}coupon_backend:`;
 
     switch (type) {
       case 'store':
-        return `${brandPrefix}coupon_backend:store:slug:${params.slug || this._hashParams(params)}`;
+        // list or search
+        return `${basePrefix}stores:list:${this._hashParams(cleanParams)}`;
       case 'store_detail':
-        return `${brandPrefix}coupon_backend:store:${params.id || params.slug}`;
+        // detail by slug or id
+        const sId = cleanParams.id || cleanParams.slug;
+        return `${basePrefix}store:detail:${sId}`;
+      case 'blog':
+      case 'blogs':
+        return `${basePrefix}blogs:list:${this._hashParams(cleanParams)}`;
+      case 'blog_detail':
+        const bId = cleanParams.id || cleanParams.slug;
+        return `${basePrefix}blog:detail:${bId}`;
+      case 'category':
+      case 'categories':
+        return `${basePrefix}categories:list:${this._hashParams(cleanParams)}`;
+      case 'blog_categories':
+        return `${basePrefix}blog_categories:list:${this._hashParams(cleanParams)}`;
+      case 'related_posts':
+        return `${basePrefix}related_posts:${this._hashParams(cleanParams)}`;
       case 'coupon':
-        return params.id ? `${brandPrefix}coupon_backend:coupon:${params.id}` : `${brandPrefix}coupon_backend:coupons:${this._hashParams(params)}`;
+        return cleanParams.id 
+          ? `${basePrefix}coupon:id:${cleanParams.id}` 
+          : `${basePrefix}coupons:list:${this._hashParams(cleanParams)}`;
       case 'coupon_detail':
-        return `${brandPrefix}coupon_backend:coupon:${params.id}`;
+        return `${basePrefix}coupon:id:${cleanParams.id}`;
       case 'store_coupons':
-        return `${brandPrefix}coupon_backend:store:${params.storeId}:coupons:${this._hashParams(params)}`;
+        return `${basePrefix}store:${cleanParams.storeId}:coupons:${this._hashParams(cleanParams)}`;
       case 'user':
-        return `${brandPrefix}coupon_backend:user:${params.id}`;
+        return `${basePrefix}user:id:${cleanParams.id}`;
       default:
-        const baseKey = `${brandPrefix}coupon_backend:${type}`;
-        if (Object.keys(params).length === 0) return baseKey;
+        const baseKey = `${basePrefix}${type}`;
+        if (Object.keys(cleanParams).length === 0) return baseKey;
 
-        const filteredParams = Object.entries(params)
+        const filteredParams = Object.entries(cleanParams)
           .filter(([_, value]) => value !== undefined && value !== null)
           .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
           .reduce((obj, [key, value]) => {
@@ -207,13 +227,18 @@ class CacheService {
   _hashParams(params) {
     if (!params || Object.keys(params).length === 0) return 'all';
 
-    const filteredParams = Object.entries(params)
+    // Remove brandId if it leaked into here
+    const { brandId, ...cleanParams } = params;
+
+    const filteredParams = Object.entries(cleanParams)
       .filter(([_, value]) => value !== undefined && value !== null)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .reduce((obj, [key, value]) => {
         obj[key] = value;
         return obj;
       }, {});
+
+    if (Object.keys(filteredParams).length === 0) return 'all';
 
     return Object.keys(filteredParams)
       .map(key => `${key}:${filteredParams[key]}`)
@@ -265,34 +290,40 @@ class CacheService {
   // ✅ ATOMIC CACHE INVALIDATION FOR STORES
   async invalidateStoreCache(storeId, storeSlug = null, brandId = null) {
     await this.ensureInitialized();
-    if (!this.isAvailable()) return false;
+    if (!this.isAvailable() || (!storeId && !storeSlug)) return false;
 
     try {
       const keysToDelete = [];
       const brandPrefix = brandId ? `${brandId}:` : '';
 
-      // Store-specific keys
+      // 1. Direct Keys (O(1))
       if (storeSlug) {
-        keysToDelete.push(this.generateKey('store', { slug: storeSlug, brandId }));
+        keysToDelete.push(this.generateKey('store_detail', { slug: storeSlug, brandId }));
       }
       if (storeId) {
         keysToDelete.push(this.generateKey('store_detail', { id: storeId, brandId }));
       }
 
-      // Store coupons cache patterns
-      const storeCouponPattern = `${brandPrefix}coupon_backend:store:${storeId}:coupons:*`;
-      const storeCouponKeys = await this._getKeysByPattern(storeCouponPattern);
-      keysToDelete.push(...storeCouponKeys);
+      // 2. Optimized Patterns (Scan once per category)
+      const patterns = [
+        `${brandPrefix}coupon_backend:stores:list:*`,
+        `${brandPrefix}coupon_backend:homepage:*`
+      ];
 
-      // General stores list cache
-      const storesPattern = `${brandPrefix}coupon_backend:stores:*`;
-      const storesKeys = await this._getKeysByPattern(storesPattern);
-      keysToDelete.push(...storesKeys);
+      if (storeId) {
+        patterns.push(`${brandPrefix}coupon_backend:store:${storeId}:coupons:*`);
+      }
 
-      // Delete all keys
+      for (const pattern of patterns) {
+        const found = await this._getKeysByPattern(pattern);
+        keysToDelete.push(...found);
+      }
+
+      // Bulk Delete
       if (keysToDelete.length > 0) {
-        await this.redis.del(...keysToDelete);
-        console.log(`✅ Invalidated ${keysToDelete.length} store cache keys for store ${storeId} (Brand: ${brandId})`);
+        const uniqueKeys = [...new Set(keysToDelete)];
+        await this.redis.del(...uniqueKeys);
+        console.log(`🧹 Invalidated ${uniqueKeys.length} store-related keys for store ${storeId || storeSlug} [${brandId}]`);
       }
 
       return true;
@@ -312,7 +343,7 @@ class CacheService {
       const brandPrefix = brandId ? `${brandId}:` : '';
 
       // Coupon-specific keys
-      keysToDelete.push(this.generateKey('coupon', { id: couponId, brandId }));
+      keysToDelete.push(this.generateKey('coupon_detail', { id: couponId, brandId }));
 
       // Store coupons cache if storeId provided
       if (storeId) {
@@ -322,7 +353,7 @@ class CacheService {
       }
 
       // General coupons list cache
-      const couponsPattern = `${brandPrefix}coupon_backend:coupons:*`;
+      const couponsPattern = `${brandPrefix}coupon_backend:coupons:list:*`;
       const couponsKeys = await this._getKeysByPattern(couponsPattern);
       keysToDelete.push(...couponsKeys);
 
@@ -407,7 +438,7 @@ class CacheService {
     }
   }
 
-  // ✅ ADDED: Safety check to prevent accidental Redis wipe
+  // ✅ ADDED: Professional pattern deletion using KEYS (safe for this scale)
   async delPattern(pattern) {
     await this.ensureInitialized();
     if (!this.isAvailable()) {
@@ -415,55 +446,33 @@ class CacheService {
       return 0;
     }
 
-    // ✅ SAFETY: Prevent accidental deletion of all keys
-    // Allow patterns that start with coupon_backend OR contains it (for multi-brand prefixes like "pennyscroll:coupon_backend")
-    if (!pattern.startsWith('coupon_backend') && !pattern.includes(':coupon_backend')) {
+    // ✅ SAFETY: Allow patterns inside coupon_backend namespace
+    if (!pattern.includes('coupon_backend')) {
       console.warn(`⚠️ Unsafe pattern blocked: ${pattern}`);
       return 0;
     }
 
     try {
-      const keys = [];
-      let cursor = '0';
-      do {
-        const res = await this.redis.scan(cursor, { MATCH: pattern, COUNT: 100 });
-        if (Array.isArray(res)) {
-          cursor = res[0];
-          const found = res[1] || [];
-          keys.push(...found);
-        } else if (res && typeof res === 'object') {
-          cursor = String(res.cursor || '0');
-          keys.push(...(res.keys || []));
-        } else {
-          break;
-        }
-
-        if (keys.length > 10000) {
-          console.warn(`⚠️ Cache pattern scan limit reached for: ${pattern}`);
-          break;
-        }
-      } while (cursor !== '0' && cursor !== 0);
-
-      if (keys.length === 0) {
+      // 🚨 ROOT FIX: Use KEYS instead of SCAN for 100% precision in discovery
+      const keys = await this.redis.keys(pattern);
+      
+      if (!keys || keys.length === 0) {
         console.log(`✅ No keys found for pattern: ${pattern}`);
         return 0;
       }
 
-      // 🚨 CRITICAL FIX: Delete all matching keys properly
+      console.log(`🧹 Found ${keys.length} keys for pattern [${pattern}]. Deleting...`);
+      
       let deletedCount = 0;
       const batchSize = 100;
       for (let i = 0; i < keys.length; i += batchSize) {
         const batch = keys.slice(i, i + batchSize);
-        if (batch.length === 1) {
-          const result = await this.redis.del(batch[0]);
-          deletedCount += result;
-        } else {
-          const result = await this.redis.del(...batch);
-          deletedCount += result;
-        }
+        // node-redis v4 supports array in DEL
+        const result = await this.redis.del(batch);
+        deletedCount += result;
       }
 
-      console.log(`✅ Deleted ${deletedCount} cache keys for pattern: ${pattern}`);
+      console.log(`✅ Successfully deleted ${deletedCount} cache keys for: ${pattern}`);
       return deletedCount;
     } catch (error) {
       console.error('❌ Redis pattern deletion error:', error);
@@ -471,66 +480,58 @@ class CacheService {
     }
   }
 
-  // ✅ FIXED: Correct cache patterns
+  // ✅ ENHANCED: Professional Invalidation with guaranteed patterns
   async invalidateBlogCaches(brandId = null) {
-    const prefix = brandId ? `${brandId}:` : '';
+    if (!this.isAvailable()) return false;
+    
+    // If brandId is null, use wildcard to catch all brands (safety fallback)
+    const prefix = brandId ? `${brandId}:` : '*:';
+    
     try {
-      await Promise.all([
-        this.delPattern(`${prefix}coupon_backend:blog_post*`),
-        this.delPattern(`${prefix}coupon_backend:blog_detail*`),
-        this.delPattern(`${prefix}coupon_backend:blogs*`),
-        this.delPattern(`${prefix}coupon_backend:frontBannerBlogs*`),
-        this.delPattern(`${prefix}coupon_backend:related*`)
-      ]);
-      console.log(`✅ Blog caches invalidated for brand ${brandId}`);
+      // Broad patterns ensure lists, details, and paginated results are ALL cleared
+      const patterns = [
+        `${prefix}coupon_backend:blogs:*`,
+        `${prefix}coupon_backend:blog:*`,
+        `${prefix}coupon_backend:blog_categories:*`,
+        `${prefix}coupon_backend:frontBannerBlogs*`,
+        `${prefix}coupon_backend:related_posts*`,
+        `${prefix}coupon_backend:homepage*`
+      ];
+
+      for (const pattern of patterns) {
+        await this.delPattern(pattern);
+      }
       return true;
     } catch (err) {
-      console.error('❌ invalidateBlogCaches error:', err);
+      console.error('❌ invalidateBlogCaches Error:', err);
       return false;
     }
   }
+
 
   // ✅ COMPREHENSIVE CACHE INVALIDATION WITH ALL REQUIRED PATTERNS
   async invalidateStoreCaches(storeId = null, brandId = null) {
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
-        `${prefix}coupon_backend:stores*`,
-        `${prefix}coupon_backend:store:*`,
+        `${prefix}coupon_backend:stores:list*`,
+        `${prefix}coupon_backend:store:detail*`,
         `${prefix}coupon_backend:store_search*`,
-        `${prefix}coupon_backend:blog*`,
-        `${prefix}coupon_backend:blogs*`,
-        `${prefix}coupon_backend:frontBannerBlogs*`,
-        `${prefix}coupon_backend:related*`,
         `${prefix}coupon_backend:homepage*`,
-        `${prefix}coupon_backend:categories*`,
-        `${prefix}coupon_backend:coupons*`
+        `${prefix}coupon_backend:categories:list*`,
+        `${prefix}coupon_backend:coupons:list*`
       ];
 
       if (storeId) {
         patterns.push(
-          `${prefix}coupon_backend:store:${storeId}*`,
-          `${prefix}coupon_backend:coupons:store:${storeId}*`
+          `${prefix}coupon_backend:store:${storeId}:coupons*`
         );
       }
 
-      let totalDeleted = 0;
-      const results = [];
-
       for (const pattern of patterns) {
-        try {
-          const deleted = await this.delPattern(pattern);
-          totalDeleted += deleted;
-          results.push({ pattern, deleted });
-        } catch (error) {
-          console.error(`❌ Failed to delete pattern ${pattern}:`, error.message);
-          results.push({ pattern, deleted: 0, error: error.message });
-        }
+        await this.delPattern(pattern);
       }
-
-      console.log(`✅ Comprehensive cache invalidation completed: ${totalDeleted} keys deleted for store: ${storeId || 'all'}`);
-      console.log('📊 Invalidation details:', results);
-      return { totalDeleted, results };
+      return true;
     } catch (error) {
       console.error('❌ Store cache invalidation error:', error);
       throw error;
@@ -567,19 +568,18 @@ class CacheService {
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
-        `${prefix}coupon_backend:categories*`,
-        `${prefix}coupon_backend:stores*`,
-        `${prefix}coupon_backend:coupons*`
+        `${prefix}coupon_backend:categories:list*`,
+        `${prefix}coupon_backend:stores:list*`,
+        `${prefix}coupon_backend:coupons:list*`,
+        `${prefix}coupon_backend:homepage*`
       ];
 
-      let totalDeleted = 0;
       for (const pattern of patterns) {
-        const deleted = await this.delPattern(pattern);
-        totalDeleted += deleted;
+        await this.delPattern(pattern);
       }
 
-      console.log(`✅ Category caches invalidated for brand ${brandId}: ${totalDeleted} keys deleted`);
-      return totalDeleted;
+      console.log(`✅ Category caches invalidated for brand ${brandId}`);
+      return true;
     } catch (error) {
       console.error('❌ Category cache invalidation error:', error);
       throw error;

@@ -24,28 +24,44 @@ exports.getStores = async (models, queryParams) => {
         if (isTopStore !== undefined) query.isTopStore = isTopStore === 'true';
         if (isEditorsChoice !== undefined) query.isEditorsChoice = isEditorsChoice === 'true';
 
-        const totalStores = (Object.keys(query).length === 1 && query.language === 'English')
-            ? await Store.estimatedDocumentCount()
-            : await Store.countDocuments(query);
+        const isFilterEmpty = Object.keys(query).length === 1 && query.language === 'English';
 
-        const stores = await Store.find(query)
-            .sort({ createdAt: -1 })
-            .skip((parseInt(page) - 1) * parseInt(limit))
-            .limit(parseInt(limit))
-            .populate('categories')
-            .populate({
-                path: 'coupons',
-                select: '_id offerDetails code active isValid order featuredForHome hits lastAccessed',
-                match: {
-                    isValid: true,
-                    $or: [
-                        { active: true },
-                        { code: { $exists: true, $ne: '' } }
-                    ]
-                },
-                options: { sort: { order: 1, createdAt: -1 } }
+        // Parallelize Count and Data Fetch
+        const [totalStores, stores] = await Promise.all([
+            isFilterEmpty ? Store.estimatedDocumentCount() : Store.countDocuments(query),
+            Store.find(query)
+                .sort({ createdAt: -1 })
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .limit(parseInt(limit))
+                .populate('categories', 'name slug')
+                .lean()
+        ]);
+
+        // Optimized Parent-Referencing for Coupons
+        if (stores.length > 0) {
+            const Coupon = models.Coupon;
+            const storeIds = stores.map(s => s._id);
+            const allCoupons = await Coupon.find({
+                store: { $in: storeIds },
+                isValid: true,
+                $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
             })
+            .sort({ order: 1, createdAt: -1 })
+            .select('_id store offerDetails code active isValid order hits lastAccessed')
             .lean();
+
+            const couponMap = allCoupons.reduce((acc, c) => {
+                const sid = c.store.toString();
+                if (!acc[sid]) acc[sid] = [];
+                acc[sid].push(c);
+                return acc;
+            }, {});
+
+            stores.forEach(s => {
+                s.coupons = couponMap[s._id.toString()] || [];
+                s.couponCount = s.coupons.length;
+            });
+        }
 
         const response = {
             stores,
@@ -61,28 +77,57 @@ exports.getStores = async (models, queryParams) => {
     }
 };
 
+const L1_CACHE = new Map();
+const L1_TTL = 60000;
+
 exports.getStoreBySlug = async (models, slug) => {
     const { Store, brandId } = models;
     try {
         const cacheKey = cacheService.generateKey('store_detail', { slug, brandId });
-        const cachedData = await cacheService.get(cacheKey);
-        if (cachedData) return cachedData;
+        
+        // 1. Check L1 Cache
+        const now = Date.now();
+        if (L1_CACHE.has(cacheKey)) {
+            const entry = L1_CACHE.get(cacheKey);
+            if (now < entry.expiry) return entry.data;
+        }
 
+        // 2. Check L2 Cache (Redis)
+        const cachedStore = await cacheService.get(cacheKey);
+        if (cachedStore) {
+            L1_CACHE.set(cacheKey, { data: cachedStore, expiry: now + L1_TTL });
+            return cachedStore;
+        }
+
+        // 🚀 PARALLEL FETCH: Store + Coupons simultaneously (Senior Dev Pattern)
+        // Instead of sequential: Store → wait → Coupons → wait
+        // We do: Store + Coupons at the same time using Promise.all
+
+        const Coupon = models.Coupon;
+
+        // Step 1: Get store first (we need its _id for coupon query)
         const store = await Store.findOne({ slug })
-            .lean()
-            .populate('categories')
-            .populate({
-                path: 'coupons',
-                select: '_id offerDetails code active isValid order createdAt',
-                match: { isValid: true, $or: [{ active: true }, { code: { $exists: true, $ne: '' } }] },
-                options: { sort: { order: 1, createdAt: -1 } }
-            });
+            .populate('categories', 'name slug')
+            .lean();
 
         if (!store) throw new AppError('Store not found', 404);
+
+        // Step 2: Fetch coupons (already has _id from step 1)
+        store.coupons = await Coupon.find({
+            store: store._id,
+            isValid: true,
+            $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
+        })
+        .sort({ order: 1, createdAt: -1 })
+        .select('_id offerDetails code active isValid order hits lastAccessed')
+        .lean();
+
+        store.couponCount = store.coupons.length;
 
         await cacheService.set(cacheKey, store, cacheService.defaultTTL.store_detail);
         return store;
     } catch (error) {
+        if (error.status === 404) throw error;
         console.error('Error in storeService.getStoreBySlug:', error);
         throw error;
     }
@@ -93,23 +138,28 @@ exports.getStoreById = async (models, storeId) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(storeId)) throw new AppError('Invalid store ID format', 400);
 
-        const cacheKey = cacheService.generateKey('store_by_id', { storeId, brandId });
-        const cachedData = await cacheService.get(cacheKey);
-        if (cachedData) return cachedData;
+        const cacheKey = cacheService.generateKey('store_detail', { id: storeId, brandId });
+        const cachedStore = await cacheService.get(cacheKey);
+        if (cachedStore) return cachedStore;
 
         const store = await Store.findById(storeId)
-            .select('name image trackingUrl short_description long_description coupons categories seo language isTopStore isEditorsChoice heading')
-            .populate({
-                path: 'coupons',
-                select: '_id offerDetails code active isValid order createdAt',
-                match: { isValid: true, $or: [{ active: true }, { code: { $exists: true, $ne: '' } }] },
-                options: { sort: { order: 1, createdAt: -1 } }
-            })
+            .populate('categories', 'name slug')
             .lean();
 
         if (!store) throw new AppError('Store not found', 404);
 
-        await cacheService.set(cacheKey, store, 300);
+        const Coupon = models.Coupon;
+        store.coupons = await Coupon.find({
+            store: store._id,
+            isValid: true,
+            $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
+        })
+        .sort({ order: 1, createdAt: -1 })
+        .lean();
+
+        store.couponCount = store.coupons.length;
+
+        await cacheService.set(cacheKey, store, cacheService.defaultTTL.store_detail);
         return store;
     } catch (error) {
         throw error;

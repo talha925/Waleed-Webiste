@@ -25,8 +25,8 @@ class RedisConfig {
 
             // Add socket configuration with better error handling
             options.socket = {
-                connectTimeout: 5000,
-                commandTimeout: 3000,
+                connectTimeout: 2000,
+                commandTimeout: 2000,
                 reconnectStrategy: (retries) => {
                     if (retries > 3) return false;
                     return Math.min(retries * 100, 3000);

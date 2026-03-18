@@ -20,9 +20,6 @@ const log = (msg: string) => {
  */
 export async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('authToken')?.value;
-
     const brand = getBrandConfig();
 
     const headers: Record<string, string> = {
@@ -30,14 +27,18 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
       'x-brand-id': brand.brandId,
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    try {
+      const cookieStore = cookies();
+      const token = cookieStore.get('authToken')?.value;
+      if (token && !forceRefresh) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (e) { }
 
     // In dev or when forcing refresh, bypass Next.js fetch cache entirely
     const fetchOptions = (forceRefresh)
       ? { headers, cache: 'no-store' as const }
-      : { headers, next: { revalidate: 60, tags: ['stores'] } };
+      : { headers, next: { revalidate: 3600, tags: ['stores'] } };
 
     const apiUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
     // Use reasonable limit for list fetches; slug uses direct endpoint
@@ -48,7 +49,8 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    // CRITICAL: Increased timeout to 15s to allow backend cold starts on first load
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(apiUrl.toString(), {
@@ -81,26 +83,32 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
  */
 async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('authToken')?.value;
-
     const brand = getBrandConfig();
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-brand-id': brand.brandId,
     };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+
+    // Safely attempt to get auth token without breaking static generation
+    // Only use cookies if we're in a request context where they are available
+    try {
+      const cookieStore = cookies();
+      const token = cookieStore.get('authToken')?.value;
+      if (token && !forceRefresh) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // Ignore error if cookies() is called outside of request context (e.g. during build)
     }
 
     const url = `${brand.apiBaseUrl}/api/stores/slug/${encodeURIComponent(slug)}`;
     const fetchOptions = (forceRefresh)
       ? { headers, cache: 'no-store' as const }
-      : { headers, next: { revalidate: 60, tags: [`store-${slug}`] } };
+      : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    // CRITICAL: Increased timeout from 8s to 15s to handle backend cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch(url, {
@@ -124,7 +132,10 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
     }
   } catch (err) {
     log(`Direct slug fetch error for ${slug}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    return null;
+    // CRITICAL FIX: We MUST throw the error here instead of returning null.
+    // If we return null on a network timeout, Next.js will cache a FALSE 404 page!
+    // By throwing, we force Next.js to properly handle the server error and retry later.
+    throw err;
   }
 }
 
@@ -181,7 +192,7 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
             : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
           try {
             const listRes = await fetch(`${brand.apiBaseUrl}/api/coupons?storeId=${store._id}`, {
               ...fetchOptions,

@@ -1,6 +1,7 @@
 import BlogList from '@/components/blog/BlogList';
 import { Metadata } from 'next';
 import { getBrandConfig } from '@config/index';
+import { fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrandConfig();
@@ -18,10 +19,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const { data: initialPosts } = await fetchBlogsByCategoryServer(''); // No category = all blogs
+  
   return (
     <BlogList
       apiEndpoint="/api/blogs"
+      initialPosts={initialPosts}
       title="Blog Posts"
       description="View and manage all your blog posts"
       showCreateButton={false}

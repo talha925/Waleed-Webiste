@@ -294,6 +294,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       try {
         setMessage('Uploading image...');
         const formData = new FormData();
+        formData.append('folder', 'blogs');
         formData.append('image', imageFile);
 
         const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
@@ -395,11 +396,9 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
       console.log('Blog creation response:', response);
       setMessage('Blog created successfully!');
 
-      // Clear banner cache if this blog has FrontBanner enabled (using v5 key)
-      if (frontBanner) {
-        localStorage.removeItem('heroBannerData_v9');
-        console.log('Banner cache cleared (v9) due to FrontBanner blog creation');
-      }
+      // Unconditionally clear banner cache so new edits or unticks are immediately visible
+      localStorage.removeItem('heroBannerData_v11');
+      console.log('Banner cache cleared (v11) due to blog creation');
 
       // Reset form after successful save
       resetForm();

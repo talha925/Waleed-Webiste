@@ -109,7 +109,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     // 4. Invalidate data cache tags
     revalidateTag('blogs');
     revalidateTag('featured-blogs');
+    revalidateTag('home-blogs');
+    revalidateTag('banner-blogs');
+    revalidateTag('recent-blogs');
     revalidateTag(`blog-${id}`);
+    if (slug) {
+      revalidateTag(`blog-${slug}`);
+    }
 
     console.log(`[Blog Update] Cache invalidated for blog ${id}${slug ? ` (slug: ${slug})` : ''}`);
 
@@ -160,6 +166,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     revalidatePath('/'); // Home page for Featured Blogs
     revalidateTag('blogs');
     revalidateTag('featured-blogs');
+    revalidateTag('home-blogs');
+    revalidateTag('banner-blogs');
+    revalidateTag('recent-blogs');
     revalidateTag(`blog-${id}`);
 
     console.log(`[Blog Delete] Cache invalidated for blog ${id}`);

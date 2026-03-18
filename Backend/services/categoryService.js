@@ -20,13 +20,18 @@ exports.getCategories = async (models, queryParams) => {
         const query = {};
         if (active !== undefined) query.active = active === 'true';
 
-        const categories = await Category.find(query)
-            .skip((parseInt(page) - 1) * parseInt(limit))
-            .limit(parseInt(limit))
-            .sort({ name: 1 })
-            .lean();
+        const isFilterEmpty = Object.keys(query).length === 0;
 
-        const totalCategories = await Category.countDocuments(query);
+        // Parallelize Count and Data Fetch
+        const [categories, totalCategories] = await Promise.all([
+            Category.find(query)
+                .select('name slug')
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .limit(parseInt(limit))
+                .sort({ name: 1 })
+                .lean(),
+            isFilterEmpty ? Category.estimatedDocumentCount() : Category.countDocuments(query)
+        ]);
 
         const result = {
             categories,

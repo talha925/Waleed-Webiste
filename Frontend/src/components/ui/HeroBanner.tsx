@@ -9,19 +9,28 @@ import { BannerCache } from '@/lib/cache/bannerCache';
 
 interface HeroBannerProps {
   className?: string;
+  initialBlogs?: Blog[];
 }
 
-export default function HeroBanner({ className = '' }: HeroBannerProps) {
-  const [bannerBlogs, setBannerBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBannerProps) {
+  const [bannerBlogs, setBannerBlogs] = useState<Blog[]>(initialBlogs);
+  const [loading, setLoading] = useState(initialBlogs.length === 0);
+  const [isFirstLoad, setIsFirstLoad] = useState(initialBlogs.length === 0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
 
   // Initialize with cached data to prevent skeleton flicker
   useEffect(() => {
-    const cacheKey = 'heroBannerData';
+    // 💡 Performance Optimization: If server already gave us blogs, don't fetch on mount
+    if (initialBlogs && initialBlogs.length > 0) {
+      setBannerBlogs(initialBlogs);
+      setLoading(false);
+      setIsFirstLoad(false);
+      return;
+    }
+
+    const cacheKey = 'heroBannerData_v11';
     const cached = localStorage.getItem(cacheKey);
 
     if (cached) {
@@ -53,11 +62,11 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
       // No cache, fetch fresh data
       fetchBannerBlogs();
     }
-  }, []);
+  }, [initialBlogs]);
 
   // Cache invalidation function for urgent updates
   const invalidateCache = () => {
-    localStorage.removeItem('heroBannerData');
+    localStorage.removeItem('heroBannerData_v11');
     fetchBannerBlogs(true);
   };
 
@@ -74,7 +83,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
   }, []);
 
   const fetchBannerBlogs = async (forceRefresh = false) => {
-    const cacheKey = 'heroBannerData_v9'; // Standardizing on decoded S3 paths for single-encoding reliability
+    const cacheKey = 'heroBannerData_v11'; // Incremented version to ensure fresh data
 
     console.log('[HeroBanner] Starting fetch, forceRefresh:', forceRefresh);
 
@@ -165,9 +174,7 @@ export default function HeroBanner({ className = '' }: HeroBannerProps) {
     }
   };
 
-  useEffect(() => {
-    fetchBannerBlogs();
-  }, []);
+  // Removed redundant useEffect fetch on mount as handled by initialBlogs effect above
 
   // Refresh when window gains focus (user returns from admin panel)
   // Only refresh if user was away for more than 5 seconds to avoid tab switching issues

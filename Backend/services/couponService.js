@@ -6,6 +6,10 @@ const cacheService = require('./cacheService');
 const { callWithCircuitBreaker } = require('../lib/circuitBreaker');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
+// 🚀 L1 CACHE: For high-traffic store coupons
+const L1_CACHE = new Map();
+const L1_TTL = 60000; // 60 seconds
+
 // Get all coupons for a specific store with pagination (20 coupons per page)
 exports.getCouponsByStore = async (models, queryParams, storeId) => {
   const { Coupon, brandId } = models;
@@ -19,17 +23,31 @@ exports.getCouponsByStore = async (models, queryParams, storeId) => {
     if (isValid !== undefined) query.isValid = isValid === 'true';
 
     const cacheKey = cacheService.generateKey('store_coupons', { storeId, ...queryParams, brandId });
+    
+    // 1. Check L1 Cache
+    const now = Date.now();
+    if (L1_CACHE.has(cacheKey)) {
+      const entry = L1_CACHE.get(cacheKey);
+      if (now < entry.expiry) return entry.data;
+    }
+
+    // 2. Check L2 Cache (Redis)
     const cached = await cacheService.get(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      L1_CACHE.set(cacheKey, { data: cached, expiry: now + L1_TTL });
+      return cached;
+    }
 
-    const coupons = await Coupon.find(query)
-      .sort({ order: 1, createdAt: -1 })
-      .skip((parseInt(page) - 1) * 20)
-      .limit(20)
-      .select('-__v')
-      .lean();
-
-    const totalCoupons = await Coupon.countDocuments(query);
+    // Parallelize Count and Data Fetch
+    const [coupons, totalCoupons] = await Promise.all([
+      Coupon.find(query)
+        .sort({ order: 1, createdAt: -1 })
+        .skip((parseInt(page) - 1) * 20)
+        .limit(20)
+        .select('-__v')
+        .lean(),
+      Coupon.countDocuments(query)
+    ]);
     const result = {
       coupons,
       totalCoupons,
@@ -63,14 +81,16 @@ exports.getCoupons = async (models, queryParams) => {
     const cached = await cacheService.get(cacheKey);
     if (cached) return cached;
 
-    const coupons = await Coupon.find(query)
-      .sort({ order: 1, createdAt: -1 })
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .limit(parseInt(limit))
-      .select('-__v')
-      .lean();
-
-    const totalCoupons = await Coupon.countDocuments(query);
+    // Parallelize Count and Data Fetch
+    const [coupons, totalCoupons] = await Promise.all([
+      Coupon.find(query)
+        .sort({ order: 1, createdAt: -1 })
+        .skip((parseInt(page) - 1) * parseInt(limit))
+        .limit(parseInt(limit))
+        .select('offerDetails code active isValid order store featuredForHome hits hits updatedAt createdAt')
+        .lean(),
+      Coupon.countDocuments(query)
+    ]);
     const formattedCoupons = coupons.map(coupon => formatCoupon(coupon));
 
     const result = {

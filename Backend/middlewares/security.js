@@ -14,7 +14,7 @@ const hpp = require('hpp');
 const rateLimiter = (options = {}) => {
     return rateLimit({
         windowMs: options.windowMs || 15 * 60 * 1000, // 15 minutes default
-        max: options.max || 100, // Limit each IP to 100 requests per windowMs
+        max: options.max || (process.env.NODE_ENV === 'development' ? 2000 : 300), // Increased for dev/prod stability
         message: 'Too many requests from this IP, please try again after 15 minutes',
         standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
         legacyHeaders: false, // Disable the `X-RateLimit-*` headers

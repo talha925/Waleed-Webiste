@@ -72,7 +72,13 @@ const BlogList: React.FC<BlogListProps> = ({
       const separator = apiEndpoint.includes('?') ? '&' : '?';
       const url = `${apiEndpoint}${separator}page=${pageNum}&limit=${BLOGS_PER_PAGE}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: 'no-store', // Prevent browser disk cache for listing
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
 
       if (response.ok) {
         const data = await response.json();

@@ -3,7 +3,7 @@ import { getBrandConfig } from '@config/index';
 
 export const dynamic = 'force-dynamic';
 
-const FETCH_TIMEOUT = 5000; // 5 seconds timeout
+const FETCH_TIMEOUT = 15000; // 15 seconds timeout
 export async function GET() {
   const brand = getBrandConfig();
   const baseUrl = brand.siteUrl;
@@ -23,7 +23,7 @@ export async function GET() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&limit=1000`, {
+    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&limit=1000&fields=slug,updatedAt,createdAt`, {
       next: { revalidate: 3600 },
       signal: controller.signal
     });

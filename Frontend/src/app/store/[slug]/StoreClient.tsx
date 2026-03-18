@@ -2,8 +2,9 @@
 
 'use client';
 
+import confetti from 'canvas-confetti';
 import SafeImage from '@/components/ui/SafeImage';
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { decodeHTML } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
@@ -18,28 +19,23 @@ interface StoreClientProps {
 
 // --- Confetti Animation Helper ---
 const triggerConfetti = (x: number, y: number) => {
-  const count = 20;
-  for (let i = 0; i < count; i++) {
-    const particle = document.createElement('div');
-    particle.classList.add('confetti');
-    document.body.appendChild(particle);
-    const destinationX = (Math.random() - 0.5) * 200;
-    const destinationY = (Math.random() - 0.5) * 200;
-    const rotation = Math.random() * 520;
-    const delay = Math.random() * 200;
-    particle.style.left = `${x}px`;
-    particle.style.top = `${y}px`;
-    particle.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-    particle.style.transform = `rotate(${rotation}deg)`;
-    particle.animate([
-      { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
-      { transform: `translate(${destinationX}px, ${destinationY}px) rotate(${rotation}deg)`, opacity: 0 }
-    ], {
-      duration: 1000 + Math.random() * 1000,
-      easing: 'cubic-bezier(0, .9, .57, 1)',
-      delay: delay
-    }).onfinish = () => particle.remove();
-  }
+  // Use canvas-confetti for high-performance explosions
+  // We calculate origin based on normalized coordinates (0 to 1) 
+  // since canvas-confetti expects that for its 'origin' property
+  const originX = x / window.innerWidth;
+  const originY = y / window.innerHeight;
+
+  confetti({
+    particleCount: 80,
+    spread: 70,
+    origin: { x: originX, y: originY },
+    colors: ['#2563eb', '#9333ea', '#f59e0b', '#ec4899', '#10b981'],
+    ticks: 200,
+    gravity: 1.2,
+    scalar: 0.9,
+    shapes: ['circle', 'square'],
+    zIndex: 9999
+  });
 };
 
 // --- CouponModal Component ---
@@ -51,11 +47,20 @@ interface CouponModalProps {
   trackingUrl?: string;
 }
 
-const CouponModal = ({ isOpen, onClose, code, onContinue, trackingUrl }: CouponModalProps) => {
+const CouponModal = React.memo(({ isOpen, onClose, code, trackingUrl }: Pick<CouponModalProps, 'isOpen' | 'onClose' | 'code' | 'trackingUrl'>) => {
   const handleCopy = useCallback((e: React.MouseEvent) => {
-    navigator.clipboard.writeText(code);
-    triggerConfetti(e.clientX, e.clientY);
-    toast.success(`Code "${code}" copied!`);
+    if (!code) return;
+
+    // Robust clipboard handling with error fallback
+    navigator.clipboard.writeText(code)
+      .then(() => {
+        triggerConfetti(e.clientX, e.clientY);
+        toast.success(`Code "${code}" copied!`);
+      })
+      .catch((err) => {
+        console.error('Failed to copy code:', err);
+        toast.error('Failed to copy automatically. Please select and copy manually.');
+      });
   }, [code]);
 
   useEffect(() => {
@@ -103,7 +108,95 @@ const CouponModal = ({ isOpen, onClose, code, onContinue, trackingUrl }: CouponM
       </div>
     </div>
   );
-};
+});
+
+const CouponCard = React.memo(({
+  coupon,
+  idx,
+  isRevealed,
+  onGetDeal
+}: {
+  coupon: Coupon;
+  idx: number;
+  isRevealed: boolean;
+  onGetDeal: (coupon: Coupon, e: React.MouseEvent) => void
+}) => {
+  return (
+    <div className="group h-full">
+      <div className="relative h-full">
+        {/* Ticket Notch - Center Only */}
+        <div className="ticket-notch left-24 sm:left-32 top-1/2" />
+
+        <div className="relative coupon-card rounded-[24px] overflow-hidden flex flex-row items-stretch h-full group/card">
+          {/* Premium Accent Strip on Hover */}
+          <div className="accent-strip" />
+
+          {/* Top badges */}
+          {(coupon.isBestValue || coupon.isExclusive) && (
+            <div className="absolute top-0 right-0 flex gap-0 z-20">
+              {coupon.isBestValue && <div className="bg-green-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-lg">🏆 Best</div>}
+              {coupon.isExclusive && <div className="bg-brand-accent text-[#143154] text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-lg">⭐ Exclusive</div>}
+            </div>
+          )}
+
+          {/* Left Column (Icon) */}
+          <div className="w-24 sm:w-32 flex flex-col items-center justify-center border-r border-dashed border-slate-300 flex-shrink-0 relative py-6 bg-slate-50/80 z-10">
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500 ring-1 ring-slate-100/50">
+              <div className="text-2xl leading-none font-black">
+                {coupon.code ? '🏷️' : '🔥'}
+              </div>
+            </div>
+            <div className="text-[9px] font-black text-[#143154]/40 uppercase tracking-[0.2em]">
+              {coupon.code ? 'CODE' : 'DEAL'}
+            </div>
+          </div>
+
+          {/* Main content */}
+          <div className="flex-1 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white z-10">
+            <div className="min-w-0 flex-1">
+              {coupon.usedCount && (
+                <div className="mb-2">
+                  <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg w-fit">
+                    <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    {coupon.usedCount} People Used
+                  </span>
+                </div>
+              )}
+              <h3 className="text-lg sm:text-xl font-black text-[#111827] leading-tight group-hover:text-brand-primary transition-colors">
+                {decodeHTML(coupon.offerDetails)}
+              </h3>
+            </div>
+
+            <div className="flex-shrink-0 sm:pl-6 flex flex-col items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-600 uppercase tracking-[0.15em]">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                Verified
+              </span>
+              {coupon.code ? (
+                <button
+                  onClick={(e) => onGetDeal(coupon, e)}
+                  className={`h-11 px-6 border-2 text-[12px] font-black uppercase tracking-[0.05em] rounded-xl transition-all whitespace-nowrap ${isRevealed
+                    ? 'bg-green-100 text-green-800 border-green-800 shadow-[4px_4px_0_0_#166534] hover:shadow-[1px_1px_0_0_#166534] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                    : 'bg-brand-accent text-[#111827] border-[#111827] shadow-[4px_4px_0_0_#111827] hover:shadow-[1px_1px_0_0_#111827] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                    }`}
+                >
+                  {isRevealed ? coupon.code : 'Show Code'}
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => onGetDeal(coupon, e)}
+                  className="h-11 px-6 bg-[#143154] hover:bg-[#0c2038] text-white text-[12px] font-black uppercase tracking-[0.1em] rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:translate-y-0 whitespace-nowrap"
+                >
+                  Get Deal
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // --- Empty State ---
 const EmptyState = ({ message }: { message: string }) => (
@@ -134,14 +227,20 @@ const LoadingState = () => (
 );
 
 // --- Smart Description Formatter ---
-const SmartDescription = ({ text }: { text: string | undefined }) => {
+const SmartDescription = React.memo(({ text }: { text: string | undefined }) => {
   const brand = useBrand();
-  if (!text) return null;
+  const descriptionContent = useMemo(() => {
+    if (!text) return null;
 
-  const cleanText = text.replace(/<[^>]*>/g, '');
-  const words = cleanText.split(/\s+/).length;
-  const readTime = Math.ceil(words / 200);
-  const isHtml = /<[a-z][\s\S]*>/i.test(text);
+    const cleanTextString = text.replace(/<[^>]*>/g, '');
+    const words = cleanTextString.split(/\s+/).length;
+    const readTime = Math.ceil(words / 200);
+    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
+    return { isHtml, readTime };
+  }, [text]);
+
+  if (!text || !descriptionContent) return null;
 
   return (
     <div>
@@ -168,7 +267,7 @@ const SmartDescription = ({ text }: { text: string | undefined }) => {
             <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white transition-colors border border-slate-100 shadow-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <div className="text-[12px] font-black text-slate-600">{readTime} Min Read</div>
+            <div className="text-[12px] font-black text-slate-600">{descriptionContent.readTime} Min Read</div>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center text-green-600 border border-green-100 shadow-sm">
@@ -180,7 +279,7 @@ const SmartDescription = ({ text }: { text: string | undefined }) => {
       </div>
 
       <div className="text-slate-600 leading-relaxed">
-        {isHtml ? (
+        {descriptionContent.isHtml ? (
           <div
             className="prose prose-slate sm:prose-lg max-w-none 
             prose-headings:font-black prose-headings:text-slate-900 
@@ -221,11 +320,9 @@ const SmartDescription = ({ text }: { text: string | undefined }) => {
           </div>
         )}
       </div>
-
-
     </div>
   );
-};
+});
 
 // --- Main Client Component ---
 export default function StoreClient({ initialStore, serverError }: StoreClientProps) {
@@ -244,22 +341,25 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const handleGetDeal = useCallback((coupon: Coupon, e: React.MouseEvent) => {
     if (!initialStore) return;
 
-    const isAlreadyRevealed = revealedCoupons[coupon._id];
+    setAreCouponsUnlocked(true);
+    setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
 
     if (coupon.code) {
-      setAreCouponsUnlocked(true);
-      setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
       navigator.clipboard.writeText(coupon.code)
-        .then(() => toast.success('Code copied to clipboard!'))
-        .catch((err) => console.error('Failed to copy code:', err));
+        .then(() => {
+          triggerConfetti(e.clientX, e.clientY);
+          toast.success('Code copied to clipboard!');
+        })
+        .catch((err) => {
+          console.error('Failed to copy code:', err);
+          toast.error('Failed to copy. Please copy the code manually.');
+        });
       setSelectedCode(coupon.code);
       setShowModal(true);
 
       if (initialStore.trackingUrl && !hasRedirected.current) {
         const storeUrl = decodeHTML(initialStore.trackingUrl);
         window.open(storeUrl, '_blank', 'noopener,noreferrer');
-        // Wait 15 seconds before marking as done
-        // Gives user enough time to close tab + come back + click again if needed
         setTimeout(() => {
           hasRedirected.current = true;
         }, 7000);
@@ -268,7 +368,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       if (initialStore.trackingUrl) window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
       toast.success('Deal activated! Redirecting...');
     }
-  }, [initialStore, revealedCoupons]);
+  }, [initialStore]);
 
   const handleCloseModal = useCallback(() => { setShowModal(false); setSelectedCode(null); }, []);
 
@@ -278,73 +378,8 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleUp { from { transform: scale(0.92) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .animate-slide-up { animation: slideUp .5s ease both; }
-        .mesh-gradient {
-          background: linear-gradient(135deg, #143154 0%, #0F172A 50%, #143154 100%) !important;
-        }
-        .noise {
-          position: absolute;
-          inset: 0;
-          opacity: 0.03;
-          pointer-events: none;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-        .hero-glow { background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.05), transparent 70%); }
-        .ticket-notch {
-          position: absolute;
-          width: 32px;
-          height: 32px;
-          background: #f8fafc; /* Matches global body background */
-          border-radius: 50%;
-          z-index: 40;
-          box-shadow: 
-            inset 0 4px 8px rgba(0,0,0,0.1), 
-            inset 0 1px 2px rgba(0,0,0,0.1),
-            0 1px 0 rgba(255,255,255,0.9); /* Bottom highlight for depth */
-          border: 1px solid #e2e8f0;
-        }
-        .coupon-card {
-          background: linear-gradient(to bottom right, #ffffff, #fcfdfe);
-          border: 1px solid #e2e8f0;
-          box-shadow: 
-            0 10px 15px -3px rgba(0, 0, 0, 0.04), 
-            0 4px 6px -2px rgba(0, 0, 0, 0.02),
-            0 0 0 1px rgba(0,0,0,0.02); /* Extra thin ring for definition */
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          cursor: pointer;
-        }
-        .coupon-card:hover {
-          box-shadow: 
-            0 15px 30px -10px rgba(20, 49, 84, 0.1),
-            0 8px 15px -5px rgba(20, 49, 84, 0.05);
-          transform: translateY(-4px);
-          border-color: hsl(var(--brand-primary) / 0.2);
-        }
-        .coupon-card:hover .accent-strip {
-          opacity: 1;
-          height: 100%;
-        }
-        .accent-strip {
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 4px;
-          background: hsl(var(--brand-primary));
-          opacity: 0;
-          height: 0;
-          transition: all 0.4s ease;
-          border-radius: 0 4px 4px 0;
-        }
-      `
-      }} />
       <Toaster position="top-center" toastOptions={{ style: { background: '#1e293b', color: '#fff', borderRadius: '12px', fontSize: '13px' }, duration: 3000 }} />
-      <CouponModal isOpen={showModal} onClose={handleCloseModal} code={selectedCode || ''} onContinue={() => { if (initialStore?.trackingUrl) window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer'); }} trackingUrl={initialStore?.trackingUrl} />
+      <CouponModal isOpen={showModal} onClose={handleCloseModal} code={selectedCode || ''} trackingUrl={initialStore?.trackingUrl} />
 
 
       <div className={`min-h-screen ${themeClasses.backgrounds.primary} font-sans`}>
@@ -365,7 +400,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                 <div className="relative w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-[2rem] p-4 shadow-2xl flex items-center justify-center ring-1 ring-white/10 overflow-hidden group/logo">
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-slate-500/5 to-transparent translate-x-[-100%] group-hover/logo:translate-x-[100%] transition-transform duration-1000" />
                   {initialStore.image?.url ? (
-                    <SafeImage src={initialStore.image.url} alt={initialStore.name} width={130} height={130} className="object-contain relative z-10" />
+                    <SafeImage src={initialStore.image.url} alt={initialStore.name} width={130} height={130} className="object-contain relative z-10" priority />
                   ) : <span className="text-5xl">🏪</span>}
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-1.5 rounded-full ring-4 ring-[#143154] z-20 shadow-lg">
@@ -427,87 +462,20 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
               ) : (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                   {activeCoupons.map((coupon, idx) => (
-                    <div key={coupon._id} className="animate-slide-up group h-full" style={{ animationDelay: `${idx * 60}ms` }}>
-                      <div className="relative h-full">
-                        {/* Ticket Notch - Center Only */}
-                        <div className="ticket-notch left-24 sm:left-32 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-
-                        <div className="relative coupon-card rounded-[24px] overflow-hidden flex flex-row items-stretch h-full group/card">
-
-                          {/* Premium Accent Strip on Hover */}
-                          <div className="accent-strip" />
-
-                          {/* Top badges */}
-                          {(coupon.isBestValue || coupon.isExclusive) && (
-                            <div className="absolute top-0 right-0 flex gap-0 z-20">
-                              {coupon.isBestValue && <div className="bg-green-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-lg">🏆 Best</div>}
-                              {coupon.isExclusive && <div className="bg-brand-accent text-[#143154] text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl shadow-lg">⭐ Exclusive</div>}
-                            </div>
-                          )}
-
-                          {/* Left Column (Icon) */}
-                          <div className="w-24 sm:w-32 flex flex-col items-center justify-center border-r border-dashed border-slate-300 flex-shrink-0 relative py-6 bg-slate-50/80 z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500 ring-1 ring-slate-100/50">
-                              <div className="text-2xl leading-none font-black">
-                                {coupon.code ? '🏷️' : '🔥'}
-                              </div>
-                            </div>
-                            <div className="text-[9px] font-black text-[#143154]/40 uppercase tracking-[0.2em]">
-                              {coupon.code ? 'CODE' : 'DEAL'}
-                            </div>
-                          </div>
-
-                          {/* Main content */}
-                          <div className="flex-1 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white z-10">
-                            <div className="min-w-0 flex-1">
-                              {coupon.usedCount && (
-                                <div className="mb-2">
-                                  <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded-lg w-fit">
-                                    <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                                    {coupon.usedCount} People Used
-                                  </span>
-                                </div>
-                              )}
-                              <h3 className="text-lg sm:text-xl font-black text-[#111827] leading-tight group-hover:text-brand-primary transition-colors">
-                                {decodeHTML(coupon.offerDetails)}
-                              </h3>
-                            </div>
-
-                            <div className="flex-shrink-0 sm:pl-6 flex flex-col items-center gap-3">
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-600 uppercase tracking-[0.15em]">
-                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                Verified
-                              </span>
-                              {coupon.code ? (
-                                <button
-                                  onClick={(e) => handleGetDeal(coupon, e)}
-                                  className={`h-11 px-6 border-2 text-[12px] font-black uppercase tracking-[0.05em] rounded-xl transition-all whitespace-nowrap ${revealedCoupons[coupon._id]
-                                      ? 'bg-green-100 text-green-800 border-green-800 shadow-[4px_4px_0_0_#166534] hover:shadow-[1px_1px_0_0_#166534] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                                      : 'bg-brand-accent text-[#111827] border-[#111827] shadow-[4px_4px_0_0_#111827] hover:shadow-[1px_1px_0_0_#111827] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
-                                    }`}
-                                >
-                                  {revealedCoupons[coupon._id] ? coupon.code : 'Show Code'}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => handleGetDeal(coupon, e)}
-                                  className="h-11 px-6 bg-[#143154] hover:bg-[#0c2038] text-white text-[12px] font-black uppercase tracking-[0.1em] rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:translate-y-0 whitespace-nowrap"
-                                >
-                                  Get Deal
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <CouponCard
+                      key={coupon._id}
+                      coupon={coupon}
+                      idx={idx}
+                      isRevealed={!!revealedCoupons[coupon._id]}
+                      onGetDeal={handleGetDeal}
+                    />
                   ))}
                 </div>
               )}
 
               {/* Long Description */}
               {initialStore.long_description && (
-                <div className="mt-16 bg-transparent">
+                <div className="mt-16 bg-transparent performance-optimized">
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-8">About {initialStore.name}</h2>
                   <SmartDescription text={decodeHTML(initialStore.long_description)} />
                 </div>

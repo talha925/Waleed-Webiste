@@ -230,13 +230,22 @@ body {
   *:focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.15);
   }
 
-  /* Smooth transitions for theme changes */
-  * {
-    transition-property: background-color, border-color, color, fill, stroke;
+  /* Specific focus styles for buttons and links */
+  a:focus-visible, 
+  button:focus-visible,
+  [role="button"]:focus-visible {
+    border-radius: 0.5rem;
+    outline: 2px solid hsl(var(--brand-primary));
+  }
+
+  /* Only transition interactive elements to save CPU/Performance */
+  a, button, input, select, textarea, [role="button"], .transition-base {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, transform;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition-duration: 200ms;
   }
 
   /* CLS Prevention Optimizations */
@@ -767,4 +776,86 @@ html {
     width: 2.5rem;
     height: 2.5rem;
   }
+}
+
+/* =========================================
+   STORE COUPON STYLES
+   ========================================= */
+@keyframes scaleUp { from { transform: scale(0.92) translate3d(0, 10px, 0); opacity: 0; } to { transform: scale(1) translate3d(0, 0, 0); opacity: 1; } }
+@keyframes slideUp { from { transform: translate3d(0, 20px, 0); opacity: 0; } to { transform: translate3d(0, 0, 0); opacity: 1; } }
+
+.animate-slide-up { animation: slideUp .5s ease both; }
+
+.mesh-gradient {
+  background: linear-gradient(135deg, #143154 0%, #0F172A 50%, #143154 100%) !important;
+  will-change: background;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  background: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+  background-size: 40px 40px;
+  transform: translateZ(0);
+}
+
+.hero-glow { 
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.05), transparent 70%); 
+  transform: translateZ(0); 
+}
+
+.ticket-notch {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background: #f8fafc; /* Matches global body background */
+  border-radius: 50%;
+  z-index: 40;
+  box-shadow: 
+    inset 0 4px 8px rgba(0,0,0,0.1), 
+    inset 0 1px 2px rgba(0,0,0,0.1),
+    0 1px 0 rgba(255,255,255,0.9); /* Bottom highlight for depth */
+  border: 1px solid #e2e8f0;
+  transform: translate3d(-50%, -50%, 0);
+}
+
+.coupon-card {
+  background: linear-gradient(to bottom right, #ffffff, #fcfdfe);
+  border: 1px solid #e2e8f0;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.04), 
+    0 4px 6px -2px rgba(0, 0, 0, 0.02),
+    0 0 0 1px rgba(0,0,0,0.02);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.coupon-card:hover {
+  box-shadow: 
+    0 15px 30px -10px rgba(20, 49, 84, 0.1),
+    0 8px 15px -5px rgba(20, 49, 84, 0.05);
+  transform: translate3d(0, -4px, 0);
+  border-color: hsl(var(--brand-primary) / 0.2);
+}
+
+.coupon-card:hover .accent-strip {
+  opacity: 1;
+  height: 100%;
+}
+
+.accent-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: hsl(var(--brand-primary));
+  opacity: 0;
+  height: 0;
+  transition: height 0.4s ease, opacity 0.4s ease;
+  border-radius: 0 4px 4px 0;
+  will-change: height, opacity;
 }

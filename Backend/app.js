@@ -15,6 +15,10 @@ try {
 
 const express = require('express');
 const dotenv = require('dotenv');
+
+// Load environment variables BEFORE requiring any other modules
+dotenv.config();
+
 const { validateEnv, getConfig } = require('./config/env');
 const { getTenantConnection, closeAllConnections, warmupConnection } = require('./config/db');
 const helmet = require('helmet');
@@ -27,11 +31,9 @@ const { createFirstSuperAdmin } = require('./middlewares/authMiddleware');
 const redisConfig = require('./config/redis');
 const cacheService = require('./services/cacheService');
 const { initializeWebSocketServer, shutdownWebSocketServer } = require('./lib/websocket-server');
+const { preWarmCache } = require('./services/warmupService');
 
-// Load environment variables
-dotenv.config();
-
-// Validate environment variables
+// Validate environment variables (dotenv.config() already called above)
 if (!validateEnv()) {
     console.error('⚠️ Environment validation failed. Application might not function correctly.');
 }
@@ -72,21 +74,33 @@ async function initializeServices() {
         const uniqueBrands = new Map();
         brandsToWarm.forEach(b => { if (!uniqueBrands.has(b.brandId)) uniqueBrands.set(b.brandId, b); });
 
+        const { getTenantModels } = require('./models/TenantModels');
         for (const [brandId, brand] of uniqueBrands) {
-            await warmupConnection(brandId, brand.mongoUri);
+            try {
+                // Use getTenantConnection to ensure we have a valid connection object
+                const connection = await getTenantConnection(brandId, brand.mongoUri);
+                
+                // 3. 🔥 PRE-WARM CACHE: Fetch critical data into Redis/Memory
+                const models = { ...getTenantModels(connection), brandId };
+                preWarmCache(models).catch(err => console.error(`Cache warm-up error for ${brandId}:`, err));
+            } catch (err) {
+                console.error(`⚠️ Database warmup failed for ${brandId}:`, err.message);
+            }
         }
 
         // 🔥 Pre-warm Central Connection
         const { getCentralConnection } = require('./config/db');
         await getCentralConnection();
 
-        console.log('✅ Database connections pre-warmed');
+        console.log('✅ Base services & Cache pre-warmed');
     } catch (error) {
         console.error('❌ Service initialization error:', error);
     }
 }
 
-initializeServices();
+// Initialize services in background to prevent blocking app startup
+// 🚨 CRITICAL: We don't 'await' this so the server starts listening immediately.
+initializeServices().catch(err => console.error('Background init failure:', err));
 
 // Note: createFirstSuperAdmin() removed from global startup
 // as it requires a specific tenant DB connection.

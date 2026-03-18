@@ -11,18 +11,22 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
+    const json = await request.json();
     const {
       type,
       path,
       tag,
       blogId,
       identifier, // Used by backend services
-      storeSlug,
+      storeSlug: bodyStoreSlug,
       couponId,
       categorySlug,
       secret,
-      source = 'api'
-    } = await request.json();
+      source = 'api',
+      oldCategorySlug
+    } = json;
+
+    const storeSlug = bodyStoreSlug || (type === 'store' || type === 'stores' ? identifier : null);
 
     // Verify secret token for security
     // Support secret in body (legacy) OR Authorization header (preferred)
@@ -35,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 });
     }
 
-    console.log(`[Revalidation] Triggering ${type} revalidation for:`, { path, tag, blogId, storeSlug });
+    console.log(`[Revalidation] Triggering ${type} revalidation for:`, { path, tag, identifier, categorySlug, oldCategorySlug });
 
     switch (type) {
       case 'path':
@@ -61,24 +65,44 @@ export async function POST(request: NextRequest) {
         });
 
       case 'blog':
-        // Revalidate blog-related pages and tags
-        // CRITICAL: Use dynamic route pattern to invalidate ALL blog detail pages
-        revalidatePath('/blog/[id]', 'page');
+        // Comprehensive blog revalidation
+        revalidatePath('/', 'layout'); // Nuclear option: clear everything to be sure
         revalidatePath('/blog');
-        revalidatePath('/');
+        revalidatePath('/blog/[id]', 'page');
+        
         revalidateTag('blogs');
+        revalidateTag('home-blogs');
+        revalidateTag('banner-blogs');
+        revalidateTag('recent-blogs');
         revalidateTag('featured-blogs');
-        if (blogId) {
-          revalidatePath(`/blog/${blogId}`);
-          revalidateTag(`blog-${blogId}`);
+        revalidateTag('category-'); // Main blog listing
+        
+        const bId = blogId || identifier;
+        if (bId) {
+          revalidatePath(`/blog/${bId}`);
+          revalidateTag(`blog-${bId}`);
         }
+
+        const currentCategorySlug = categorySlug;
+
+        if (currentCategorySlug) {
+          revalidateTag(`category-${currentCategorySlug}`);
+          revalidatePath(`/blog/category/${currentCategorySlug}`, 'page');
+        }
+        
+        if (oldCategorySlug && oldCategorySlug !== currentCategorySlug) {
+          revalidateTag(`category-${oldCategorySlug}`);
+          revalidatePath(`/blog/category/${oldCategorySlug}`, 'page');
+        }
+
         return NextResponse.json({
-          message: 'Revalidated blog pages',
+          message: 'Revalidated all blog-related pages',
           source,
           timestamp: new Date().toISOString()
         });
 
 
+      case 'store':
       case 'stores':
         // Revalidate stores-related pages and tags
         revalidatePath('/stores');

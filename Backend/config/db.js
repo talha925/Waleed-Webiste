@@ -7,9 +7,10 @@ const tenantConnections = {};
 let centralConnection = null;
 
 const mongoOptions = {
-  maxPoolSize: 10,
+  maxPoolSize: 20,
   serverSelectionTimeoutMS: 60000,
   socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
   heartbeatFrequencyMS: 10000,
   family: 4,
 };

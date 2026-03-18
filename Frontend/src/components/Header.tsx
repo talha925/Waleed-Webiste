@@ -21,39 +21,25 @@ interface HeaderProps {
   categories?: any[];
 }
 
-export default function Header({ categories = [] }: HeaderProps) {
+export default function Header() {
   const { user, isAuthenticated, logout, isLoading } = useUnifiedAuth();
-  const { state } = useApp();
   const brand = useBrand();
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Fallback Static Categories if none provided
-  const STATIC_CATEGORIES = categories.length > 0 ? categories : [
-    { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty' },
-    { _id: '2', name: 'Home and Tech', slug: 'home-and-tech' },
-    { _id: '3', name: 'Lifestyle', slug: 'lifestyle' },
-    { _id: '4', name: 'Sports and Fitness', slug: 'sports-and-fitness' },
-    { _id: '5', name: 'Travel', slug: 'travel' },
-  ];
-
-  // Static nav items
-  const homeItem = ['Home', '/'];
-  const blogItem = ['Blogs', '/blog'];
-
-  // Categories come after Home
-  const categoriesItems = STATIC_CATEGORIES.map(category => [
-    category.name,
-    `/blog/category/${category.slug}`
-  ]);
-
-  // Combine: Home -> Categories -> Blog
+  // 🏛️ Hardcoded Static Categories (Senior Dev Choice: Reliability & Speed)
   const navItems = [
-    homeItem,
-    ...categoriesItems,
-    blogItem
+    ['Home', '/'],
+    ['Health and Beauty', '/blog/category/health-and-beauty'],
+    ['Home and Tech', '/blog/category/home-and-tech'],
+    ['Lifestyle', '/blog/category/lifestyle'],
+    ['Sports and Fitness', '/blog/category/sports-and-fitness'],
+    ['Travel', '/blog/category/travel'],
+    ['Blogs', '/blog'],
   ];
+
+  const categoriesItems = navItems.slice(1, -1); // Extract only the categories for the middle group
 
   // Prevent hydration mismatch by only showing dynamic content after hydration
   useEffect(() => {

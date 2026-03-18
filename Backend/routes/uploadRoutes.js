@@ -33,9 +33,18 @@ router.post('/', upload.single('image'), async (req, res) => {
       .replace(/\s+/g, '_')
       .replace(/[^a-zA-Z0-9_.-]/g, '');
 
-    const fileKey = `${Date.now()}-${uuidv4()}-${sanitizedOriginalName}`;
+    // Allow frontend to specify a folder (e.g., 'blogs', 'stores')
+    let folder = 'uncategorized';
+    if (req.body.folder && typeof req.body.folder === 'string') {
+      folder = req.body.folder.trim().replace(/\/+$/, ''); // Remove trailing slashes
+    }
+    
+    if (!folder) folder = 'uncategorized';
 
-    console.log('Generated File Key:', fileKey);
+    // 🚨 ROOT FIX: Ensure folder structure is ALWAYS maintained
+    const fileKey = `${folder}/${Date.now()}-${uuidv4()}-${sanitizedOriginalName}`;
+
+    console.log(`[Upload] Processing request... Folder: [${folder}], Key: [${fileKey}]`);
 
     const bucketName = req.brand?.bucketName || process.env.AWS_BUCKET_NAME;
 
@@ -48,7 +57,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     };
 
     console.log(`Uploading to S3 Bucket [${bucketName}] with params:`, uploadParams);
-    
+
     try {
       const command = new PutObjectCommand(uploadParams);
       await s3.send(command);

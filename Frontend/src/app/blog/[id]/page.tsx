@@ -52,51 +52,9 @@ function decodeRecursively(text: string): string {
 
 
 import { getBrandConfig } from '@config/index';
+import { fetchBlogDetailServer, fetchRecentBlogsServer } from '@/lib/serverData';
 
-async function fetchBlogBySlugOrId(slugOrId: string): Promise<Blog | null> {
-  const FETCH_TIMEOUT = 10000;
-  try {
-    const brand = getBrandConfig();
-    console.log(`[Blog Fetch] Fetching blog details for: ${slugOrId} (Brand: ${brand.brandId})`);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    try {
-      // Step 1: Direct Fetch! The backend now natively supports finding by Slug or ID.
-      // This eliminates downloading 1000 blogs just to find the ID.
-      const detailRes = await fetch(`${brand.apiBaseUrl}/api/blogs/${slugOrId}`, {
-        headers: {
-          'x-brand-id': brand.brandId
-        },
-        next: {
-          revalidate: 60,
-          tags: [`blog-${slugOrId}`]
-        },
-        signal: controller.signal
-      });
-
-      if (!detailRes.ok) {
-        if (detailRes.status === 404) return null;
-        throw new Error(`Failed to fetch details: ${detailRes.status}`);
-      }
-
-      const detailData = await detailRes.json();
-      const fullBlog = detailData.blog || detailData.data?.blog || detailData.data;
-
-      return fullBlog || null;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  } catch (error) {
-    console.error('[Blog Fetch] Error:', error);
-    return null;
-  }
-}
-
-
-
-// The parser now uses the new recursive decoder
+// --- Main Page Component ---
 function customParser(html: string) {
   // First, fully clean the double (or triple) encoded HTML string
   const decodedHtml = decodeRecursively(html);
@@ -121,7 +79,7 @@ function customParser(html: string) {
 
 // Generate metadata - no changes needed here
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const blog = await fetchBlogBySlugOrId(params.id);
+  const { data: blog } = await fetchBlogDetailServer(params.id);
   if (!blog) return { title: 'Blog Not Found' };
   return {
     title: blog.meta?.title || blog.title,
@@ -132,7 +90,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 // --- Main Page Component ---
 export default async function BlogDetailPage({ params }: { params: { id: string } }) {
-  const blog = await fetchBlogBySlugOrId(params.id);
+  const [{ data: blog }, { data: recentBlogs }] = await Promise.all([
+    fetchBlogDetailServer(params.id),
+    fetchRecentBlogsServer(5, params.id)
+  ]);
 
   if (!blog) {
     return (
@@ -277,7 +238,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
           {/* Right Sidebar - Recent Blogs */}
           <aside className="hidden lg:block">
             <div className="sticky-sidebar">
-              <RecentBlogs currentBlogId={blog._id} limit={5} />
+              <RecentBlogs currentBlogId={blog._id} limit={5} initialBlogs={recentBlogs} />
             </div>
           </aside>
         </div>

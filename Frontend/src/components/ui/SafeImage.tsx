@@ -45,84 +45,38 @@ const SafeImage: React.FC<SafeImageProps> = ({
   unoptimized,
   ...props
 }) => {
-  const [imgSrc, setImgSrc] = useState(src);
-  const [hasError, setHasError] = useState(false);
+  const [hasError, setHasError] = React.useState(false);
 
-  // Synchronize internal state when src prop changes
-  React.useEffect(() => {
-    setImgSrc(src);
-    setHasError(false);
-  }, [src]);
-
-  /**
-   * Properly encode URL for AWS S3 images
-   * Handles special characters like spaces, parentheses, etc.
-   */
-  const encodeImageUrl = (url: string): string => {
-    if (!url) return fallbackSrc;
-
-    try {
-      // Check if it's an AWS S3 URL
-      if (url.includes('amazonaws.com')) {
-        // Split the URL to get the base and the file path
-        const urlParts = url.split('/');
-        if (urlParts.length > 3) {
-          // Get the base URL (protocol + domain)
-          const baseUrl = urlParts.slice(0, 3).join('/');
-          // Get the file path and encode it properly
-          const filePath = urlParts.slice(3).join('/');
-
-          // Encode the file path while preserving forward slashes, but ONLY if not already encoded
-          const encodedPath = filePath
-            .split('/')
-            .map(segment => {
-              // Robust check: try to decode. If it changes, it was encoded.
-              try {
-                const decoded = decodeURIComponent(segment);
-                if (decoded !== segment) return segment;
-              } catch (e) { }
-              return encodeURIComponent(segment);
-            })
-            .join('/');
-
-          return `${baseUrl}/${encodedPath}`;
-        }
-      }
-
-      // For other URLs, return as is
-      return url;
-    } catch (error) {
-      console.warn('Error encoding image URL:', error);
-      return fallbackSrc;
-    }
-  };
-
-  const handleError = () => {
-    if (!hasError) {
-      setHasError(true);
-      setImgSrc(fallbackSrc);
-      onError?.();
-    }
-  };
-
-  const handleLoad = () => {
-    setHasError(false);
-    onLoad?.();
-  };
-
-  // Decode potentially already encoded URL to avoid double-encoding by Next.js Image component
+  // Derive the clean source for the current render cycle
+  // This prevents hydration flickering compared to using useEffect
   const getCleanSrc = (url: string): string => {
-    if (!url) return '';
+    if (!url) return fallbackSrc;
+    if (hasError) return fallbackSrc;
+
     try {
       // Decode the URL. If it was already encoded (like %20 for space), this makes it a raw space.
-      // Next.js Image component will then encode it exactly once.
+      // Next.js Image component will then encode it exactly once consistently on server/client.
       return decodeURIComponent(url);
     } catch (e) {
       return url;
     }
   };
 
-  const cleanSrc = getCleanSrc(imgSrc);
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      onError?.();
+    }
+  };
+
+  const handleLoad = () => {
+    // We don't Reset hasError here to avoid loops if fallback also fails
+    onLoad?.();
+  };
+
+  const cleanSrc = getCleanSrc(src);
+
+  if (!cleanSrc && !fill) return null;
 
   return (
     <Image

@@ -8,6 +8,8 @@ interface BlogCardProps {
     title: string;
     slug: string; // Required for consistent routing
     shortDescription?: string;
+    isFeaturedForHome?: boolean;
+    status?: string;
     image?: {
       url: string;
       alt?: string;
@@ -22,11 +24,13 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
       <div className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.03] shadow-xl hover:shadow-2xl hover:border-primary/60 cursor-pointer">
         {blog.image?.url && (
           <div className="relative h-48 overflow-hidden">
-            <div className="absolute top-3 left-3 z-10">
-              <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white bg-gradient-vibrant shadow-lg rounded-full">
-                Featured
-              </span>
-            </div>
+            {(blog.isFeaturedForHome || (blog as any).isFeatured) && (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white bg-gradient-vibrant shadow-lg rounded-full">
+                  Featured
+                </span>
+              </div>
+            )}
             <SafeImage
               src={blog.image.url}
               alt={blog.image.alt || blog.title}

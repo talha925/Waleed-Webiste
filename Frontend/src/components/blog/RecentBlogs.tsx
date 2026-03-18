@@ -18,14 +18,18 @@ interface Blog {
 interface RecentBlogsProps {
   currentBlogId?: string;
   limit?: number;
+  initialBlogs?: Blog[];
 }
 
-export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsProps) {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function RecentBlogs({ currentBlogId, limit = 5, initialBlogs = [] }: RecentBlogsProps) {
+  const [blogs, setBlogs] = useState<Blog[]>(initialBlogs);
+  const [loading, setLoading] = useState(initialBlogs.length === 0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 🚀 Optimization: If we have pre-fetched data, don't fetch on the client
+    if (initialBlogs.length > 0) return;
+
     const fetchRecentBlogs = async () => {
       try {
         setLoading(true);
@@ -43,7 +47,7 @@ export default function RecentBlogs({ currentBlogId, limit = 5 }: RecentBlogsPro
     };
 
     fetchRecentBlogs();
-  }, [currentBlogId, limit]);
+  }, [currentBlogId, limit, initialBlogs]);
 
   const getAuthorName = (author: string | { name: string; _id: string }): string => {
     if (typeof author === 'string') {

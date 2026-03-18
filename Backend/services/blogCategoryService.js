@@ -2,21 +2,43 @@ const AppError = require('../errors/AppError');
 const cacheService = require('./cacheService');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
+// 🚀 L1 CACHE: In-memory cache to bypass Redis/DB for common lookups
+const L1_CACHE = new Map();
+const L1_TTL = 60000; // 60 seconds
+
 exports.findAll = async (models, queryParams = {}) => {
     const { BlogCategory, brandId } = models;
     try {
         const { page = 1, limit = 20, sort = 'name' } = queryParams;
 
         const cacheKey = cacheService.generateKey('blog_categories', { ...queryParams, brandId });
-        const cached = await cacheService.get(cacheKey);
-        if (cached) return cached;
 
-        const total = await BlogCategory.estimatedDocumentCount();
-        const categories = await BlogCategory.find()
-            .sort(sort)
-            .skip((parseInt(page) - 1) * parseInt(limit))
-            .limit(parseInt(limit))
-            .lean();
+        // 1. Check L1 Cache (Memory)
+        const now = Date.now();
+        if (L1_CACHE.has(cacheKey)) {
+            const entry = L1_CACHE.get(cacheKey);
+            if (now < entry.expiry) return entry.data;
+        }
+
+        // 2. Check L2 Cache (Redis)
+        const cached = await cacheService.get(cacheKey);
+        if (cached) {
+            L1_CACHE.set(cacheKey, { data: cached, expiry: now + L1_TTL });
+            return cached;
+        }
+
+        const isFilterEmpty = Object.keys(queryParams).length === 0;
+
+        // Parallelize Count and Data Fetch
+        const [total, categories] = await Promise.all([
+            isFilterEmpty ? BlogCategory.estimatedDocumentCount() : BlogCategory.countDocuments({}),
+            BlogCategory.find()
+                .sort(sort)
+                .select('name slug')
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .limit(parseInt(limit))
+                .lean()
+        ]);
 
         const result = {
             categories,

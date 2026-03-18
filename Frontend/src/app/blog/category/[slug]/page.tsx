@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import BlogList from '@/components/blog/BlogList';
-import { useBlogCategories } from '@/hooks/useBlogCategories';
 import { getBrandConfig } from '@config/index';
+import { fetchBlogCategoriesServer, fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export const dynamicParams = true; // allow dynamic routes even if not in generateStaticParams
 
@@ -15,42 +15,13 @@ interface CategoryPageProps {
 }
 
 // Function to get category by slug
-async function getCategoryBySlug(slug: string) {
-  try {
-    const brand = getBrandConfig();
-    const baseUrl = brand.apiBaseUrl;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    const response = await fetch(`${baseUrl}/api/blog-categories`, {
-      next: { revalidate: 300 }, // Cache for 5 minutes
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch categories');
-    }
-
-    const parsedData = await response.json();
-    const categories = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
-      Array.isArray(parsedData.data) ? parsedData.data :
-        Array.isArray(parsedData.categories) ? parsedData.categories :
-          Array.isArray(parsedData) ? parsedData : [];
-
-    return categories.find((category: any) => category.slug === slug);
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    return null;
-  }
-}
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const brand = getBrandConfig();
-  const category = await getCategoryBySlug(params.slug);
+  const { data: categories } = await fetchBlogCategoriesServer();
+  const category = categories.find((cat: any) => cat.slug === params.slug);
 
   if (!category) {
     return {
@@ -134,60 +105,34 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-// Generate static params for known categories (optional, for better performance)
+// Generate static params for known categories
 export async function generateStaticParams() {
-  try {
-    const brand = getBrandConfig();
-    const baseUrl = brand.apiBaseUrl;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    const response = await fetch(`${baseUrl}/api/blog-categories`, {
-      next: { revalidate: 3600 }, // Cache for 1 hour
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const parsedData = await response.json();
-    const categories = Array.isArray(parsedData.data?.categories) ? parsedData.data.categories :
-      Array.isArray(parsedData.data) ? parsedData.data :
-        Array.isArray(parsedData.categories) ? parsedData.categories :
-          Array.isArray(parsedData) ? parsedData : [];
-
-    return categories.map((category: any) => ({
-      slug: category.slug,
-    }));
-  } catch (error) {
-    console.error('Error generating static params:', error);
-    return [];
-  }
+  const { data: categories } = await fetchBlogCategoriesServer();
+  return categories.map((cat: any) => ({ slug: cat.slug }));
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const category = await getCategoryBySlug(params.slug);
+  const [ { data: categories }, { data: blogs } ] = await Promise.all([
+    fetchBlogCategoriesServer(),
+    fetchBlogsByCategoryServer(params.slug)
+  ]);
+
+  const category = categories.find((cat: any) => cat.slug === params.slug);
 
   if (!category) {
-    // Redirect to main blog page instead of showing not found
     redirect('/blog');
   }
 
-  // Construct API endpoint for fetching blogs by category
+  // API endpoint for client-side pagination
   const apiEndpoint = `/api/blogs?category=${encodeURIComponent(category.slug)}`;
 
   return (
     <BlogList
       apiEndpoint={apiEndpoint}
-      title={`${category.name} Posts`}
-      description={`Discover all blog posts in the ${category.name} category`}
+      title={`${category.name}`}
+      description={`Insights and stories about ${category.name}`}
       showCreateButton={false}
-      emptyStateMessage={`No ${category.name} Posts Yet`}
-      emptyStateDescription={`There are no blog posts in the ${category.name} category at the moment. Check back later for new content!`}
+      initialPosts={blogs}
     />
   );
 }

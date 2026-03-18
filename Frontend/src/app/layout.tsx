@@ -13,6 +13,7 @@ import config from '@/lib/config'
 import { getBrandConfig } from '@config/index'
 import { fetchBlogCategoriesServer } from '@/lib/serverData'
 import React from 'react'
+import Script from 'next/script'
 
 // Dynamically import WebSocket components for real-time functionality
 const RealTimeUpdates = dynamic(
@@ -103,30 +104,15 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Server-side cookie reading for SSR hydration
-  const cookieStore = cookies()
-  const initialToken = cookieStore.get('authToken')?.value ?? null
+  // Removed SSR cookie reading to enable full static optimization (ISR) and fix slow TTFB.
+  // The app will gracefully authenticate on the client-side via AuthService using localStorage.
+  const initialToken = null;
 
   // Resolve brand config for this request
   const brand = getBrandConfig();
   
-  // Fetch dynamic categories for the header
-  const fetchCategories = async () => {
-    try {
-      const { data } = await fetchBlogCategoriesServer();
-      return data;
-    } catch {
-      return [];
-    }
-  };
-  
-  // Note: Since this is RootLayout, we can't easily await here without making the whole layout blocking.
-  // We'll use the Suspense pattern or just accept that it will be blocking for the first byte.
-  // For now, let's keep it simple.
-  const categories = await fetchCategories();
-  
   // Build gtag inline script dynamically per brand
-  const gtagScript = `
+  const gtagInnerHtml = `
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
@@ -141,11 +127,6 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
-        {/* Dynamic Google tag (gtag.js) per brand */}
-        <script async src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}></script>
-        <script
-          dangerouslySetInnerHTML={{ __html: gtagScript }}
-        />
         {/* Inject brand theme colors as CSS custom properties */}
         <style
           dangerouslySetInnerHTML={{
@@ -167,17 +148,6 @@ export default async function RootLayout({
           href={brand.apiBaseUrl || config.api.baseUrl}
           crossOrigin="anonymous"
         />
-        {/* Preconnect to Google Fonts */}
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
         {/* Dynamic favicon */}
         <link rel="icon" href={brand.faviconPath} type="image/svg+xml" />
       </head>
@@ -185,20 +155,26 @@ export default async function RootLayout({
         <Providers initialToken={initialToken} brand={brand}>
           <ErrorBoundary>
             <div className="flex flex-col min-h-screen">
-              <React.Suspense fallback={<div className="h-20 bg-background-elevated" />}>
-                <Header categories={categories} />
-              </React.Suspense>
+              <Header />
               <main className="flex-grow">
                 {children}
               </main>
               <React.Suspense fallback={null}>
                 <ConditionalFooter />
               </React.Suspense>
-              {/* Performance monitoring is available in admin dashboard only */}
               {/* Real-time updates notifications */}
               <RealTimeUpdates />
               <SpeedInsights />
               <Analytics />
+              
+              {/* Load Scripts after interactive */}
+              <Script
+                src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
+                strategy="afterInteractive"
+              />
+              <Script id="google-analytics" strategy="afterInteractive">
+                {gtagInnerHtml}
+              </Script>
             </div>
           </ErrorBoundary>
         </Providers>
@@ -206,3 +182,5 @@ export default async function RootLayout({
     </html>
   )
 }
+
+

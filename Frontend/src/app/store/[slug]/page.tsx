@@ -6,8 +6,8 @@ import StoreClient from './StoreClient';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-// Enable Dynamic Rendering (Disable caching) to prevent stale/deleted stores from showing
-export const dynamic = 'force-dynamic';
+// Enable ISR with 1 hour revalidation safety net
+export const revalidate = 3600;
 
 interface StorePageProps {
   params: { slug: string };
@@ -16,8 +16,8 @@ interface StorePageProps {
 // Helper function to get store data directly from store-service
 // Wrapped in React cache() to deduplicate requests between generateMetadata and StorePage
 const getStorePromise = cache((slug: string) => {
-  // ALWAYS force fresh data to ensure deleted stores are removed immediately
-  return getStoreBySlug(slug, true);
+  // Use cached data for performance; revalidation is handled via API
+  return getStoreBySlug(slug, false);
 });
 
 import { getBrandConfig } from '@config/index';

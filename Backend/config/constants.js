@@ -11,13 +11,15 @@ module.exports = {
         API_BASE_PATH: '/api'
     },
 
-    // Performance Thresholds
+    // Performance Thresholds (Environment-aware)
+    // Dev mode: Next.js compilation adds 500-2000ms overhead, so relaxed thresholds
+    // Production: Strict thresholds for real performance monitoring
     PERFORMANCE: {
-        SLOW_QUERY_THRESHOLD: 100, // milliseconds
-        SLOW_REQUEST_THRESHOLD: 1000, // milliseconds
-        API_RESPONSE_TIME_THRESHOLD: 500, // milliseconds
-        DB_QUERY_TIME_THRESHOLD: 100, // milliseconds
-        CACHE_HIT_RATE_THRESHOLD: 0.8 // 80%
+        SLOW_QUERY_THRESHOLD: process.env.NODE_ENV === 'production' ? 100 : 500,
+        SLOW_REQUEST_THRESHOLD: process.env.NODE_ENV === 'production' ? 1000 : 3000,
+        API_RESPONSE_TIME_THRESHOLD: process.env.NODE_ENV === 'production' ? 500 : 2000,
+        DB_QUERY_TIME_THRESHOLD: process.env.NODE_ENV === 'production' ? 100 : 500,
+        CACHE_HIT_RATE_THRESHOLD: process.env.NODE_ENV === 'production' ? 0.8 : 0.5
     },
 
     // API Endpoints for Testing

@@ -78,7 +78,8 @@ const BlogCategorySchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    autoIndex: false
 });
 
 BlogCategorySchema.index({ slug: 1 }, { unique: true }); // Explicit slug index
@@ -109,11 +110,11 @@ BlogCategorySchema.pre('save', async function (next) {
 // 4. Store Schema
 const ALLOWED_HEADINGS = ['Promo Codes & Coupon', 'Coupons & Promo Codes', 'Voucher & Discount Codes'];
 const StoreSchema = new mongoose.Schema({
-    name: { type: String, required: true, index: 'text' },
+    name: { type: String, required: true },
     slug: { type: String },
     trackingUrl: { type: String, required: true },
-    short_description: { type: String, required: true, index: 'text' },
-    long_description: { type: String, required: true, index: 'text' },
+    short_description: { type: String, required: true },
+    long_description: { type: String, required: true },
     image: {
         url: { type: String, required: true },
         alt: { type: String, required: true },
@@ -145,13 +146,15 @@ const StoreSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    autoIndex: false
 });
 
 StoreSchema.index({ name: 'text', slug: 'text', short_description: 'text', long_description: 'text' });
 StoreSchema.index({ slug: 1 }, { unique: true }); // 🔥 CRITICAL: Fast lookup index
-StoreSchema.index({ language: 1 }); // 🔥 FIX: Slow filtering by language
-StoreSchema.index({ categories: 1 }); // 🔥 FIX: Slow filtering by category
+StoreSchema.index({ name: 1 }); // Regular index for regex search
+StoreSchema.index({ language: 1, createdAt: -1 }); // 🔥 Covers getStores query + sort
+StoreSchema.index({ categories: 1 }); // Category filtering
 StoreSchema.index({ language: 1, isTopStore: 1 });
 StoreSchema.index({ language: 1, isEditorsChoice: 1 });
 StoreSchema.index({ language: 1, categories: 1 });
@@ -210,14 +213,15 @@ const CouponSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    autoIndex: false
 });
 
-CouponSchema.index({ store: 1, isValid: 1, order: 1, createdAt: -1 }); // Optimized for store-details population
-CouponSchema.index({ store: 1, isValid: 1, active: 1, order: 1 });
+// 🔥 COMPOUND INDEXES - Matched to exact query patterns in storeService.js
+CouponSchema.index({ store: 1, isValid: 1, active: 1, order: 1, createdAt: -1 }); // Covers store detail $or query + sort
+CouponSchema.index({ store: 1, isValid: 1, code: 1, order: 1, createdAt: -1 }); // Covers code $exists leg of $or
 CouponSchema.index({ store: 1, featuredForHome: 1 });
-CouponSchema.index({ store: 1, code: 1 }, { partialFilterExpression: { code: { $type: 'string' } } });
-CouponSchema.index({ store: 1, isValid: 1, active: 1 }); // Performance boost for common queries
+CouponSchema.index({ store: 1, order: 1, createdAt: -1 }); // General sort pattern
 CouponSchema.pre('validate', function (next) {
     if (!this.active && !this.code) return next(new Error("Either 'Code' or 'Active' must be provided"));
     next();
@@ -285,18 +289,22 @@ const BlogPostSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    autoIndex: false
 });
 
-// Blog Indexes
+// 🔥 Blog Indexes - Enterprise Grade (matched to exact query patterns)
 BlogPostSchema.index({ title: 'text', shortDescription: 'text' });
-BlogPostSchema.index({ status: 1, publishDate: -1 });
-BlogPostSchema.index({ isFeaturedForHome: 1, status: 1, publishDate: -1 });
-BlogPostSchema.index({ FrontBanner: 1, status: 1, publishDate: -1 });
-BlogPostSchema.index({ 'category.id': 1, status: 1, publishDate: -1 });
-BlogPostSchema.index({ 'store.id': 1, status: 1, publishDate: -1 });
-BlogPostSchema.index({ 'category.slug': 1, status: 1, publishDate: -1 }); // 🔥 FIX: Slow category slug queries
-BlogPostSchema.index({ slug: 1 }, { unique: true }); // Fast slug lookup index
+BlogPostSchema.index({ title: 1 }); // Regex search fallback
+BlogPostSchema.index({ slug: 1 }, { unique: true }); // Fast slug/detail lookup
+BlogPostSchema.index({ status: 1, publishDate: -1 }); // Default list query
+BlogPostSchema.index({ status: 1, createdAt: -1 }); // sort by createdAt
+BlogPostSchema.index({ isFeaturedForHome: 1, status: 1, publishDate: -1 }); // Homepage featured
+BlogPostSchema.index({ FrontBanner: 1, status: 1, publishDate: -1 }); // Homepage banner
+BlogPostSchema.index({ 'category.id': 1, status: 1, publishDate: -1 }); // Category by ObjectId
+BlogPostSchema.index({ 'category.slug': 1, status: 1, publishDate: -1 }); // Category by slug
+BlogPostSchema.index({ 'store.id': 1, status: 1, publishDate: -1 }); // Store filtering
+BlogPostSchema.index({ tags: 1, status: 1 }); // Tag filtering
 
 function safeHtml(input) {
     return sanitizeHtml(input, {
