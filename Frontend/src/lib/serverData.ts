@@ -47,13 +47,19 @@ export async function fetchBlogCategoriesServer() {
     const { getBrandConfig } = await import('@config/index');
     const brand = getBrandConfig();
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const response = await fetch(`${brand.apiBaseUrl}/api/blog-categories`, {
       headers: {
         'Content-Type': 'application/json',
         'x-brand-id': brand.brandId
       },
+      signal: controller.signal,
       next: { revalidate: 5 } // 🔥 Reduced from 600s to 5s for near-instant category updates
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) return { data: [], error: `HTTP ${response.status}` };
     const result = await response.json();
