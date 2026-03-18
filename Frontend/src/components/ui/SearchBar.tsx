@@ -120,15 +120,16 @@ const SearchBar = React.memo(function SearchBar({
   const handleResultClick = useCallback(() => {
     setIsOpen(false);
     setIsFocused(false);
+    clearSearch(); // 🚀 Clear input text when a result is clicked
     if (isMobile && onClose) {
       onClose();
     }
-  }, [isMobile, onClose]);
+  }, [isMobile, onClose, clearSearch]);
 
   const placeholderText = useMemo(() => {
     if (placeholder) return placeholder;
-    return 'Search blogs...';
-  }, [placeholder]);
+    return searchType === 'stores' ? 'Search stores...' : 'Search blogs...';
+  }, [placeholder, searchType]);
 
   const hasCurrentResults = useMemo(() => {
     if (searchType === 'stores') {

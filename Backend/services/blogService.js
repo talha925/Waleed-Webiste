@@ -6,7 +6,7 @@ const { deleteImageFromS3 } = require('../utils/s3Utils');
 
 // 🚀 L1 CACHE: Local memory cache for high-traffic lists
 const L1_CACHE = new Map();
-const L1_TTL = 5000; // 5 seconds (Reduced from 60s for faster updates)
+const L1_TTL = 60000; // 60 seconds (Professional Production standard)
 
 // ✅ Optimized helper for related posts
 exports.getRelatedPosts = async (models, categoryId, storeId, excludeId, limit = 5) => {

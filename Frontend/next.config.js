@@ -10,7 +10,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: process.env.NODE_ENV === 'production' ? 60 : 0, // Enable caching in production
+    minimumCacheTTL: process.env.NODE_ENV === 'production' ? 31536000 : 0, // 🚀 Standard: Cache for 1 year in production
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [

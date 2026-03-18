@@ -148,6 +148,10 @@ export default async function RootLayout({
           href={brand.apiBaseUrl || config.api.baseUrl}
           crossOrigin="anonymous"
         />
+        {/* 🚀 IMAGE ROOT OPTIMIZATION: Resolve DNS and Handshake for S3 bucket early */}
+        <link rel="preconnect" href={`https://${brand.imageDomain}`} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={`https://${brand.imageDomain}`} />
+        
         {/* Dynamic favicon */}
         <link rel="icon" href={brand.faviconPath} type="image/svg+xml" />
       </head>

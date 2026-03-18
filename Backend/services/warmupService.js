@@ -22,8 +22,16 @@ async function preWarmCache(models) {
         //    Frontend: GET /api/blog-categories (no params → key = 'all')
         await blogCategoryService.findAll(models, {});
 
-        // 2. Homepage Featured Blogs
-        //    Frontend: GET /api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9
+        // 2. Homepage Featured Blogs (Handpicked Stories)
+        // 🔥 CRITICAL: Must match the frontend's query exactly to avoid Cache MISS
+        // Frontend URL: GET /api/blogs?page=1&limit=9&isFeaturedForHome=true
+        await blogService.findAll(models, {
+            page: '1',
+            limit: '9',
+            isFeaturedForHome: 'true'
+        });
+
+        // 2b. Also warm up with sort if needed
         await blogService.findAll(models, {
             isFeaturedForHome: 'true',
             sort: '-createdAt',
@@ -46,12 +54,44 @@ async function preWarmCache(models) {
             status: 'published'
         });
 
-        // 5. Top Stores
-        //    Frontend: GET /api/stores?limit=50&page=1
-        await storeService.getStores(models, {
-            page: '1',
-            limit: '50'
-        });
+        // 6. 🔥 DYNAMIC VIP STORES (Ad Landing Pages / Top Stores)
+        // Root Fix: Warm up by database flags instead of hardcoding slugs.
+        // This ensures the top 50 most important stores are always in memory.
+        const Store = models.Store;
+        const vipStores = await Store.find({ 
+            $or: [
+                { isTopStore: true }, 
+                { isEditorsChoice: true }
+            ] 
+        })
+        .sort({ updatedAt: -1 })
+        .limit(50)
+        .select('slug')
+        .lean();
+
+        if (vipStores && vipStores.length > 0) {
+            console.log(`🚀 Warming up ${vipStores.length} VIP Stores...`);
+            for (const store of vipStores) {
+                try {
+                    await storeService.getStoreBySlug(models, store.slug);
+                } catch (e) {
+                    // Fail silently for individual stores
+                }
+            }
+        } else {
+            // Fallback: Warm up 20 most recent stores if no flags are set
+            const recentStores = await Store.find({ language: 'English' })
+                .sort({ createdAt: -1 })
+                .limit(20)
+                .select('slug')
+                .lean();
+            
+            for (const store of recentStores) {
+                try {
+                    await storeService.getStoreBySlug(models, store.slug);
+                } catch (e) {}
+            }
+        }
 
         console.log(`✅ Cache warmed up for [${brandId}]`);
     } catch (err) {

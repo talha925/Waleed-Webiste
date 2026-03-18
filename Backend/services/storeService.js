@@ -5,6 +5,10 @@ const { callWithCircuitBreaker, getCircuitBreakerStatus } = require('../lib/circ
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 const mongoose = require('mongoose');
 
+// 🚀 L1 CACHE: Local memory cache for VIP speed (60 seconds)
+const L1_CACHE = new Map();
+const L1_TTL = 60000;
+
 /**
  * Get stores with filtering, pagination, and sorting
  */
@@ -14,8 +18,19 @@ exports.getStores = async (models, queryParams) => {
         // Strip cache-busting params before generating cache key
         const { _ts, ...cacheParams } = queryParams;
         const cacheKey = cacheService.generateKey('store', { ...cacheParams, brandId });
+        
+        // 🚀 L1 CACHE: Instant list retrieval
+        const now = Date.now();
+        if (L1_CACHE.has(cacheKey)) {
+            const entry = L1_CACHE.get(cacheKey);
+            if (now < entry.expiry) return entry.data;
+        }
+
         const cachedData = await cacheService.get(cacheKey);
-        if (cachedData) return cachedData;
+        if (cachedData) {
+            L1_CACHE.set(cacheKey, { data: cachedData, expiry: now + L1_TTL });
+            return cachedData;
+        }
 
         const { page = 1, limit = 10, language = 'English', category, isTopStore, isEditorsChoice } = queryParams;
         const query = { language };
@@ -76,9 +91,6 @@ exports.getStores = async (models, queryParams) => {
         throw error;
     }
 };
-
-const L1_CACHE = new Map();
-const L1_TTL = 60000;
 
 exports.getStoreBySlug = async (models, slug) => {
     const { Store, brandId } = models;

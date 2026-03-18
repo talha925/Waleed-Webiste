@@ -37,7 +37,7 @@ const brandB: BrandConfig = {
     twitterImage: '/images/twitter-image.jpg',
 
     // ─── Analytics & Tracking ────────────────────────────────
-    gaId: process.env.NEXT_PUBLIC_GA_ID_BRAND_B || 'G-BLOGZENIX',
+    gaId: process.env.NEXT_PUBLIC_GA_ID_BRAND_B || 'G-RLGDEQM2Z9',
     gtagConversion: {
         sendTo: 'AW-XXXXXXXXXXX/XXXXXXXXXXXXXX',
         value: 1.0,
