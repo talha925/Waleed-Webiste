@@ -133,13 +133,24 @@ const BlogList: React.FC<BlogListProps> = ({
     fetchBlogPosts(nextPage, false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[400px] flex flex-col items-center justify-center py-12">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary shadow-lg"></div>
-        <p className={`mt-6 text-lg ${themeClasses.text.primary} font-medium`}>Loading blog posts...</p>
+  if (loading && initialPosts.length === 0) {
+    const skeletonGrid = (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 min-h-[400px]">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="animate-pulse bg-slate-50/50 rounded-[2.5rem] border border-slate-100 p-6 space-y-4">
+            <div className="bg-slate-200 h-48 rounded-2xl w-full" />
+            <div className="space-y-3">
+              <div className="bg-slate-200 h-4 rounded-full w-2/3" />
+              <div className="bg-slate-200 h-3 rounded-full w-full" />
+              <div className="bg-slate-200 h-3 rounded-full w-5/6" />
+            </div>
+          </div>
+        ))}
       </div>
     );
+
+    if (isEmbedded) return skeletonGrid;
+    return <div className="container mx-auto px-4 py-12">{skeletonGrid}</div>;
   }
 
   if (error) {

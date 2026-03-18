@@ -172,6 +172,7 @@ exports.findAll = async (models, queryParams = {}) => {
     };
 
     await cacheService.set(cacheKey, result, cacheService.defaultTTL.blogPost);
+    L1_CACHE.set(cacheKey, { data: result, expiry: now + L1_TTL });
     return result;
   } catch (error) {
     throw new AppError('Failed to fetch blog posts', 500);
