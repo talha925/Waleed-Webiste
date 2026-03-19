@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 
 export const dynamic = 'force-dynamic';
 

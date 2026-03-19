@@ -5,7 +5,7 @@ import HeroBanner from "@/components/ui/HeroBanner";
 import BlogList from "@/components/blog/BlogList";
 import config from '@/lib/config';
 import { themeClasses } from '@/lib/theme/utils';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 import { fetchHomeDataServer } from "@/lib/serverData";
 
 // ISR: revalidate the page every 60s. Build-time fetches fail gracefully (return []).

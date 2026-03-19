@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import BlogList from '@/components/blog/BlogList';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 import { fetchBlogCategoriesServer, fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export const dynamicParams = true; // allow dynamic routes even if not in generateStaticParams

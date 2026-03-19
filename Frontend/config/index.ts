@@ -11,7 +11,6 @@
  *   4. Done — no component changes required
  */
 
-import { headers } from 'next/headers';
 import type { BrandConfig } from './types';
 import brandA from './brandA';
 import brandB from './brandB';
@@ -27,50 +26,8 @@ const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
 ];
 
 /**
- * Resolve the brand config for the current request.
- * Works on the **server side** only (reads Next.js request headers).
- *
- * Usage in Server Components / `generateMetadata`:
- *   const brand = getBrandConfig();
- */
-export function getBrandConfig(): BrandConfig {
-    // 1. Build-Time / Environment Variable Check (Best for Vercel Static Generation)
-    // If this env var is set, we return that brand immediately.
-    if (process.env.NEXT_PUBLIC_APP_BRAND_ID) {
-        for (const entry of DOMAIN_MAP) {
-            if (entry.config.brandId === process.env.NEXT_PUBLIC_APP_BRAND_ID) {
-                return entry.config;
-            }
-        }
-    }
-
-    // 2. Runtime Header Check (Fallback for specialized multi-tenant setups)
-    try {
-        const headersList = headers();
-        const host = (headersList.get('host') || headersList.get('x-forwarded-host') || '').toLowerCase();
-
-        for (const entry of DOMAIN_MAP) {
-            // Strict match or ends with (for www etc)
-            if (host === entry.match || host.endsWith(`.${entry.match}`)) {
-                return entry.config;
-            }
-            // Logic for Vercel preview/branch domains (e.g. blogzenix-frontend.vercel.app)
-            if (host.includes(entry.config.brandId) && host.includes('vercel.app')) {
-                return entry.config;
-            }
-        }
-    } catch {
-        // headers() throws outside of a request context (e.g. build time)
-    }
-
-    // Fallback to first brand instead of throwing (better for build time and local dev)
-    console.warn(`[Brand Config] No match for host. Falling back to default: ${DOMAIN_MAP[0].config.brandId}`);
-    return DOMAIN_MAP[0].config;
-}
-
-/**
  * Resolve brand config from an arbitrary hostname string.
- * Useful in middleware, API routes, or anywhere you already have the host.
+ * This is safe to import on both client and server sides.
  */
 export function getBrandConfigByHost(host: string): BrandConfig {
     // Priority 1: Environment Variable Override (for Local Dev)

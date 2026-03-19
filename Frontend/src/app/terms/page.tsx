@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = getBrandConfig();

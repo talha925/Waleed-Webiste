@@ -51,7 +51,7 @@ function decodeRecursively(text: string): string {
 
 
 
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 import { fetchBlogDetailServer, fetchRecentBlogsServer } from '@/lib/serverData';
 
 // --- Main Page Component ---

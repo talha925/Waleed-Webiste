@@ -1,6 +1,6 @@
 import BlogList from '@/components/blog/BlogList';
 import { Metadata } from 'next';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 import { fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export async function generateMetadata(): Promise<Metadata> {

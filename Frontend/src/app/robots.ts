@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 
 export default function robots(): MetadataRoute.Robots {
     const brand = getBrandConfig();

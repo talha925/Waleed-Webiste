@@ -37,11 +37,12 @@ class HttpClient implements IHttpClient {
     } else {
       // Server-side detection
       try {
-        const { getBrandConfig } = require('@config/index');
+        // Use a dynamic require to isolate server-only 'next/headers' usage
+        const { getBrandConfig } = require('@config/server-config');
         const brand = getBrandConfig();
         brandId = brand.brandId;
       } catch (e) {
-        // Fallback to default or env var
+        // Fallback if not in a request context
       }
     }
 

@@ -20,7 +20,7 @@ const getStorePromise = cache((slug: string) => {
   return getStoreBySlug(slug, false);
 });
 
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 
 // ... imports
 

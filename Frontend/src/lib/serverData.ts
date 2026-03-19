@@ -19,7 +19,7 @@ export async function fetchStoresServer({ noCache = false }: { noCache?: boolean
 
 export async function fetchCategoriesServer() {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
     // Fetch directly from backend to avoid local proxy overhead
@@ -45,7 +45,7 @@ export async function fetchCategoriesServer() {
 
 export async function fetchBlogCategoriesServer() {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
     const controller = new AbortController();
@@ -78,7 +78,7 @@ export async function fetchBlogCategoriesServer() {
  */
 export async function fetchHomeDataServer() {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
     
     // Parallel fetch for speed
@@ -109,7 +109,7 @@ export async function fetchHomeDataServer() {
  */
 export async function fetchBlogDetailServer(slugOrId: string) {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
     const response = await fetch(`${brand.apiBaseUrl}/api/blogs/${slugOrId}`, {
@@ -132,7 +132,7 @@ export async function fetchBlogDetailServer(slugOrId: string) {
  */
 export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
     const url = new URL(`${brand.apiBaseUrl}/api/blogs`);
@@ -159,7 +159,7 @@ export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
  */
 export async function fetchBlogsByCategoryServer(categorySlug: string, page = 1, limit = 9) {
   try {
-    const { getBrandConfig } = await import('@config/index');
+    const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
     const url = new URL(`${brand.apiBaseUrl}/api/blogs`);

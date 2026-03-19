@@ -7,7 +7,7 @@
 import { cookies } from 'next/headers';
 import config from './config';
 import { Store, Coupon } from './types/store';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '../../config/server-config';
 
 // Dev-only logging for debugging cache behavior
 const log = (msg: string) => {

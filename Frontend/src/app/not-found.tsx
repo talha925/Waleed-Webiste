@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getBrandConfig } from '@config/index';
+import { getBrandConfig } from '@config/server-config';
 
 export default function NotFound() {
   const brand = getBrandConfig();
