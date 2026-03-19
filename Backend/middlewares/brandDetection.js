@@ -57,11 +57,13 @@ async function brandDetection(req, res, next) {
             });
         }
 
-        const tenantConnection = await getTenantConnection(brand.brandId, uri);
-        const tenantModels = getTenantModels(tenantConnection);
+        // 2 & 3. Establish Connections in PARALLEL to reduce cold-start latency
+        const [tenantConnection, centralConnection] = await Promise.all([
+            getTenantConnection(brand.brandId, uri),
+            getCentralConnection()
+        ]);
 
-        // 3. Establish Central Connection Strictly
-        const centralConnection = await getCentralConnection();
+        const tenantModels = getTenantModels(tenantConnection);
         const centralModels = getCentralModels(centralConnection);
 
         // 4. Attach Unified Model Object to the request
