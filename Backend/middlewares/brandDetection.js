@@ -40,11 +40,21 @@ async function brandDetection(req, res, next) {
 
         // 2. Resolve Tenant Database Connection
         let uri = brand.mongoUri;
-        if (!uri) uri = process.env.MONGO_URI;
+        
+        // Root Fallback: If specific brand URI is missing, check major environment variables
+        if (!uri) {
+            uri = process.env.MONGO_URI || 
+                  process.env.BLOGZENIX_MONGO_URI || 
+                  process.env.PENNYSCROLL_MONGO_URI;
+        }
 
         if (!uri) {
-            console.error(`❌ NO MONGO_URI found for brand: ${brand.brandId}`);
-            return res.status(500).json({ error: `Database configuration missing for ${brand.brandId}. Please check Vercel settings.` });
+            const host = req.headers['host'] || 'unknown';
+            console.error(`❌ NO MONGO_URI found for brand: ${brand.brandId} (Host: ${host})`);
+            return res.status(500).json({ 
+                error: `Database configuration missing for ${brand.brandId}. Please check Vercel settings.`,
+                _debug: { detectedBrand: brand.brandId, host }
+            });
         }
 
         const tenantConnection = await getTenantConnection(brand.brandId, uri);

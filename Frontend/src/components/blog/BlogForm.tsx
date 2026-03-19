@@ -297,10 +297,16 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
         formData.append('folder', 'blogs');
         formData.append('image', imageFile);
 
+        const brandId = (httpClient as any).defaultHeaders?.['x-brand-id'] || 
+                       (typeof window !== 'undefined' && window.location.hostname.includes('blogzenix') ? 'blogzenix' : 'pennyscroll');
+
         const uploadResponse = await fetch(`${config.api.baseUrl}/api/upload`, {
           method: 'POST',
           body: formData,
-          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
+          headers: {
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            'x-brand-id': brandId
+          },
         });
 
         if (!uploadResponse.ok) {

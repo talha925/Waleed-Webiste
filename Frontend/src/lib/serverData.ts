@@ -10,9 +10,10 @@ export async function fetchStoresServer({ noCache = false }: { noCache?: boolean
 
     return { data: stores || [], error: null };
   } catch (error) {
-    console.error('Server-side stores fetch error:', error);
-    // CRITICAL: Throw error to prevent Next.js caching an empty list during cold starts
-    throw new Error('Failed to fetch stores. The backend may be warming up.');
+    console.error(`[ServerData] Fetch stores failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // CRITICAL: Throw error to prevent Next.js caching an empty list during cold starts or transient errors.
+    // We keep the message user-friendly for the Catch boundary/Client component.
+    throw new Error('Stores are currently unavailable. The backend may be starting up - please try reloading in a few seconds.');
   }
 }
 

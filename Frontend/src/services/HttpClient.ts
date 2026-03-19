@@ -26,13 +26,22 @@ class HttpClient implements IHttpClient {
     // Resolve brand ID dynamically
     let brandId = process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll';
     
-    // On client-side, we can try to resolve from hostname if possible
     if (typeof window !== 'undefined') {
+      // Client-side detection
       const host = window.location.hostname;
       if (host.includes('blogzenix.com') || host.includes('blogzenix-frontend.vercel.app')) {
         brandId = 'blogzenix';
       } else if (host.includes('pennyscroll.com') || host.includes('pennyscroll-frontend.vercel.app')) {
         brandId = 'pennyscroll';
+      }
+    } else {
+      // Server-side detection
+      try {
+        const { getBrandConfig } = require('@config/index');
+        const brand = getBrandConfig();
+        brandId = brand.brandId;
+      } catch (e) {
+        // Fallback to default or env var
       }
     }
 
