@@ -37,10 +37,10 @@ class HttpClient implements IHttpClient {
     } else {
       // Server-side detection
       try {
-        // Use a dynamic require to isolate server-only 'next/headers' usage
-        const { getBrandConfig } = require('@config/server-config');
-        const brand = getBrandConfig();
-        brandId = brand.brandId;
+        // HACK: Use eval('require') to bypass Next.js static analysis for client bundles.
+        // This ensures '@config/server-config' (using next/headers) is NOT pulled into the client.
+        const serverConfig = eval('require')('@config/server-config');
+        brandId = serverConfig.getBrandConfig().brandId;
       } catch (e) {
         // Fallback if not in a request context
       }
