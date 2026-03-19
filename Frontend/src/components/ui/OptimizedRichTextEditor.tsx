@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, lazy, memo, useState, useCallback } from 'react';
+import React, { Suspense, lazy, memo, useState, useCallback, useId } from 'react';
 import { LoadingSpinner } from '@/components/common/UnifiedComponents';
 
 // Dynamically import the optimized TinyMCE wrapper with better chunk splitting
@@ -122,8 +122,9 @@ const OptimizedRichTextEditor: React.FC<OptimizedRichTextEditorProps> = memo(({
     setEditorError(true);
   }, []);
 
-  // Generate unique ID if not provided
-  const editorId = id || `rich-text-editor-${Math.random().toString(36).substr(2, 9)}`;
+  // Generate unique ID using useId to ensure hydration stability
+  const reactId = useId();
+  const editorId = id || `rich-text-editor-${reactId}`;
 
   return (
     <div className="space-y-2">

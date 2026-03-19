@@ -37,10 +37,12 @@ class HttpClient implements IHttpClient {
     } else {
       // Server-side detection
       try {
-        // HACK: Use eval('require') to bypass Next.js static analysis for client bundles.
-        // This ensures '@config/server-config' (using next/headers) is NOT pulled into the client.
-        const serverConfig = eval('require')('@config/server-config');
-        brandId = serverConfig.getBrandConfig().brandId;
+        // Use process.env.NEXT_RUNTIME to hide server-only code from client bundles
+        // without using eval() which violates Content Security Policy (CSP).
+        if (process.env.NEXT_RUNTIME === 'nodejs') {
+          const { getBrandConfig } = require('@config/server-config');
+          brandId = getBrandConfig().brandId;
+        }
       } catch (e) {
         // Fallback if not in a request context
       }

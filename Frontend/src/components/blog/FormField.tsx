@@ -38,13 +38,14 @@ const FormField: React.FC<FormFieldProps> = ({
       return (
         <textarea
           id={id}
+          name={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          required={required}
-          maxLength={maxLength}
           rows={rows}
-          className={baseInputClasses}
+          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
+            error ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+          }`}
         />
       );
     }
@@ -52,13 +53,14 @@ const FormField: React.FC<FormFieldProps> = ({
     return (
       <input
         id={id}
+        name={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        required={required}
-        maxLength={maxLength}
-        className={baseInputClasses}
+        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
+          error ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
+        }`}
       />
     );
   };

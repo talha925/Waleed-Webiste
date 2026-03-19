@@ -578,6 +578,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                 </label>
                 <select
                   id="status"
+                  name="status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
@@ -625,6 +626,8 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                 Select an image file to upload. The image will be uploaded automatically when you submit the blog post.
               </div>
               <input
+                id="blogImageUpload"
+                name="blogImageUpload"
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
@@ -687,6 +690,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
                 <input
                   id="isFeatured"
+                  name="isFeatured"
                   type="checkbox"
                   checked={isFeatured}
                   onChange={(e) => setIsFeatured(e.target.checked)}
@@ -700,6 +704,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
                 <input
                   id="frontBanner"
+                  name="frontBanner"
                   type="checkbox"
                   checked={frontBanner}
                   onChange={(e) => setFrontBanner(e.target.checked)}

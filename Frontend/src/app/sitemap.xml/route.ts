@@ -13,7 +13,6 @@ export async function GET() {
   const staticPages = [
     '',
     '/blog',
-    '/stores',
     '/categories',
   ];
 

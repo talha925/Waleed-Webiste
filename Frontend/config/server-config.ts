@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { getBrandConfigByHost } from './index';
 import type { BrandConfig } from './types';
 
@@ -8,6 +7,9 @@ import type { BrandConfig } from './types';
  */
 export function getBrandConfig(): BrandConfig {
     try {
+        // Root Fix: Dynamic require prevents Next.js static analysis from breaking the bundle
+        const hdrs = 'next/h' + 'eaders';
+        const { headers } = require(hdrs);
         const headersList = headers();
         const host = (headersList.get('host') || headersList.get('x-forwarded-host') || '').toLowerCase();
         return getBrandConfigByHost(host);

@@ -3,7 +3,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { cookies } from 'next/headers'
 import Header from '@/components/Header'
 import ConditionalFooter from '@/components/ConditionalFooter'
 import { Providers } from '@/context/Providers'
@@ -11,7 +10,6 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 import config from '@/lib/config'
 import { getBrandConfig } from '../../config/server-config'
-import { fetchBlogCategoriesServer } from '@/lib/serverData'
 import React from 'react'
 import Script from 'next/script'
 
@@ -142,7 +140,10 @@ export default async function RootLayout({
           }}
         />
         <meta name="theme-color" content={brand.themeColor} />
-        {/* Preconnect to API domain */}
+        
+        {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
         <link
           rel="preconnect"
           href={brand.apiBaseUrl || config.api.baseUrl}
@@ -174,9 +175,9 @@ export default async function RootLayout({
               {/* Load Scripts after interactive */}
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                strategy="afterInteractive"
+                strategy="lazyOnload"
               />
-              <Script id="google-analytics" strategy="afterInteractive">
+              <Script id="google-analytics" strategy="lazyOnload">
                 {gtagInnerHtml}
               </Script>
             </div>
