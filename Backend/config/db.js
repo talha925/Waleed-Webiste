@@ -8,16 +8,26 @@ let centralConnection = null;
 
 const mongoOptions = {
   maxPoolSize: 20,
-  serverSelectionTimeoutMS: 60000,
+  serverSelectionTimeoutMS: 15000, // Reduced from 60s to 15s for better responsiveness
   socketTimeoutMS: 45000,
   connectTimeoutMS: 10000,
   heartbeatFrequencyMS: 10000,
   family: 4,
 };
 
+// Map of brandId -> Promise<Connection>
+const connectionPromises = {};
+// Central connection promise
+let centralConnectionPromise = null;
+
 const getCentralConnection = async () => {
-  if (centralConnection && (centralConnection.readyState === 1 || centralConnection.readyState === 2)) {
+  if (centralConnection && centralConnection.readyState === 1) {
     return centralConnection;
+  }
+
+  // If already connecting, return existing promise
+  if (centralConnectionPromise) {
+    return centralConnectionPromise;
   }
 
   const uri = process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI;
@@ -26,60 +36,77 @@ const getCentralConnection = async () => {
   }
 
   console.log('🔌 Connecting to Central Database...');
-  try {
-    centralConnection = mongoose.createConnection(uri, mongoOptions);
-    await centralConnection.asPromise();
-    console.log('✅ Central Database Connected.');
+  centralConnectionPromise = (async () => {
+    try {
+      centralConnection = mongoose.createConnection(uri, mongoOptions);
+      await centralConnection.asPromise();
+      console.log('✅ Central Database Connected.');
 
-    centralConnection.on('error', (err) => {
-      console.error('❌ Central MongoDB Error:', err.message);
-    });
+      centralConnection.on('error', (err) => {
+        console.error('❌ Central MongoDB Error:', err.message);
+        centralConnectionPromise = null; // Allow retry on fatal error
+      });
 
-    return centralConnection;
-  } catch (error) {
-    console.error('❌ Failed to connect to Central Database:', error.message);
-    throw error;
-  }
+      return centralConnection;
+    } catch (error) {
+      console.error('❌ Failed to connect to Central Database:', error.message);
+      centralConnectionPromise = null;
+      throw error;
+    }
+  })();
+
+  return centralConnectionPromise;
 };
 
 /**
  * Get or create a database connection for a specific tenant (brand)
+ * Uses a promise cache to prevent "Double Connection" races
  */
 const getTenantConnection = async (brandId, uri) => {
-  if (tenantConnections[brandId]) {
-    const conn = tenantConnections[brandId];
-    if (conn.readyState === 1 || conn.readyState === 2) {
-      return conn;
-    }
-    if (conn.readyState === 0) {
-      console.log(`ℹ️ Connection [${brandId}] is disconnected, awaiting auto-reconnect...`);
-    }
-    return conn;
+  // 1. If we have an active connection, return it immediately
+  if (tenantConnections[brandId] && tenantConnections[brandId].readyState === 1) {
+    return tenantConnections[brandId];
+  }
+
+  // 2. If we are currently connecting, wait for THAT specific promise
+  if (connectionPromises[brandId]) {
+    return connectionPromises[brandId];
   }
 
   console.log(`🔌 Creating new DB connection for brand: ${brandId}`);
+  
+  // 3. Create the connection promise
+  connectionPromises[brandId] = (async () => {
+    try {
+      const conn = mongoose.createConnection(uri, mongoOptions);
+      tenantConnections[brandId] = conn;
 
-  try {
-    const conn = mongoose.createConnection(uri, mongoOptions);
-    tenantConnections[brandId] = conn;
+      await Promise.race([
+        conn.asPromise(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`Database connection timed out (15s) for ${brandId}.`)), 15000))
+      ]);
 
-    await Promise.race([
-      conn.asPromise(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timed out (60s).')), 60000))
-    ]);
+      console.log(`✅ DB connected for [${brandId}]`);
 
-    console.log(`✅ DB connected for [${brandId}]`);
+      conn.on('error', (err) => {
+        console.error(`❌ MongoDB error for brand [${brandId}]:`, err.message);
+        // If connection dies, clear it so next request re-establishes
+        if (conn.readyState === 0) {
+          delete tenantConnections[brandId];
+          delete connectionPromises[brandId];
+        }
+      });
 
-    conn.on('error', (err) => {
-      console.error(`❌ MongoDB error for brand [${brandId}]:`, err.message);
-    });
+      return conn;
+    } catch (error) {
+      console.error(`❌ Failed to connect to DB for brand [${brandId}]:`, error.message);
+      delete tenantConnections[brandId];
+      delete connectionPromises[brandId];
+      throw error;
+    }
+  })();
 
-    return conn;
-  } catch (error) {
-    console.error(`❌ Failed to connect to DB for brand [${brandId}]:`, error.message);
-    delete tenantConnections[brandId];
-    throw error;
-  }
+  return connectionPromises[brandId];
 };
 
 const warmupConnection = async (brandId, uri) => {

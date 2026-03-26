@@ -70,14 +70,15 @@ async function preWarmCache(models) {
         .lean();
 
         if (vipStores && vipStores.length > 0) {
-            console.log(`🚀 Warming up ${vipStores.length} VIP Stores...`);
-            for (const store of vipStores) {
+            console.log(`🚀 Warming up ${vipStores.length} VIP Stores in parallel...`);
+            // Parallelize warmup with Promise.all
+            await Promise.all(vipStores.map(async (store) => {
                 try {
                     await storeService.getStoreBySlug(models, store.slug);
                 } catch (e) {
                     // Fail silently for individual stores
                 }
-            }
+            }));
         } else {
             // Fallback: Warm up 20 most recent stores if no flags are set
             const recentStores = await Store.find({ language: 'English' })
@@ -86,11 +87,11 @@ async function preWarmCache(models) {
                 .select('slug')
                 .lean();
             
-            for (const store of recentStores) {
+            await Promise.all(recentStores.map(async (store) => {
                 try {
                     await storeService.getStoreBySlug(models, store.slug);
                 } catch (e) {}
-            }
+            }));
         }
 
         console.log(`✅ Cache warmed up for [${brandId}]`);

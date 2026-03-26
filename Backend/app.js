@@ -1,16 +1,7 @@
 const dns = require('node:dns');
-// 🔥 ROOT FIX: Force IPv4 DNS resolution BEFORE anything else.
-// Without this, Node.js on Windows tries IPv6 first for MongoDB Atlas SRV records.
+// 🌐 NETWORK FIX: Force IPv4 DNS resolution for MongoDB Atlas SRV compatibility on Windows.
 if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
-}
-
-// 🌐 NETWORK FIX: Some ISP DNS servers fail on MongoDB SRV lookups.
-// Using Google DNS as a backup can solve 'querySrv ETIMEOUT' on Windows.
-try {
-    dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
-} catch (e) {
-    console.warn('⚠️ Could not set custom DNS servers, using system defaults.');
 }
 
 const express = require('express');
@@ -54,6 +45,10 @@ const monitoringRoutes = require('./routes/monitoringRoutes');
 // Create Express app
 const app = express();
 
+// 🔥 PROXY FIX: Trust reverse proxies (Vercel, Cloudflare, etc.)
+// This is required for express-rate-limit to work correctly.
+app.set('trust proxy', 1);
+
 // Setup performance monitoring
 performanceMiddleware.setupQueryMonitoring();
 
@@ -71,28 +66,34 @@ async function initializeServices() {
         const brandsToWarm = BRAND_MAP.filter(b => b.mongoUri && b.match !== '');
 
         // De-duplicate by brandId (multiple hosts can map to same brand)
-        const uniqueBrands = new Map();
-        brandsToWarm.forEach(b => { if (!uniqueBrands.has(b.brandId)) uniqueBrands.set(b.brandId, b); });
+        const uniqueBrands = [];
+        const seenBrands = new Set();
+        brandsToWarm.forEach(b => { 
+            if (!seenBrands.has(b.brandId)) {
+                seenBrands.add(b.brandId);
+                uniqueBrands.push(b);
+            }
+        });
 
         const { getTenantModels } = require('./models/TenantModels');
-        for (const [brandId, brand] of uniqueBrands) {
+        
+        // 🔥 Parallel Warmup: Start connecting to all brands simultaneously
+        await Promise.all(uniqueBrands.map(async (brand) => {
             try {
-                // Use getTenantConnection to ensure we have a valid connection object
-                const connection = await getTenantConnection(brandId, brand.mongoUri);
-                
-                // 3. 🔥 PRE-WARM CACHE: Fetch critical data into Redis/Memory
-                const models = { ...getTenantModels(connection), brandId };
-                preWarmCache(models).catch(err => console.error(`Cache warm-up error for ${brandId}:`, err));
+                const connection = await getTenantConnection(brand.brandId, brand.mongoUri);
+                const models = { ...getTenantModels(connection), brandId: brand.brandId };
+                // Cache warming can still run in background
+                preWarmCache(models).catch(err => console.error(`Cache warm-up error for ${brand.brandId}:`, err));
             } catch (err) {
-                console.error(`⚠️ Database warmup failed for ${brandId}:`, err.message);
+                console.error(`⚠️ Database warmup failed for ${brand.brandId}:`, err.message);
             }
-        }
+        }));
 
         // 🔥 Pre-warm Central Connection
         const { getCentralConnection } = require('./config/db');
         await getCentralConnection();
 
-        console.log('✅ Base services & Cache pre-warmed');
+        console.log(`✅ Base services & ${uniqueBrands.length} brand connections pre-warmed`);
     } catch (error) {
         console.error('❌ Service initialization error:', error);
     }

@@ -22,14 +22,23 @@ export async function fetchCategoriesServer() {
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
+    // Fix IPv6 delay on localhost
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     // Fetch directly from backend to avoid local proxy overhead
-    const response = await fetch(`${brand.apiBaseUrl}/api/categories`, {
+    const response = await fetch(`${apiBaseUrl}/api/categories`, {
       headers: {
         'Content-Type': 'application/json',
         'x-brand-id': brand.brandId
       },
+      signal: controller.signal,
       next: { revalidate: 300 } // Cache for 5 minutes
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       return { data: [], error: `HTTP ${response.status}` };
@@ -37,8 +46,8 @@ export async function fetchCategoriesServer() {
 
     const result = await response.json();
     return { data: result.data || [], error: null };
-  } catch (error) {
-    console.error('Server-side categories fetch error:', error);
+  } catch (error: any) {
+    console.error('Server-side categories fetch error:', error.message || error);
     return { data: [], error: 'Failed to fetch categories' };
   }
 }
@@ -48,10 +57,12 @@ export async function fetchBlogCategoriesServer() {
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blog-categories`, {
+    const response = await fetch(`${apiBaseUrl}/api/blog-categories`, {
       headers: {
         'Content-Type': 'application/json',
         'x-brand-id': brand.brandId
@@ -81,25 +92,39 @@ export async function fetchHomeDataServer() {
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
     
+    // Normalize localhost to 127.0.0.1 to avoid IPv6 resolution delays on some systems
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s total timeout
+
     // Parallel fetch for speed
     const [featured, banner] = await Promise.all([
-      fetch(`${brand.apiBaseUrl}/api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9`, {
+      fetch(`${apiBaseUrl}/api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9`, {
         headers: { 'x-brand-id': brand.brandId },
+        signal: controller.signal,
         next: { revalidate: 60, tags: ['home-blogs'] }
       }).then(res => res.ok ? res.json() : null),
-      fetch(`${brand.apiBaseUrl}/api/blogs?frontBanner=true&sort=-createdAt&limit=3`, {
+      fetch(`${apiBaseUrl}/api/blogs?frontBanner=true&sort=-createdAt&limit=3`, {
         headers: { 'x-brand-id': brand.brandId },
+        signal: controller.signal,
         next: { revalidate: 60, tags: ['banner-blogs'] }
       }).then(res => res.ok ? res.json() : null)
     ]);
+
+    clearTimeout(timeout);
 
     return {
       featuredBlogs: featured?.data?.blogs || featured?.blogs || [],
       bannerBlogs: banner?.data?.blogs || banner?.blogs || [],
       error: null
     };
-  } catch (error) {
-    console.error('Home data fetch error:', error);
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+       console.error('❌ Home data fetch TIMEOUT (15s). Backend might be slow or cold-starting.');
+    } else {
+       console.error('❌ Home data fetch error:', error.message || error);
+    }
     return { featuredBlogs: [], bannerBlogs: [], error: 'Failed to load home data' };
   }
 }

@@ -49,8 +49,8 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     }
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout to 30s to allow backend cold starts on first load
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // CRITICAL: Optimized timeout for better UX
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(apiUrl.toString(), {
@@ -107,8 +107,8 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
       : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout from 15s to 30s to handle backend cold starts
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // Optimized 12s timeout for better UX
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(url, {
@@ -192,7 +192,7 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
             : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
 
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
           try {
             const listRes = await fetch(`${brand.apiBaseUrl}/api/coupons?storeId=${store._id}`, {
               ...fetchOptions,
