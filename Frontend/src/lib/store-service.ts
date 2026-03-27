@@ -49,8 +49,8 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     }
 
     const controller = new AbortController();
-    // CRITICAL: Optimized timeout for better UX
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    // CRITICAL: Increased timeout to 25s for better cold-start tolerance
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const response = await fetch(apiUrl.toString(), {
@@ -107,8 +107,8 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
       : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
 
     const controller = new AbortController();
-    // Optimized 12s timeout for better UX
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    // CRITICAL: Increased timeout to 25s for server-side fetches to handle cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const response = await fetch(url, {
@@ -132,9 +132,6 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
     }
   } catch (err) {
     log(`Direct slug fetch error for ${slug}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    // CRITICAL FIX: We MUST throw the error here instead of returning null.
-    // If we return null on a network timeout, Next.js will cache a FALSE 404 page!
-    // By throwing, we force Next.js to properly handle the server error and retry later.
     throw err;
   }
 }
@@ -142,121 +139,41 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
 /**
  * Get store by slug
  * CRITICAL: Relies on Next.js native caching
+ * Optimized: Removed redundant client-side coupon hydration (now handled by backend)
  */
 export async function getStoreBySlug(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
     const brand = getBrandConfig();
 
     // Attempt to fetch from direct backend slug endpoint
+    // The backend already populates coupons, so no need for second-pass hydration
     const store = await fetchStoreBySlugDirect(slug, forceRefresh);
-
-    // CRITICAL: Trust the direct endpoint. If it returns null (404), the store is gone.
-    // We removed the fallback to fetchAllStores because it was reviving deleted stores
-    // due to stale Next.js data cache.
 
     if (!store) {
       log(`Store NOT found at direct endpoint: ${slug}`);
       return null;
     }
 
-    // CRITICAL: Add SEO/JSON-LD structured data (preserve existing logic)
-    let enrichedStore = store as Store | null;
-    if (store) {
-      const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "Store",
-        "name": store.name,
-        "image": store.image?.url || "",
-        "description": store.short_description || "",
-        "url": `${brand.siteUrl}/store/${store.slug}`
-      };
-      const finalSeoObject = {
+    // CRITICAL: Add SEO/JSON-LD structured data
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": store.name,
+      "image": store.image?.url || "",
+      "description": store.short_description || "",
+      "url": `${brand.siteUrl}/store/${store.slug}`
+    };
+
+    const enrichedStore = {
+      ...store,
+      seo: {
         ...jsonLd,
         ...store.seo
-      };
-
-      const existingCouponsObjs: Coupon[] = Array.isArray(store.coupons)
-        ? (store.coupons as any[]).filter((x) => typeof x === 'object') as Coupon[]
-        : [];
-      let hydratedCoupons: Coupon[] = existingCouponsObjs;
-
-      // Optimization: Only fetch coupons if they are not already populated
-      if (hydratedCoupons.length === 0) {
-        try {
-          const headers: Record<string, string> = { 
-            'Content-Type': 'application/json',
-            'x-brand-id': brand.brandId
-          };
-          const fetchOptions = (forceRefresh)
-            ? { headers, cache: 'no-store' as const }
-            : { headers, next: { revalidate: 60, tags: [`store-${store.slug}-coupons`] } };
-
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
-          try {
-            const listRes = await fetch(`${brand.apiBaseUrl}/api/coupons?storeId=${store._id}`, {
-              ...fetchOptions,
-              signal: controller.signal
-            });
-
-            if (listRes.ok) {
-              const listJson = await listRes.json();
-              const allCoupons: Coupon[] = Array.isArray(listJson?.data) ? listJson.data : [];
-              const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
-              if (storeCouponIds.length > 0) {
-                const idSet = new Set(storeCouponIds);
-                const matched = allCoupons.filter((c) => idSet.has(c._id));
-                if (matched.length > 0) {
-                  hydratedCoupons = matched;
-                  hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
-                }
-              } else {
-                const byStore = allCoupons.filter((c: any) => c.storeId === store._id);
-                if (byStore.length > 0) {
-                  hydratedCoupons = byStore;
-                }
-              }
-            }
-          } finally {
-            clearTimeout(timeoutId);
-          }
-          if (hydratedCoupons.length === 0) {
-            const storeCouponIds = Array.isArray(store.coupons) ? (store.coupons as any[]).filter((x) => typeof x === 'string') as string[] : [];
-            if (storeCouponIds.length > 0) {
-              const fetchOptionsId = (forceRefresh)
-                ? { cache: 'no-store' as const }
-                : { next: { revalidate: 60, tags: storeCouponIds.map((id) => `coupon-${id}`) } };
-              const byId = await Promise.all(
-                storeCouponIds.map(async (id) => {
-                  try {
-                    const r = await fetch(`${brand.apiBaseUrl}/api/coupons/${id}`, {
-                      ...fetchOptionsId,
-                      headers: { 'x-brand-id': brand.brandId }
-                    });
-                    if (!r.ok) return null;
-                    const j = await r.json();
-                    return j?.data || null;
-                  } catch {
-                    return null;
-                  }
-                })
-              );
-              const resolved = (byId.filter(Boolean) as Coupon[]);
-              if (resolved.length > 0) {
-                hydratedCoupons = resolved;
-                hydratedCoupons.sort((a, b) => storeCouponIds.indexOf(a._id) - storeCouponIds.indexOf(b._id));
-              }
-            }
-          }
-        } catch { }
       }
+    } as Store;
 
-      enrichedStore = {
-        ...store,
-        coupons: hydratedCoupons,
-        seo: finalSeoObject
-      } as Store;
-    }
+    log(`Store found: ${slug}`);
+    return enrichedStore;
 
     if (enrichedStore) {
       log(`Store found: ${slug}`);

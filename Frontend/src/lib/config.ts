@@ -11,7 +11,7 @@ const config = {
   // API URLs
   api: {
     // Base URL for API requests
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://coupon-app-backend.vercel.app',
+    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://waleed-webiste-backend.vercel.app',
 
     // Frontend URL (for callbacks, etc.)
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',

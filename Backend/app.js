@@ -1,5 +1,12 @@
 const dns = require('node:dns');
-// 🌐 NETWORK FIX: Force IPv4 DNS resolution for MongoDB Atlas SRV compatibility on Windows.
+
+// 🌐 ROOT NETWORK FIX: Use reliable DNS servers (Google + Cloudflare) 
+// to prevent 'queryTxt ETIMEOUT' errors caused by unreliable ISP DNS on Windows.
+if (dns.setServers) {
+    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+}
+
+// Force IPv4 ordering to avoid IPv6 resolution delays on local machines.
 if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
 }
@@ -68,7 +75,7 @@ async function initializeServices() {
         // De-duplicate by brandId (multiple hosts can map to same brand)
         const uniqueBrands = [];
         const seenBrands = new Set();
-        brandsToWarm.forEach(b => { 
+        brandsToWarm.forEach(b => {
             if (!seenBrands.has(b.brandId)) {
                 seenBrands.add(b.brandId);
                 uniqueBrands.push(b);
@@ -76,7 +83,7 @@ async function initializeServices() {
         });
 
         const { getTenantModels } = require('./models/TenantModels');
-        
+
         // 🔥 Parallel Warmup: Start connecting to all brands simultaneously
         await Promise.all(uniqueBrands.map(async (brand) => {
             try {
