@@ -8,8 +8,10 @@ const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
 
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
     // Build the API URL with query parameters
-    const apiUrl = new URL(`${brand.apiBaseUrl}/api/blogs`);
+    const apiUrl = new URL(`${apiBaseUrl}/api/blogs`);
     if (searchParams) {
       // Forward supported query parameters to the external API
       const supportedParams = ['category', 'search', 'page', 'pageSize', 'limit', 'featured', 'isFeaturedForHome', 'frontBanner', 'status', 'sort', 'slug'];
@@ -21,6 +23,9 @@ const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
       });
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
       headers: {
@@ -29,8 +34,11 @@ const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
       },
+      signal: controller.signal,
       cache: 'no-store'
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

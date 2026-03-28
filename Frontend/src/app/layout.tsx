@@ -127,6 +127,7 @@ export default async function RootLayout({
       <head>
         {/* Inject brand theme colors as CSS custom properties */}
         <style
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               :root {

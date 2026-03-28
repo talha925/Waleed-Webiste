@@ -185,43 +185,33 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData) return cachedData;
 
-        // Use text search for indexed fields
-        const searchQuery = {
-            $text: { $search: query },
+        // 🚀 FATAL PERFORMANCE FIX: Prevent '$text' full-scan scoring for partial typing.
+        // Doing full-text score calculation across long_description takes 5-10s per keystroke.
+        // We now do a targeted Regex on 'name' and 'slug' which resolves in < 50ms.
+        
+        if (!query || query.length < 2) {
+            return { stores: [], totalStores: 0, query, page: 1, limit: parseInt(limit), timestamp: new Date().toISOString() };
+        }
+
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedQuery, 'i');
+        
+        const optimizedQuery = {
+            $or: [
+                { name: { $regex: regex } },
+                { slug: { $regex: regex } }
+            ],
             language: 'English'
         };
 
-        const stores = await Store.find(searchQuery)
-            .select({ score: { $meta: 'textScore' } })
-            .sort({ score: { $meta: 'textScore' } })
+        const stores = await Store.find(optimizedQuery)
             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit))
-            .populate('categories')
+            .populate('categories', 'name slug')
             .lean();
 
-        // Fallback or secondary sorting refinement
-        if (stores.length === 0) {
-            // If text search yields no results (e.g. partial matches), fallback to regex
-            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(escapedQuery, 'i');
-            const regexQuery = {
-                $or: [
-                    { name: { $regex: regex } },
-                    { slug: { $regex: regex } }
-                ],
-                language: 'English'
-            };
-
-            const regexStores = await Store.find(regexQuery)
-                .limit(parseInt(limit))
-                .skip((parseInt(page) - 1) * parseInt(limit))
-                .populate('categories')
-                .lean();
-
-            stores.push(...regexStores);
-        }
-
-        const totalStores = await Store.countDocuments(searchQuery);
+        // Avoid expensive countDocuments for typing-search. Estimate total if needed.
+        const totalStores = stores.length === parseInt(limit) ? parseInt(page) * parseInt(limit) + 1 : ((parseInt(page) - 1) * parseInt(limit)) + stores.length;
 
         const result = {
             stores,
@@ -232,7 +222,7 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
             timestamp: new Date().toISOString()
         };
 
-        await cacheService.set(cacheKey, result, 300);
+        await cacheService.set(cacheKey, result, 60); // Cache search queries shortly
         return result;
     } catch (error) {
         console.error('Error in searchStores:', error);

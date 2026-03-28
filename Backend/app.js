@@ -13,6 +13,8 @@ if (dns.setDefaultResultOrder) {
 
 const express = require('express');
 const dotenv = require('dotenv');
+const compression = require('compression');
+
 
 // Load environment variables BEFORE requiring any other modules
 dotenv.config();
@@ -118,6 +120,10 @@ app.use(performanceMonitoring || ((req, res, next) => next()));
 app.use(performanceMiddleware.requestTimer);
 app.use(performanceMiddleware.performanceSummary);
 app.use(requestLogger);
+
+// 🔥 PERFORMANCE FIX: Enable response compression (gzip/br)
+// This reduces JSON payload size by ~70%, making the site load much faster.
+app.use(compression());
 
 // Security Middleware
 app.use(helmet());

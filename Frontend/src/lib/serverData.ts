@@ -137,10 +137,18 @@ export async function fetchBlogDetailServer(slugOrId: string) {
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blogs/${slugOrId}`, {
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const response = await fetch(`${apiBaseUrl}/api/blogs/${slugOrId}`, {
       headers: { 'x-brand-id': brand.brandId },
+      signal: controller.signal,
       next: { revalidate: 60, tags: [`blog-${slugOrId}`] }
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) return { data: null, error: `HTTP ${response.status}` };
     
@@ -160,15 +168,23 @@ export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
-    const url = new URL(`${brand.apiBaseUrl}/api/blogs`);
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
+    const url = new URL(`${apiBaseUrl}/api/blogs`);
     url.searchParams.set('limit', limit.toString());
     url.searchParams.set('sort', '-publishDate');
     if (excludeId) url.searchParams.set('exclude', excludeId);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(url.toString(), {
       headers: { 'x-brand-id': brand.brandId },
+      signal: controller.signal,
       next: { revalidate: 60, tags: ['recent-blogs'] }
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) return { data: [], error: `HTTP ${response.status}` };
     
@@ -187,16 +203,24 @@ export async function fetchBlogsByCategoryServer(categorySlug: string, page = 1,
     const { getBrandConfig } = await import('../../config/server-config');
     const brand = getBrandConfig();
 
-    const url = new URL(`${brand.apiBaseUrl}/api/blogs`);
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+
+    const url = new URL(`${apiBaseUrl}/api/blogs`);
     if (categorySlug) url.searchParams.set('category', categorySlug);
     url.searchParams.set('page', page.toString());
     url.searchParams.set('limit', limit.toString());
     url.searchParams.set('status', 'published');
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
     const response = await fetch(url.toString(), {
       headers: { 'x-brand-id': brand.brandId },
+      signal: controller.signal,
       next: { revalidate: 60, tags: [`category-${categorySlug}`] }
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) return { data: [], error: `HTTP ${response.status}` };
     
