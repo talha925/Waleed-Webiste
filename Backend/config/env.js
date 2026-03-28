@@ -19,7 +19,7 @@ const REQUIRED_ENV_VARS = [
 const ENV_DEFAULTS = {
     NODE_ENV: 'production',
     PORT: '5000',
-    ALLOWED_ORIGINS: 'http://localhost:3000,https://www.blogzenix.com,https://pennyscroll.com'
+    ALLOWED_ORIGINS: 'http://localhost:3000,https://www.blogzenix.com'
 };
 
 /**
