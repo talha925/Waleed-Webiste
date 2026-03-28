@@ -28,7 +28,8 @@ const activityLogSchema = new mongoose.Schema({
     userAgent: { type: String },
     timestamp: { type: Date, default: Date.now, index: true }
 }, {
-    timestamps: true
+    timestamps: true,
+    autoIndex: false
 });
 
 // Compound index for date-wise user tracking

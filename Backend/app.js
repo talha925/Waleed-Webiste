@@ -59,7 +59,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Setup performance monitoring
-performanceMiddleware.setupQueryMonitoring();
+// performanceMiddleware.setupQueryMonitoring(); // Disabled for clean logs
 
 // Initialize services AND pre-warm database connections
 async function initializeServices() {
@@ -69,40 +69,15 @@ async function initializeServices() {
         await cacheService.ensureInitialized();
         console.log('✅ Base services (Redis/Cache) initialized');
 
-        // 2. 🔥 PRE-WARM DATABASE: Connect to MongoDB NOW so first API request is instant
-        // Without this, the first request waits 30-50s for SRV DNS resolution
-        const { BRAND_MAP } = require('./config/brands');
-        const brandsToWarm = BRAND_MAP.filter(b => b.mongoUri && b.match !== '');
-
-        // De-duplicate by brandId (multiple hosts can map to same brand)
-        const uniqueBrands = [];
-        const seenBrands = new Set();
-        brandsToWarm.forEach(b => {
-            if (!seenBrands.has(b.brandId)) {
-                seenBrands.add(b.brandId);
-                uniqueBrands.push(b);
-            }
-        });
-
-        const { getTenantModels } = require('./models/TenantModels');
-
-        // 🔥 Parallel Warmup: Start connecting to all brands simultaneously
-        await Promise.all(uniqueBrands.map(async (brand) => {
-            try {
-                const connection = await getTenantConnection(brand.brandId, brand.mongoUri);
-                const models = { ...getTenantModels(connection), brandId: brand.brandId };
-                // Cache warming can still run in background
-                preWarmCache(models).catch(err => console.error(`Cache warm-up error for ${brand.brandId}:`, err));
-            } catch (err) {
-                console.error(`⚠️ Database warmup failed for ${brand.brandId}:`, err.message);
-            }
-        }));
-
-        // 🔥 Pre-warm Central Connection
+        // 2. 🔥 Pre-warm Central Connection ONLY
+        // We establish the central connection (for Users & Logging) at startup.
+        // Tenant-specific DBs will be connected on first request via brandDetection middleware.
+        // This prevents slamming the database cluster with 10+ connections simultaneously 
+        // during a Vercel cold start.
         const { getCentralConnection } = require('./config/db');
         await getCentralConnection();
 
-        console.log(`✅ Base services & ${uniqueBrands.length} brand connections pre-warmed`);
+        console.log(`✅ Base services & central connection initialized`);
     } catch (error) {
         console.error('❌ Service initialization error:', error);
     }
@@ -116,7 +91,7 @@ initializeServices().catch(err => console.error('Background init failure:', err)
 // as it requires a specific tenant DB connection.
 
 // Request Logging and Performance Monitoring
-app.use(performanceMonitoring || ((req, res, next) => next()));
+// app.use(performanceMonitoring || ((req, res, next) => next())); // Disabled for clean logs
 app.use(performanceMiddleware.requestTimer);
 app.use(performanceMiddleware.performanceSummary);
 app.use(requestLogger);

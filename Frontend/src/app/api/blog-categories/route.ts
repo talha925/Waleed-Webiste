@@ -8,17 +8,24 @@ const getBlogCategories = async (host: string = '') => {
     const { getBrandConfigByHost } = await import('@config/index');
     const brand = getBrandConfigByHost(host);
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blogCategories`, {
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    const response = await fetch(`${apiBaseUrl}/api/blogCategories`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'x-brand-id': brand.brandId,
       },
+      signal: controller.signal,
       next: {
         revalidate: 300, // Revalidate every 5 minutes
         tags: ['blog-categories'] // Enable tag-based revalidation
       }
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

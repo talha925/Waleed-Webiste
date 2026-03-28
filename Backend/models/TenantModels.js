@@ -60,7 +60,9 @@ UserSchema.methods.createPasswordResetToken = function () {
 // 2. Category Schema (Coupons Category)
 const CategorySchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true }
-}, { timestamps: true });
+}, { 
+    timestamps: true 
+});
 
 // 3. Blog Category Schema
 const BlogCategorySchema = new mongoose.Schema({
@@ -146,8 +148,7 @@ const StoreSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    autoIndex: false
+    toObject: { virtuals: true }
 });
 
 StoreSchema.index({ name: 'text', slug: 'text', short_description: 'text', long_description: 'text' });
@@ -213,8 +214,7 @@ const CouponSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    autoIndex: false
+    toObject: { virtuals: true }
 });
 
 // 🔥 COMPOUND INDEXES - Matched to exact query patterns in storeService.js
@@ -289,8 +289,7 @@ const BlogPostSchema = new mongoose.Schema({
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    autoIndex: false
+    toObject: { virtuals: true }
 });
 
 // 🔥 Blog Indexes - Enterprise Grade (matched to exact query patterns)

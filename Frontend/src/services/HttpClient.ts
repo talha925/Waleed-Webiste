@@ -40,7 +40,8 @@ class HttpClient implements IHttpClient {
         // Use process.env.NEXT_RUNTIME to hide server-only code from client bundles
         // without using eval() which violates Content Security Policy (CSP).
         if (process.env.NEXT_RUNTIME === 'nodejs') {
-          const { getBrandConfig } = require('@config/server-config');
+          // @ts-ignore hiding require from client bundler
+          const { getBrandConfig } = require(/* webpackIgnore: true */ '@config/server-config');
           brandId = getBrandConfig().brandId;
         }
       } catch (e) {

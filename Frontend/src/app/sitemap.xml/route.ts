@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 const FETCH_TIMEOUT = 15000; // 15 seconds timeout
 export async function GET() {
   const brand = getBrandConfig();
+  const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
   const baseUrl = brand.siteUrl;
   const currentDate = new Date().toISOString();
 
@@ -22,8 +23,9 @@ export async function GET() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/blogs?page=1&limit=1000&fields=slug,updatedAt,createdAt`, {
+    const response = await fetch(`${apiBaseUrl}/api/blogs?page=1&limit=1000&fields=slug,updatedAt,createdAt`, {
       next: { revalidate: 3600 },
+      headers: { 'x-brand-id': brand.brandId },
       signal: controller.signal
     });
 
@@ -31,7 +33,8 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      blogPosts = data.data || [];
+      // Backend returns { data: blogs[], ... }
+      blogPosts = Array.isArray(data.data) ? data.data : (Array.isArray(data.blogs) ? data.blogs : []);
     }
   } catch (error) {
     console.error('Error fetching blogs for sitemap:', error);
@@ -43,8 +46,9 @@ export async function GET() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-    const response = await fetch(`${brand.apiBaseUrl}/api/proxy-stores`, {
+    const response = await fetch(`${apiBaseUrl}/api/stores?limit=1000`, {
       next: { revalidate: 3600 },
+      headers: { 'x-brand-id': brand.brandId },
       signal: controller.signal
     });
 
@@ -52,7 +56,8 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      stores = data.data || [];
+      // Backend returns { stores: [], ... } or { data: [] }
+      stores = Array.isArray(data.stores) ? data.stores : (Array.isArray(data.data) ? data.data : []);
     }
   } catch (error) {
     console.error('Error fetching stores for sitemap:', error);

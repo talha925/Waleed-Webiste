@@ -139,12 +139,18 @@ export function useSearch(options: UseSearchOptions = {}) {
       const pageToUse = pageOverride ?? 1;
       url.searchParams.set('page', pageToUse.toString());
 
+      const abortTimeout = setTimeout(() => {
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+      }, 15000); // 15s search timeout
+
       const response = await fetch(url.toString(), {
         signal,
         headers: {
           'Content-Type': 'application/json',
         },
       });
+
+      clearTimeout(abortTimeout);
 
       // Check if request was aborted
       if (signal.aborted) return;

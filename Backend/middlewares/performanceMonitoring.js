@@ -81,11 +81,16 @@ class PerformanceMonitor {
 
   // 🚨 CRITICAL: Database Query Performance Monitoring
   setupDatabaseMonitoring() {
+    // 🚨 PERFORMANCE FIX: Only enable debug mode if explicitly requested
+    if (process.env.DEBUG_MONGO !== 'true' && process.env.NODE_ENV === 'production') {
+      console.log('🗄️  MongoDB query monitoring: DISABLED (Set DEBUG_MONGO=true to enable)');
+      return;
+    }
+
     // Monitor MongoDB queries
     mongoose.set('debug', (collectionName, method, query, doc, options) => {
       const startTime = Date.now();
       
-      // Create a unique query identifier
       const queryId = `${collectionName}.${method}`;
       
       if (!this.metrics.dbQueries.has(queryId)) {
@@ -99,31 +104,33 @@ class PerformanceMonitor {
         });
       }
       
-      // Simulate query completion (in real implementation, this would be in a callback)
-      setTimeout(() => {
+      // Use setImmediate to not block the current query execution reporting
+      setImmediate(() => {
         const endTime = Date.now();
         const queryTime = endTime - startTime;
         
         const dbMetric = this.metrics.dbQueries.get(queryId);
-        dbMetric.count++;
-        dbMetric.totalTime += queryTime;
-        dbMetric.avgTime = dbMetric.totalTime / dbMetric.count;
-        dbMetric.maxTime = Math.max(dbMetric.maxTime, queryTime);
-        dbMetric.minTime = Math.min(dbMetric.minTime, queryTime);
-        
-        if (queryTime > this.thresholds.dbQueryTime) {
-          dbMetric.slowQueries++;
-          this.generateAlert('SLOW_QUERY', {
-            queryId,
-            queryTime,
-            threshold: this.thresholds.dbQueryTime,
-            query: JSON.stringify(query),
-            timestamp: new Date().toISOString()
-          });
+        if (dbMetric) {
+          dbMetric.count++;
+          dbMetric.totalTime += queryTime;
+          dbMetric.avgTime = dbMetric.totalTime / dbMetric.count;
+          dbMetric.maxTime = Math.max(dbMetric.maxTime, queryTime);
+          dbMetric.minTime = Math.min(dbMetric.minTime, queryTime);
+          
+          if (queryTime > this.thresholds.dbQueryTime) {
+            dbMetric.slowQueries++;
+            this.generateAlert('SLOW_QUERY', {
+              queryId,
+              queryTime,
+              threshold: this.thresholds.dbQueryTime,
+              query: JSON.stringify(query),
+              timestamp: new Date().toISOString()
+            });
+          }
+          
+          console.log(`🗄️  DB: ${queryId} - ${queryTime}ms ${queryTime > this.thresholds.dbQueryTime ? '🚨' : '✅'}`);
         }
-        
-        console.log(`🗄️  DB: ${queryId} - ${queryTime}ms ${queryTime > this.thresholds.dbQueryTime ? '🚨' : '✅'}`);
-      }, 1);
+      });
     });
   }
 

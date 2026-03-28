@@ -24,7 +24,7 @@ const getBlogs = async (searchParams?: URLSearchParams, host: string = '') => {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 25000); // Increased to 25s for production stability
 
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
@@ -69,8 +69,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Handle different response structures from the external API
+    // Backend returns { data: blogs[], metadata: pagination{} }
     const blogData = blogs.data?.blogs || blogs.blogs || blogs.data || blogs || [];
-    const pagination = blogs.data?.pagination || blogs.pagination || null;
+    const pagination = blogs.metadata || blogs.data?.pagination || blogs.pagination || blogs.data?.metadata || null;
 
     const response = NextResponse.json({
       blogs: blogData,

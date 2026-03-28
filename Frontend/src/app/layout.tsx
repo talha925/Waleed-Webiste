@@ -157,7 +157,7 @@ export default async function RootLayout({
         {/* Dynamic favicon */}
         <link rel="icon" href={brand.faviconPath} type="image/svg+xml" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <Providers initialToken={initialToken} brand={brand}>
           <ErrorBoundary>
             <div className="flex flex-col min-h-screen">

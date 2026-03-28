@@ -125,7 +125,7 @@ exports.findAll = async (models, queryParams = {}) => {
 
     // 🔥 ROOT PERFORMANCE OPTIMIZATION: Parallelize Count and Data Fetch
     // This halves the query time for cache-misses
-    const [total, blogs] = await Promise.all([
+    let [total, blogs] = await Promise.all([
       isFilterEmpty ? BlogPost.estimatedDocumentCount() : BlogPost.countDocuments(query),
       mongoQuery
         .skip((parseInt(page) - 1) * parseInt(limit))

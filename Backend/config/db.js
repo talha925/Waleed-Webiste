@@ -13,6 +13,7 @@ const mongoOptions = {
   connectTimeoutMS: 20000,       // Sufficient time for DNS + TLS
   heartbeatFrequencyMS: 10000,
   family: 4,                      // Explicitly prioritize IPv4
+  autoIndex: process.env.NODE_ENV === 'development', // Build indexes in dev, but keep production safe (manual logic required there)
 };
 
 // Map of brandId -> Promise<Connection>

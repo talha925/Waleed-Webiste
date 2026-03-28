@@ -390,16 +390,28 @@ class CacheService {
       return null;
     }
     try {
-      const data = await this.redis.get(key);
+      // 🚨 NETWORK FIX: Add a 1.5s timeout to Redis operations.
+      // If Redis DNS lookup (EAI_AGAIN) or connection is slow, we fallback to DB immediately
+      // instead of letting the entire request hang for 5-10 seconds.
+      const data = await Promise.race([
+        this.redis.get(key),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis Timeout')), 1500))
+      ]);
+      
       const hit = data !== null;
-      trackCache('GET', key, hit);
+      if (typeof trackCache === 'function') trackCache('GET', key, hit);
+      
       if (data) {
         return JSON.parse(data);
       }
       return null;
     } catch (error) {
-      console.error('❌ Cache get error:', error);
-      trackCache('GET', key, false);
+      if (error.message !== 'Redis Timeout') {
+        console.error('❌ Cache get error:', error);
+      } else {
+        console.warn('⚠️ Cache skip (Redis Timeout)');
+      }
+      if (typeof trackCache === 'function') trackCache('GET', key, false);
       return null;
     }
   }
