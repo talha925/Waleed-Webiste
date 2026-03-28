@@ -10,9 +10,27 @@
     },
     "app/api/blogs/route.ts": {
       "maxDuration": 30
+    },
+    "app/api/proxy-stores/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/stores/**/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/store/**/route.ts": {
+      "maxDuration": 30
     }
   },
   "headers": [
+    {
+      "source": "/store/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=3600, stale-while-revalidate=86400"
+        }
+      ]
+    },
     {
       "source": "/api/(.*)",
       "headers": [

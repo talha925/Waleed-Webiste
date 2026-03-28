@@ -49,8 +49,8 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     }
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout to 25s for better cold-start tolerance
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    // CRITICAL: 12s timeout - fail fast rather than make users stare at loading
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(apiUrl.toString(), {
@@ -107,8 +107,8 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
       : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout to 25s for server-side fetches to handle cold starts
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    // CRITICAL: 12s timeout - fail fast for better UX
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(url, {
@@ -173,14 +173,6 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
     } as Store;
 
     log(`Store found: ${slug}`);
-    return enrichedStore;
-
-    if (enrichedStore) {
-      log(`Store found: ${slug}`);
-    } else {
-      log(`Store not found: ${slug}`);
-    }
-
     return enrichedStore;
 
   } catch (error) {

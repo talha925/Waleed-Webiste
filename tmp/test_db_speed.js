@@ -45,7 +45,7 @@ async function test() {
                 if (err) console.error('DNS Lookup Error:', err);
                 else console.log('Resolved to:', address, 'in', (Date.now() - lookupStart) / 1000, 's');
             });
-        } catch (e) {}
+        } catch (e) { }
     }
 }
 

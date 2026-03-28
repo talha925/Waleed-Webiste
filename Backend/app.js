@@ -124,6 +124,12 @@ app.use(helmet());
 app.use(security.setSecurityHeaders);
 app.use(security.configureCors);
 
+// 🔥 WARMUP ENDPOINT: Ultra-lightweight ping for Vercel Cron to keep function warm
+// Placed BEFORE brand detection so it responds instantly without DB connections
+app.get('/ping', (req, res) => {
+    res.status(200).json({ status: 'warm', ts: Date.now() });
+});
+
 // Brand Detection — attaches req.brand, req.db, and req.models for multi-brand support
 const brandDetection = require('./middlewares/brandDetection');
 app.use(brandDetection);
@@ -135,6 +141,7 @@ app.use(security.preventXSS);
 app.use(security.preventParamPollution(['category', 'language', 'isTopStore']));
 
 // Routes
+
 app.get('/', (req, res) => {
     res.json({
         message: 'Multi-Brand Coupon Backend API',

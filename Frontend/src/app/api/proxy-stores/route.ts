@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     // Get stores with caching
     const apiUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
     // Fetch more stores to improve local search accuracy
-    apiUrl.searchParams.set('limit', '1000');
+    apiUrl.searchParams.set('limit', '100');
     apiUrl.searchParams.set('page', '1');
 
     // Initialize cache manager for stores with brand-specific key
