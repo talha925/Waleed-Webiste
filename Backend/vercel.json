@@ -1,20 +1,28 @@
 {
     "version": 2,
-    "functions": {
-        "app.js": {
-            "maxDuration": 30
-        }
-    },
-    "rewrites": [
+    "builds": [
         {
-            "source": "/(.*)",
-            "destination": "/app.js"
+            "src": "app.js",
+            "use": "@vercel/node",
+            "config": {
+                "maxDuration": 30
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/ping",
+            "dest": "app.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "app.js"
         }
     ],
     "crons": [
         {
             "path": "/ping",
-            "schedule": "*/5 * * * *"
+            "schedule": "0 0 * * *"
         }
     ]
 }
