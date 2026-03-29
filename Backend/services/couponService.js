@@ -8,7 +8,7 @@ const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
 // 🚀 L1 CACHE: For high-traffic store coupons
 const L1_CACHE = new Map();
-const L1_TTL = 60000; // 60 seconds
+const L1_TTL = 20000; // 20 seconds
 
 // Get all coupons for a specific store with pagination (20 coupons per page)
 exports.getCouponsByStore = async (models, queryParams, storeId) => {
@@ -110,6 +110,7 @@ exports.getCoupons = async (models, queryParams) => {
 // Create a new coupon
 exports.createCoupon = async (models, couponData) => {
   const { Coupon, Store, brandId } = models;
+  L1_CACHE.clear(); // 🧹 Clear memory cache on create
   try {
     const store = await Store.findById(couponData.store).select('slug');
     if (!store) throw new AppError('Invalid Store ID', 400);
@@ -119,11 +120,11 @@ exports.createCoupon = async (models, couponData) => {
     await Store.findByIdAndUpdate(couponData.store, { $push: { coupons: newCoupon._id } });
 
     const storeId = newCoupon.store.toString();
-    await cacheService.invalidateCouponCache(null, storeId, brandId);
-    await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+    cacheService.invalidateCouponCache(null, storeId, brandId).catch(err => console.error(`[Coupon.create] Cache Error: ${err.message}`));
+    cacheService.invalidateStoreCachesSafely(storeId, brandId).catch(err => console.error(`[Coupon.create] Store Cache Error: ${err.message}`));
 
     getWebSocketServer().notifyUpdate(models, 'created', 'coupon', newCoupon._id, newCoupon);
-    await callFrontendRevalidation('store', storeId, brandId, { action: 'created', couponId: newCoupon._id.toString() });
+    callFrontendRevalidation('store', storeId, brandId, { action: 'created', couponId: newCoupon._id.toString() }).catch(err => console.error(`[Coupon.create] Revalidation Error: ${err.message}`));
 
     return newCoupon;
   } catch (error) {
@@ -134,6 +135,7 @@ exports.createCoupon = async (models, couponData) => {
 // Update a coupon
 exports.updateCoupon = async (models, id, updateData) => {
   const { Coupon, Store, brandId } = models;
+  L1_CACHE.clear(); // 🧹 Clear memory cache on update
   try {
     const existingCoupon = await Coupon.findById(id).select('code active store');
     if (!existingCoupon) throw new AppError('Coupon not found', 404);
@@ -146,11 +148,11 @@ exports.updateCoupon = async (models, id, updateData) => {
     const updatedCoupon = await Coupon.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true });
 
     const storeId = updatedCoupon.store.toString();
-    await cacheService.invalidateCouponCache(id, storeId, brandId);
-    await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+    cacheService.invalidateCouponCache(id, storeId, brandId).catch(err => console.error(`[Coupon.update] Cache Error: ${err.message}`));
+    cacheService.invalidateStoreCachesSafely(storeId, brandId).catch(err => console.error(`[Coupon.update] Store Cache Error: ${err.message}`));
 
     getWebSocketServer().notifyUpdate(models, 'updated', 'coupon', id, updatedCoupon);
-    await callFrontendRevalidation('coupon', id, brandId, { storeId, updatedFields: Object.keys(updateData) });
+    callFrontendRevalidation('coupon', id, brandId, { storeId, updatedFields: Object.keys(updateData) }).catch(err => console.error(`[Coupon.update] Revalidation Error: ${err.message}`));
 
     return formatCoupon(updatedCoupon);
   } catch (error) {
@@ -161,6 +163,7 @@ exports.updateCoupon = async (models, id, updateData) => {
 // Delete a coupon
 exports.deleteCoupon = async (models, id) => {
   const { Coupon, Store, brandId } = models;
+  L1_CACHE.clear(); // 🧹 Clear memory cache on delete
   try {
     const deletedCoupon = await Coupon.findByIdAndDelete(id);
     if (!deletedCoupon) throw new AppError('Coupon not found', 404);
@@ -168,11 +171,11 @@ exports.deleteCoupon = async (models, id) => {
     await Store.findByIdAndUpdate(deletedCoupon.store, { $pull: { coupons: deletedCoupon._id } });
 
     const storeId = deletedCoupon.store.toString();
-    await cacheService.invalidateCouponCache(id, storeId, brandId);
-    await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+    cacheService.invalidateCouponCache(id, storeId, brandId).catch(err => console.error(`[Coupon.delete] Cache Error: ${err.message}`));
+    cacheService.invalidateStoreCachesSafely(storeId, brandId).catch(err => console.error(`[Coupon.delete] Store Cache Error: ${err.message}`));
 
     getWebSocketServer().notifyUpdate(models, 'deleted', 'coupon', id, { id });
-    await callFrontendRevalidation('coupon', id, brandId, { action: 'deleted', storeId });
+    callFrontendRevalidation('coupon', id, brandId, { action: 'deleted', storeId }).catch(err => console.error(`[Coupon.delete] Revalidation Error: ${err.message}`));
 
     return deletedCoupon;
   } catch (error) {
@@ -209,6 +212,7 @@ exports.getCouponById = async (models, id) => {
 // Update the order of coupons for a specific store
 exports.updateCouponOrder = async (models, storeId, orderedCouponIds) => {
   const { Coupon, Store, brandId } = models;
+  L1_CACHE.clear(); // 🧹 Clear memory cache on order update
   try {
     if (!mongoose.Types.ObjectId.isValid(storeId)) throw new AppError('Invalid store ID', 400);
     if (!Array.isArray(orderedCouponIds) || orderedCouponIds.length === 0) throw new AppError('Ordered coupon IDs array is required', 400);
@@ -227,9 +231,10 @@ exports.updateCouponOrder = async (models, storeId, orderedCouponIds) => {
 
     await Store.findByIdAndUpdate(storeId, { coupons: orderedCouponIds, updatedAt: new Date() });
 
-    await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+    // Run in background to prevent order update hanging
+    cacheService.invalidateStoreCachesSafely(storeId, brandId).catch(err => console.error(`[Coupon.order] Cache Error: ${err.message}`));
     getWebSocketServer().notifyUpdate(models, 'updated', 'store', storeId, { event: 'coupon_order_updated' });
-    await callFrontendRevalidation('store', storeId, brandId, { event: 'coupon_order_updated' });
+    callFrontendRevalidation('store', storeId, brandId, { event: 'coupon_order_updated' }).catch(err => console.error(`[Coupon.order] Revalidation Error: ${err.message}`));
 
     return { message: 'Coupon order updated successfully', totalUpdated: bulkOps.length };
   } catch (error) {

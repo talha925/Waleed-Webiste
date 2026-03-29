@@ -465,8 +465,8 @@ class CacheService {
     }
 
     try {
-      // 🚨 ROOT FIX: Use KEYS instead of SCAN for 100% precision in discovery
-      const keys = await this.redis.keys(pattern);
+      // 🚨 ROOT FIX: Use SCAN (via _getKeysByPattern) instead of KEYS to prevent blocking the entire Redis server
+      const keys = await this._getKeysByPattern(pattern);
       
       if (!keys || keys.length === 0) {
         console.log(`✅ No keys found for pattern: ${pattern}`);

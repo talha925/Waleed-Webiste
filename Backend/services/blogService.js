@@ -233,7 +233,7 @@ exports.create = async (models, data) => {
   const { Blog: BlogPost, brandId } = models;
   const blog = await BlogPost.create(data);
   L1_CACHE.clear(); // 🧹 Clear memory cache on create
-  await cacheService.invalidateBlogCachesSafely(brandId);
+  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.create] Cache Error: ${err.message}`));
   getWebSocketServer().notifyUpdate(models, 'created', 'blog', blog._id, blog);
   // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
   callFrontendRevalidation('blog', blog.slug || blog._id.toString(), brandId);
@@ -284,7 +284,7 @@ exports.update = async (models, id, data) => {
   console.log(`[BlogService.update] Successfully updated in DB. New status:`, updatedBlog.status);
 
   L1_CACHE.clear(); // 🧹 Clear memory cache on update
-  await cacheService.invalidateBlogCachesSafely(brandId);
+  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.update] Cache Error: ${err.message}`));
   getWebSocketServer().notifyUpdate(models, 'updated', 'blog', id, updatedBlog);
   
   // 🔥 Revalidation Fix: Pass category slugs so the frontend clears specific category pages
@@ -317,7 +317,7 @@ exports.delete = async (models, id) => {
   }
 
   L1_CACHE.clear(); // 🧹 Clear memory cache on delete
-  await cacheService.invalidateBlogCachesSafely(brandId);
+  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.delete] Cache Error: ${err.message}`));
   getWebSocketServer().notifyUpdate(models, 'deleted', 'blog', id, { id });
   // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
   callFrontendRevalidation('blog', blog.slug || id.toString(), brandId, { action: 'deleted' });

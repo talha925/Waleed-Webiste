@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 
 // 🚀 L1 CACHE: Local memory cache for VIP speed (60 seconds)
 const L1_CACHE = new Map();
-const L1_TTL = 60000;
+const L1_TTL = 20000;
 
 /**
  * Get stores with filtering, pagination, and sorting
@@ -232,6 +232,7 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
 
 exports.createStore = async (models, storeData) => {
     const { Store, brandId } = models;
+    L1_CACHE.clear(); // 🧹 Clear memory cache on create
     try {
         if (storeData.slug) {
             const existingStore = await Store.findOne({ slug: storeData.slug }).lean();
@@ -241,9 +242,10 @@ exports.createStore = async (models, storeData) => {
         const newStore = await Store.create(storeData);
         const storeId = newStore._id.toString();
 
-        await cacheService.invalidateStoreCachesSafely(null, brandId);
+        // 🚀 NON-BLOCKING: Run invalidation & revalidation in background
+        cacheService.invalidateStoreCachesSafely(null, brandId).catch(err => console.error(`[Store.create] Cache Error: ${err.message}`));
         getWebSocketServer().notifyUpdate(models, 'created', 'store', storeId, newStore);
-        await callFrontendRevalidation('store', newStore.slug || storeId, brandId);
+        callFrontendRevalidation('store', newStore.slug || storeId, brandId).catch(err => console.error(`[Store.create] Revalidation Error: ${err.message}`));
 
         return newStore;
     } catch (error) {
@@ -253,13 +255,15 @@ exports.createStore = async (models, storeData) => {
 
 exports.updateStore = async (models, id, updateData) => {
     const { Store, brandId } = models;
+    L1_CACHE.clear(); // 🧹 Clear memory cache on update
     try {
         const updatedStore = await Store.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).lean();
         if (!updatedStore) throw new AppError('Store not found', 404);
 
-        await cacheService.invalidateStoreCachesSafely(id, brandId);
+        // 🚀 NON-BLOCKING: Admin should get response instantly
+        cacheService.invalidateStoreCachesSafely(id, brandId).catch(err => console.error(`[Store.update] Cache Error: ${err.message}`));
         getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, updatedStore);
-        await callFrontendRevalidation('store', updatedStore.slug || id, brandId);
+        callFrontendRevalidation('store', updatedStore.slug || id, brandId).catch(err => console.error(`[Store.update] Revalidation Error: ${err.message}`));
 
         return updatedStore;
     } catch (error) {
@@ -269,6 +273,7 @@ exports.updateStore = async (models, id, updateData) => {
 
 exports.deleteStore = async (models, id) => {
     const { Store, Coupon, brandId } = models;
+    L1_CACHE.clear(); // 🧹 Clear memory cache on delete
     try {
         const store = await Store.findById(id).lean();
         if (!store) throw new AppError('Store not found', 404);
@@ -276,9 +281,10 @@ exports.deleteStore = async (models, id) => {
         await Coupon.deleteMany({ store: id });
         await Store.findByIdAndDelete(id);
 
-        await cacheService.invalidateStoreCachesSafely(id, brandId);
-        getWebSocketServer().notifyUpdate(models, 'deleted', 'store', id, { id });
-        await callFrontendRevalidation('store', store.slug || id, brandId, { action: 'deleted' });
+        // 🚀 NON-BLOCKING: Process deletion cleanup in background
+        cacheService.invalidateStoreCachesSafely(id, brandId).catch(err => console.error(`[Store.delete] Cache Error: ${err.message}`));
+        getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, { event: 'deleted' });
+        callFrontendRevalidation('store', store.slug || id, brandId, { action: 'deleted' }).catch(err => console.error(`[Store.delete] Revalidation Error: ${err.message}`));
 
         return null;
     } catch (error) {

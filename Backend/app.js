@@ -1,16 +1,3 @@
-const dns = require('node:dns');
-
-// 🌐 ROOT NETWORK FIX: Use reliable DNS servers (Google + Cloudflare) 
-// to prevent 'queryTxt ETIMEOUT' errors caused by unreliable ISP DNS on Windows.
-if (dns.setServers) {
-    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-}
-
-// Force IPv4 ordering to avoid IPv6 resolution delays on local machines.
-if (dns.setDefaultResultOrder) {
-    dns.setDefaultResultOrder('ipv4first');
-}
-
 const express = require('express');
 const dotenv = require('dotenv');
 const compression = require('compression');
@@ -26,7 +13,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const security = require('./middlewares/security');
 const requestLogger = require('./middlewares/requestLogger');
 const performanceMiddleware = require('./middlewares/performanceMiddleware');
-const { performanceMiddleware: performanceMonitoring } = require('./middlewares/performanceMonitoring');
+// const { performanceMiddleware: performanceMonitoring } = require('./middlewares/performanceMonitoring');
 const { createFirstSuperAdmin } = require('./middlewares/authMiddleware');
 const redisConfig = require('./config/redis');
 const cacheService = require('./services/cacheService');

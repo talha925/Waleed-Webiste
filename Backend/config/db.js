@@ -8,12 +8,11 @@ let centralConnection = null;
 
 const mongoOptions = {
   maxPoolSize: 20,
-  serverSelectionTimeoutMS: 20000, // Sufficient time for DNS + Handshake
+  serverSelectionTimeoutMS: 20000, 
   socketTimeoutMS: 45000,
-  connectTimeoutMS: 20000,       // Sufficient time for DNS + TLS
+  connectTimeoutMS: 20000,
   heartbeatFrequencyMS: 10000,
-  family: 4,                      // Explicitly prioritize IPv4
-  autoIndex: process.env.NODE_ENV === 'development', // Build indexes in dev, but keep production safe (manual logic required there)
+  autoIndex: process.env.NODE_ENV === 'development',
 };
 
 // Map of brandId -> Promise<Connection>
