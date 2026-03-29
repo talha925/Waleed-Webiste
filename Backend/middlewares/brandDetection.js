@@ -17,9 +17,19 @@ const { getTenantModels, getCentralModels } = require('../models/TenantModels');
 
 /**
  * Brand & Database Detection Middleware
+ * 🔥 PERFORMANCE FIX: Added initialization gate + 15s timeout guard
  */
 async function brandDetection(req, res, next) {
+    const startTime = Date.now();
+
     try {
+        // 🔥 CRITICAL FIX: Wait for background initialization to complete FIRST
+        // This prevents the race condition where brandDetection and initializeServices()
+        // both try to establish DB connections simultaneously during cold starts.
+        if (req.app.locals.initPromise) {
+            await req.app.locals.initPromise;
+        }
+
         // 1. Resolve Brand from Header or Host FIRST (Needed for DB detection)
         const brandIdFromHeader = req.headers['x-brand-id'];
         let brand;
@@ -57,16 +67,24 @@ async function brandDetection(req, res, next) {
             });
         }
 
-        // 2 & 3. Establish Connections in PARALLEL to reduce cold-start latency
-        const [tenantConnection, centralConnection] = await Promise.all([
-            getTenantConnection(brand.brandId, uri),
-            getCentralConnection()
+        // 🔥 CRITICAL FIX: Add a 15s timeout guard around DB connection establishment
+        // This prevents requests from hanging for 100-253 seconds during cold starts
+        const DB_CONNECT_TIMEOUT = 15000;
+        
+        const [tenantConnection, centralConnection] = await Promise.race([
+            Promise.all([
+                getTenantConnection(brand.brandId, uri),
+                getCentralConnection()
+            ]),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error(`DB connection timeout after ${DB_CONNECT_TIMEOUT}ms`)), DB_CONNECT_TIMEOUT)
+            )
         ]);
 
         const tenantModels = getTenantModels(tenantConnection);
         const centralModels = getCentralModels(centralConnection);
 
-        // 4. Attach Unified Model Object to the request
+        // 3. Attach Unified Model Object to the request
         req.db = tenantConnection;
         req.centralDb = centralConnection;
 
@@ -76,17 +94,19 @@ async function brandDetection(req, res, next) {
             brandId: brand.brandId
         };
 
+        const elapsed = Date.now() - startTime;
+        if (elapsed > 2000) {
+            console.warn(`⚠️ Brand detection slow: ${elapsed}ms for ${brand.brandId}`);
+        }
+
         next();
     } catch (error) {
-        console.error('❌ Brand Detection Error:', error);
-        res.status(500).json({
-            error: 'Database connection failed',
+        const elapsed = Date.now() - startTime;
+        console.error(`❌ Brand Detection Error (${elapsed}ms):`, error.message);
+        res.status(503).json({
+            error: 'Database connection failed. The backend may be starting up - please retry.',
             details: error.message,
-            _performance: {
-                totalTime: '0ms',
-                breakdown: { database: '0ms', cache: '0ms', processing: '0ms' },
-                timestamp: new Date().toISOString()
-            }
+            retryAfter: 5
         });
     }
 }

@@ -49,8 +49,8 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     }
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout to 30s to prevent Next.js from prematurely aborting slow local/DB connections
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // 🔥 FIX: Reduced from 30s to 12s - fail fast for better UX during cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(apiUrl.toString(), {
@@ -107,8 +107,8 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
       : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
 
     const controller = new AbortController();
-    // CRITICAL: Increased timeout to 30s to prevent premature AbortError
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // 🔥 FIX: Reduced from 30s to 12s - fail fast for better UX during cold starts
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     try {
       const response = await fetch(url, {

@@ -7,12 +7,14 @@ const tenantConnections = {};
 let centralConnection = null;
 
 const mongoOptions = {
-  maxPoolSize: 20,
-  serverSelectionTimeoutMS: 20000, 
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 20000,
-  heartbeatFrequencyMS: 10000,
+  maxPoolSize: 3,                  // 🔥 FIX: Serverless needs small pools (was 20, causing thundering herd)
+  minPoolSize: 1,                  // Keep at least 1 connection alive
+  serverSelectionTimeoutMS: 10000, // 🔥 FIX: Fail fast (was 20s)
+  socketTimeoutMS: 20000,          // 🔥 FIX: Reduced from 45s
+  connectTimeoutMS: 10000,         // 🔥 FIX: Reduced from 20s
+  heartbeatFrequencyMS: 30000,     // 🔥 FIX: Less frequent heartbeats to reduce overhead (was 10s)
   autoIndex: process.env.NODE_ENV === 'development',
+  maxIdleTimeMS: 60000,            // Close idle connections after 60s to free resources
 };
 
 // Map of brandId -> Promise<Connection>

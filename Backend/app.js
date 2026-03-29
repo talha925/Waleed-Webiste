@@ -71,8 +71,9 @@ async function initializeServices() {
 }
 
 // Initialize services in background to prevent blocking app startup
-// 🚨 CRITICAL: We don't 'await' this so the server starts listening immediately.
-initializeServices().catch(err => console.error('Background init failure:', err));
+// Store the promise so brandDetection middleware can await it before handling requests
+const initPromise = initializeServices().catch(err => console.error('Background init failure:', err));
+app.locals.initPromise = initPromise; // Expose for middleware use
 
 // Note: createFirstSuperAdmin() removed from global startup
 // as it requires a specific tenant DB connection.
@@ -92,10 +93,26 @@ app.use(helmet());
 app.use(security.setSecurityHeaders);
 app.use(security.configureCors);
 
-// 🔥 WARMUP ENDPOINT: Ultra-lightweight ping for Vercel Cron to keep function warm
-// Placed BEFORE brand detection so it responds instantly without DB connections
-app.get('/ping', (req, res) => {
-    res.status(200).json({ status: 'warm', ts: Date.now() });
+// 🔥 WARMUP ENDPOINT: Vercel Cron hits this every 5 min to keep function + DB warm
+// Placed BEFORE brand detection so it skips tenant resolution
+app.get('/ping', async (req, res) => {
+    try {
+        // Ensure DB connections are established (critical for preventing cold starts)
+        await initPromise;
+        const { getCentralConnection } = require('./config/db');
+        const conn = await getCentralConnection();
+        const isDbReady = conn && conn.readyState === 1;
+        res.status(200).json({ 
+            status: 'warm', 
+            db: isDbReady ? 'connected' : 'connecting',
+            redis: redisConfig.isReady() ? 'connected' : 'disconnected',
+            ts: Date.now() 
+        });
+    } catch (err) {
+        // Still respond 200 so cron doesn't alert, but log the issue
+        console.warn('⚠️ Ping warmup partial failure:', err.message);
+        res.status(200).json({ status: 'warming', error: err.message, ts: Date.now() });
+    }
 });
 
 // Brand Detection — attaches req.brand, req.db, and req.models for multi-brand support

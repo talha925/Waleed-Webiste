@@ -424,15 +424,21 @@ class CacheService {
     }
     try {
       const serializedData = JSON.stringify(data);
-      if (ttl) {
-        await this.redis.setEx(key, ttl, serializedData);
-      } else {
-        await this.redis.set(key, serializedData);
-      }
+      // 🔥 FIX: Add 2s timeout to SET operations to prevent blocking responses
+      const setOp = ttl 
+        ? this.redis.setEx(key, ttl, serializedData)
+        : this.redis.set(key, serializedData);
+      
+      await Promise.race([
+        setOp,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis SET Timeout')), 2000))
+      ]);
       trackCache('SET', key, true);
       return true;
     } catch (error) {
-      console.error('❌ Cache set error:', error);
+      if (error.message !== 'Redis SET Timeout') {
+        console.error('❌ Cache set error:', error.message);
+      }
       trackCache('SET', key, false);
       return false;
     }
