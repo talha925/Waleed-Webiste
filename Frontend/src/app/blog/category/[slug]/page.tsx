@@ -4,7 +4,8 @@ import BlogList from '@/components/blog/BlogList';
 import { getBrandConfig } from '@config/server-config';
 import { fetchBlogCategoriesServer, fetchBlogsByCategoryServer } from '@/lib/serverData';
 
-export const dynamicParams = true; // allow dynamic routes even if not in generateStaticParams
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const FETCH_TIMEOUT = 5000;
 
@@ -15,7 +16,6 @@ interface CategoryPageProps {
 }
 
 // Function to get category by slug
-
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -103,12 +103,6 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       }),
     },
   };
-}
-
-// Generate static params for known categories
-export async function generateStaticParams() {
-  const { data: categories } = await fetchBlogCategoriesServer();
-  return categories.map((cat: any) => ({ slug: cat.slug }));
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {

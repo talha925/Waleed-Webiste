@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { getBrandConfigByHost } from './index';
 import type { BrandConfig } from './types';
 
@@ -7,14 +8,13 @@ import type { BrandConfig } from './types';
  */
 export function getBrandConfig(): BrandConfig {
     try {
-        // Root Fix: Dynamic require prevents Next.js static analysis from breaking the bundle
-        // @ts-ignore hiding require from client bundler
-        const { headers } = require(/* webpackIgnore: true */ 'next/headers');
         const headersList = headers();
         const host = (headersList.get('host') || headersList.get('x-forwarded-host') || '').toLowerCase();
         return getBrandConfigByHost(host);
-    } catch {
-        // Fallback for build time / outside request context
+    } catch (error) {
+        // In Next.js, headers() throws a specific error during static generation
+        // to signal that the page must be dynamic. We want to allow this for auto-detection
+        // but provide a safe fallback for builds/tooling.
         return getBrandConfigByHost('');
     }
 }

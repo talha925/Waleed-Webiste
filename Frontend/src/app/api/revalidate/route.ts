@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
         });
 
       case 'blog':
+      case 'blogs':
         // Comprehensive blog revalidation
         revalidatePath('/', 'layout'); // Nuclear option: clear everything to be sure
         revalidatePath('/blog');
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         });
 
+      case 'coupon':
       case 'coupons':
         // Revalidate coupon-related pages and tags
         revalidateTag('coupons');
@@ -138,8 +140,10 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         });
 
+      case 'category':
       case 'categories':
       case 'blogCategory':
+      case 'blogCategories':
         // Revalidate categories-related pages and tags
         revalidatePath('/categories');
         revalidateTag('categories');

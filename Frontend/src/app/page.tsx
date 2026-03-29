@@ -8,8 +8,9 @@ import { themeClasses } from '@/lib/theme/utils';
 import { getBrandConfig } from '@config/server-config';
 import { fetchHomeDataServer } from "@/lib/serverData";
 
-// ISR: revalidate the page every 60s. Build-time fetches fail gracefully (return []).
-export const revalidate = 60;
+// Force dynamic rendering since brand detection depends on the hostname header
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {

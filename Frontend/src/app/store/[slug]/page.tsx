@@ -6,8 +6,9 @@ import StoreClient from './StoreClient';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-// Enable ISR with 1 hour revalidation safety net
-export const revalidate = 3600;
+// Enable dynamic rendering since brand identification depends on host headers
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface StorePageProps {
   params: { slug: string };
