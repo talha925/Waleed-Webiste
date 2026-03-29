@@ -26,14 +26,14 @@ const callFrontendRevalidation = async (type, identifier, brandId = null, metada
             // Global fallback for any older code not passing brandId
             if (!frontendUrl) frontendUrl = process.env.FRONTEND_URL;
 
+            // For local development, prioritize localhost ONLY IF no brand URL was resolved
+            if (isDev && !frontendUrl) {
+                frontendUrl = 'http://localhost:3000';
+            }
+
             if (!frontendUrl) {
                 console.error(`❌ No FRONTEND_URL found for brand: ${brandId || 'global'}. Revalidation aborted.`);
                 return { success: false, error: 'Frontend URL missing' };
-            }
-
-            // For local development, prioritize localhost
-            if (isDev) {
-                frontendUrl = 'http://localhost:3000';
             }
 
             const revalidationEndpoint = `${frontendUrl}/api/revalidate`;

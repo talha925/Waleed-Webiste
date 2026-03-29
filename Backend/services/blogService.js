@@ -6,7 +6,7 @@ const { deleteImageFromS3 } = require('../utils/s3Utils');
 
 // 🚀 L1 CACHE: Local memory cache for high-traffic lists
 const L1_CACHE = new Map();
-const L1_TTL = 60000; // 60 seconds (Professional Production standard)
+const L1_TTL = 20000; // 20 seconds (Reduced for faster cache sync across instances)
 
 // ✅ Optimized helper for related posts
 exports.getRelatedPosts = async (models, categoryId, storeId, excludeId, limit = 5) => {
@@ -175,6 +175,11 @@ exports.findAll = async (models, queryParams = {}) => {
     L1_CACHE.set(cacheKey, { data: result, expiry: now + L1_TTL });
     return result;
   } catch (error) {
+    console.error('❌ BlogService.findAll Error:', error.message, '| Query:', JSON.stringify(queryParams));
+    // Provide a more descriptive error in development
+    if (process.env.NODE_ENV === 'development') {
+      throw new AppError(`Failed to fetch blog posts: ${error.message}`, 500);
+    }
     throw new AppError('Failed to fetch blog posts', 500);
   }
 };

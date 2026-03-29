@@ -18,7 +18,7 @@ exports.getStores = async (models, queryParams) => {
         // Strip cache-busting params before generating cache key
         const { _ts, ...cacheParams } = queryParams;
         const cacheKey = cacheService.generateKey('store', { ...cacheParams, brandId });
-        
+
         // 🚀 L1 CACHE: Instant list retrieval
         const now = Date.now();
         if (L1_CACHE.has(cacheKey)) {
@@ -61,9 +61,9 @@ exports.getStores = async (models, queryParams) => {
                 isValid: true,
                 $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
             })
-            .sort({ order: 1, createdAt: -1 })
-            .select('_id store offerDetails code active isValid order hits lastAccessed')
-            .lean();
+                .sort({ order: 1, createdAt: -1 })
+                .select('_id store offerDetails code active isValid order hits lastAccessed')
+                .lean();
 
             const couponMap = allCoupons.reduce((acc, c) => {
                 const sid = c.store.toString();
@@ -96,7 +96,7 @@ exports.getStoreBySlug = async (models, slug) => {
     const { Store, brandId } = models;
     try {
         const cacheKey = cacheService.generateKey('store_detail', { slug, brandId });
-        
+
         // 1. Check L1 Cache
         const now = Date.now();
         if (L1_CACHE.has(cacheKey)) {
@@ -130,9 +130,9 @@ exports.getStoreBySlug = async (models, slug) => {
             isValid: true,
             $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
         })
-        .sort({ order: 1, createdAt: -1 })
-        .select('_id offerDetails code active isValid order hits lastAccessed')
-        .lean();
+            .sort({ order: 1, createdAt: -1 })
+            .select('_id offerDetails code active isValid order hits lastAccessed')
+            .lean();
 
         store.couponCount = store.coupons.length;
 
@@ -166,8 +166,8 @@ exports.getStoreById = async (models, storeId) => {
             isValid: true,
             $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
         })
-        .sort({ order: 1, createdAt: -1 })
-        .lean();
+            .sort({ order: 1, createdAt: -1 })
+            .lean();
 
         store.couponCount = store.coupons.length;
 
@@ -188,14 +188,14 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         // 🚀 FATAL PERFORMANCE FIX: Prevent '$text' full-scan scoring for partial typing.
         // Doing full-text score calculation across long_description takes 5-10s per keystroke.
         // We now do a targeted Regex on 'name' and 'slug' which resolves in < 50ms.
-        
+
         if (!query || query.length < 2) {
             return { stores: [], totalStores: 0, query, page: 1, limit: parseInt(limit), timestamp: new Date().toISOString() };
         }
 
         const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(escapedQuery, 'i');
-        
+
         const optimizedQuery = {
             $or: [
                 { name: { $regex: regex } },
