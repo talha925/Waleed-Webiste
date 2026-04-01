@@ -115,6 +115,7 @@ export default async function RootLayout({
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', '${brand.gaId}');
+    ${brand.googleAdsId ? `gtag('config', '${brand.googleAdsId}');` : ''}
     ${brand.gtagConversion ? `gtag('event', 'conversion', {
       'send_to': '${brand.gtagConversion.sendTo}',
       'value': ${brand.gtagConversion.value},
@@ -141,6 +142,9 @@ export default async function RootLayout({
           }}
         />
         <meta name="theme-color" content={brand.themeColor} />
+        {brand.adSenseAccount && (
+          <meta name="google-adsense-account" content={brand.adSenseAccount} />
+        )}
         
         {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
@@ -178,6 +182,12 @@ export default async function RootLayout({
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
                 strategy="lazyOnload"
               />
+              {brand.googleAdsId && (
+                <Script
+                  src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
+                  strategy="lazyOnload"
+                />
+              )}
               <Script id="google-analytics" strategy="lazyOnload">
                 {gtagInnerHtml}
               </Script>

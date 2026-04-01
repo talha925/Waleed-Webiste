@@ -38,6 +38,8 @@ const brandB: BrandConfig = {
 
     // ─── Analytics & Tracking ────────────────────────────────
     gaId: process.env.NEXT_PUBLIC_GA_ID_BRAND_B || 'G-RLGDEQM2Z9',
+    googleAdsId: 'AW-17998192949',
+    adSenseAccount: 'ca-pub-5501806014590426',
     gtagConversion: {
         sendTo: 'AW-XXXXXXXXXXX/XXXXXXXXXXXXXX',
         value: 1.0,

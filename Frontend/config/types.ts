@@ -48,6 +48,10 @@ export interface BrandConfig {
     // ─── Analytics & Tracking ────────────────────────────────
     /** Google Analytics Measurement ID (e.g. "G-AAAAAAA") */
     gaId: string;
+    /** Google Ads Measurement ID (e.g. "AW-12345678") */
+    googleAdsId?: string;
+    /** Google AdSense Account ID (e.g. "ca-pub-XXXXXXXXXXXXXXXX") */
+    adSenseAccount?: string;
     /** Google Ads conversion tag config */
     gtagConversion?: GtagConversion;
 
