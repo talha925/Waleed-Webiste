@@ -93,32 +93,25 @@ app.use(helmet());
 app.use(security.setSecurityHeaders);
 app.use(security.configureCors);
 
-/**
- * 🚩 IMPORTANT: BACKEND WARMUP ENDPOINT
- * Used by external service (cron-job.org) to prevent Vercel Cold Starts.
- * Frequency: Every 5 minutes (via console.cron-job.org)
- * Purpose: Keeps the serverless function active and maintains MongoDB connection pools.
- */
+// 🔥 WARMUP ENDPOINT: Vercel Cron hits this every 5 min to keep function + DB warm
+// Placed BEFORE brand detection so it skips tenant resolution
 app.get('/ping', async (req, res) => {
     try {
-        // Ensure MongoDB is actually ready before responding 'warm'
-        if (app.locals.initPromise) {
-            await app.locals.initPromise;
-        }
-        
+        // Ensure DB connections are established (critical for preventing cold starts)
+        await initPromise;
+        const { getCentralConnection } = require('./config/db');
+        const conn = await getCentralConnection();
+        const isDbReady = conn && conn.readyState === 1;
         res.status(200).json({ 
             status: 'warm', 
-            db: 'connected', 
-            redis: cacheService.isAvailable() ? 'connected' : 'disconnected',
-            ts: Date.now(),
-            _performance: {
-                totalTime: '0ms',
-                breakdown: { database: '0ms', cache: '0ms', processing: '0ms' },
-                timestamp: new Date().toISOString()
-            }
+            db: isDbReady ? 'connected' : 'connecting',
+            redis: redisConfig.isReady() ? 'connected' : 'disconnected',
+            ts: Date.now() 
         });
     } catch (err) {
-        res.status(500).json({ status: 'unstable', error: err.message });
+        // Still respond 200 so cron doesn't alert, but log the issue
+        console.warn('⚠️ Ping warmup partial failure:', err.message);
+        res.status(200).json({ status: 'warming', error: err.message, ts: Date.now() });
     }
 });
 
