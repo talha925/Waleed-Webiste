@@ -109,7 +109,7 @@ app.get('/ping', async (req, res) => {
         res.status(200).json({ 
             status: 'warm', 
             db: 'connected', 
-            redis: (require('./config/cacheService').client?.isReady) ? 'connected' : 'disconnected',
+            redis: cacheService.isAvailable() ? 'connected' : 'disconnected',
             ts: Date.now(),
             _performance: {
                 totalTime: '0ms',
