@@ -41,7 +41,7 @@ const brandB: BrandConfig = {
     googleAdsId: 'AW-17998192949',
     adSenseAccount: 'ca-pub-5501806014590426',
     gtagConversion: {
-        sendTo: 'AW-XXXXXXXXXXX/XXXXXXXXXXXXXX',
+        sendTo: 'AW-17998192949/KletCK3N5pMcELXCmoZD',
         value: 1.0,
         currency: 'USD',
     },
