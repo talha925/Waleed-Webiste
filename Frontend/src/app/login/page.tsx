@@ -25,29 +25,16 @@ export default function LoginPage() {
         return;
       }
 
-      // Call login API
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // Use the login function with credentials
+      await login({ email, password });
 
-      const data = await response.json();
-
-      if (response.ok && data.token) {
-        // Use the login function with credentials
-        await login({ email, password });
-
-        // Always redirect to admin page after login
-        router.push('/admin/blogs');
-      } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
-      }
-    } catch (err) {
+      // Always redirect to admin page after login
+      router.push('/admin/blogs');
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('An error occurred during login. Please try again.');
+      // Try to extract a clean error message
+      const errorMsg = err.message || err.response?.message || err.response?.error || 'An error occurred during login. Please try again.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

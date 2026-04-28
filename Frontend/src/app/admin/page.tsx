@@ -22,24 +22,12 @@ export default function AdminLoginPage() {
         setError('Email and password are required');
         return;
       }
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-brand-id': process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll'
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok && data.token) {
-        // The login function expects credentials, but we already have the token from the API
-        // We need to handle this differently - the token is already set by the API response
-        router.push('/admin/blogs');
-      } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
-      }
-    } catch (err) {
-      setError('An error occurred during login. Please try again.');
+      await login({ email, password });
+      router.push('/admin/blogs');
+    } catch (err: any) {
+      console.error('Admin login error:', err);
+      const errorMsg = err.message || err.response?.message || err.response?.error || 'An error occurred during login. Please try again.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -41,7 +41,7 @@ class CacheService {
     return this.initializationPromise;
   }
 
-  async _initializeWithRetry(maxRetries = 10, retryDelay = 1000) {
+  async _initializeWithRetry(maxRetries = 3, retryDelay = 500) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         this.redis = redisConfig.getClient();
@@ -65,8 +65,7 @@ class CacheService {
         }
       }
 
-      const delay = attempt <= 3 ? retryDelay : retryDelay * Math.pow(2, attempt - 3);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
 
     this.isInitialized = true;

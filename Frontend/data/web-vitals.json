@@ -1,47 +1,38 @@
 [
   {
-    "metric": "LCP",
-    "value": 52288,
-    "rating": "poor",
-    "id": "1764066360777-gt2o5t4t4",
-    "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-    "timestamp": 1764153461908
-  },
-  {
-    "metric": "TTFB",
-    "value": 51131.69999998808,
-    "rating": "poor",
-    "id": "1764066360789-b6kohfyum",
-    "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-    "timestamp": 1764153462010
-  },
-  {
-    "metric": "INP",
-    "value": 45.10000002384186,
+    "metric": "FID",
+    "value": 1.699999999254942,
     "rating": "good",
-    "id": "1764066360792-m6j1tetw2",
-    "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-    "timestamp": 1764153462033
+    "id": "1777335693643-yw4kbi3vk",
+    "url": "http://localhost:3000/admin/performance-dashboard",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "timestamp": 1777335693677
   },
   {
     "metric": "CLS",
-    "value": 0.4699103033930077,
+    "value": 0.416223928615659,
     "rating": "poor",
-    "id": "1764066780442-pw58grv01",
-    "url": "http://localhost:3000/admin/blogs/create",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-    "timestamp": 1764169281388
+    "id": "1777335694432-mh8o4nvsk",
+    "url": "http://localhost:3000/admin/blogs",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "timestamp": 1777335694465
   },
   {
-    "metric": "INP",
-    "value": 45.10000002384186,
+    "metric": "TTFB",
+    "value": 741.6000000014901,
     "rating": "good",
-    "id": "1764066360792-m6j1tetw2",
-    "url": "http://localhost:3000/admin/blogs/create",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-    "timestamp": 1764169281390
+    "id": "1777335689493-6cvon49x2",
+    "url": "http://localhost:3000/admin/blogs",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "timestamp": 1777336754029
+  },
+  {
+    "metric": "FID",
+    "value": 1.699999999254942,
+    "rating": "good",
+    "id": "1777335693643-yw4kbi3vk",
+    "url": "http://localhost:3000/admin/blogs",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
+    "timestamp": 1777336754081
   }
 ]

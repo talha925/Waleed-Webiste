@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { token, data: userData } = data;
+    const { token, refreshToken, expiresIn, data: userData } = data;
     const { user } = userData;
 
     // Set HTTP-only cookie with the REAL token from Backend
@@ -47,6 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: 'Login successful',
       token,
+      refreshToken,
+      expiresIn,
       user: {
         id: user._id,
         name: user.name,

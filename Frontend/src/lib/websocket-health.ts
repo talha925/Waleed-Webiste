@@ -256,12 +256,6 @@ class WebSocketHealthMonitor {
       const health = this.getHealthStatus();
       
       // Log health status for monitoring
-      console.log('WebSocket Health Check:', {
-        status: health.status,
-        score: health.score,
-        issues: health.issues
-      });
-
       // Emit health events for external monitoring
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('websocket-health-update', {

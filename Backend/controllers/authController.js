@@ -110,10 +110,10 @@ exports.login = catchAsync(async (req, res, next) => {
     const user = await User.findOne({ email, active: true }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user.password))) {
+        console.warn(`Login failed: Incorrect credentials for email ${email}`);
         return next(new AppError('Incorrect email or password', 401));
     }
 
-    // 🔐 Brand Login Isolation Check (Applies to ALL users except super-admin)
     if (user.role !== 'super-admin') {
         const currentBrandId = req.brand?.brandId;
         const userBrands = user.allowedBrands || [];
@@ -125,11 +125,12 @@ exports.login = catchAsync(async (req, res, next) => {
         const hasPermission = userBrands.some(brandId => normalize(brandId) === normalizedCurrentBrand);
 
         if (!hasPermission) {
-            console.warn(`Login Blocked: User ${user.email} (Role: ${user.role}) tried to log into ${currentBrandId} without permission.`);
+            console.warn(`Login Blocked: User ${user.email} (Role: ${user.role}) tried to log into ${currentBrandId} without permission. userBrands: ${JSON.stringify(userBrands)}`);
             return next(new AppError(`Access Denied: You do not have login permission for '${currentBrandId}'.`, 403));
         }
     }
 
+    console.log(`Login successful for ${user.email} (Role: ${user.role}) on brand ${req.brand?.brandId}`);
     await createSendToken(req, user, 200, res);
 });
 
