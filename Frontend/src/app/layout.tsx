@@ -142,6 +142,7 @@ export default async function RootLayout({
           }}
         />
         <meta name="theme-color" content={brand.themeColor} />
+        <meta name="google-site-verification" content="BPO_05-y3girQJnOzN4k3xo6r07DPlcH1OFydF3S9eY" />
         {brand.adSenseAccount && (
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}

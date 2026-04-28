@@ -59,7 +59,8 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     if (!isEmptyOrWhitespace(store?.seo?.meta_title)) {
       finalTitle = cleanText(store?.seo?.meta_title);
     } else {
-      finalTitle = cleanText(store?.name) || 'Store Not Found';
+      const storeName = cleanText(store?.name) || 'Store';
+      finalTitle = `${storeName} Discount Codes, Promos & Coupons (${new Date().getFullYear()})`;
     }
 
     // Get description with proper prioritization
@@ -67,7 +68,9 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     if (!isEmptyOrWhitespace(store?.seo?.meta_description)) {
       description = cleanText(store?.seo?.meta_description);
     } else {
-      description = cleanText(store?.short_description) || 'Fallback description';
+      const storeName = cleanText(store?.name) || 'this store';
+      const shortDesc = cleanText(store?.short_description);
+      description = `Get the latest and verified ${storeName} discount codes, promo codes, and coupons. ${shortDesc ? shortDesc + ' ' : ''}Save money today with our exclusive deals!`;
     }
 
     // Get keywords with proper prioritization
@@ -75,7 +78,8 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     if (!isEmptyOrWhitespace(store?.seo?.meta_keywords)) {
       keywords = cleanText(store?.seo?.meta_keywords);
     } else {
-      keywords = `${store?.name} discount codes, ${store?.name} coupons, ${store?.name} deals, savings, exclusive offers`;
+      const storeName = cleanText(store?.name) || 'Store';
+      keywords = `${storeName} discount codes, ${storeName} promo codes, ${storeName} coupons, ${storeName} voucher, ${storeName} deals, savings, exclusive offers`;
     }
 
     return {
