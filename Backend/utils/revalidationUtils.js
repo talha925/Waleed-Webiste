@@ -16,8 +16,9 @@ const callFrontendRevalidation = async (type, identifier, brandId = null, metada
 
             // 1. Resolve Frontend URL based on brand
             let frontendUrl;
-
-            if (brandId === 'blogzenix') {
+            if (isDev) {
+                frontendUrl = 'http://localhost:3000';
+            } else if (brandId === 'blogzenix') {
                 frontendUrl = process.env.BLOGZENIX_FRONTEND_URL;
             } else if (brandId === 'pennyscroll') {
                 frontendUrl = process.env.PENNYSCROLL_FRONTEND_URL;
@@ -25,11 +26,6 @@ const callFrontendRevalidation = async (type, identifier, brandId = null, metada
 
             // Global fallback for any older code not passing brandId
             if (!frontendUrl) frontendUrl = process.env.FRONTEND_URL;
-
-            // For local development, prioritize localhost ONLY IF no brand URL was resolved
-            if (isDev && !frontendUrl) {
-                frontendUrl = 'http://localhost:3000';
-            }
 
             if (!frontendUrl) {
                 console.error(`❌ No FRONTEND_URL found for brand: ${brandId || 'global'}. Revalidation aborted.`);

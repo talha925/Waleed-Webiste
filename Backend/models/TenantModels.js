@@ -162,17 +162,43 @@ StoreSchema.index({ language: 1, categories: 1 });
 StoreSchema.index({ createdAt: -1 });
 
 StoreSchema.pre('save', async function (next) {
-    if (this.isModified('name')) {
+    // Determine if we should auto-generate or update the slug
+    const nameModified = this.isModified('name');
+    const slugModified = this.isModified('slug');
+    
+    // Auto-generate if:
+    // 1. New document and no slug provided
+    // 2. Name is modified AND (slug was not touched OR slug is empty)
+    // 3. Name is modified AND the current slug looks like it was generated from the old name (manual override check)
+    const isNewWithoutSlug = this.isNew && !this.slug;
+    const nameChangedNoSlugTouch = nameModified && (!slugModified || !this.slug);
+
+    if (isNewWithoutSlug || nameChangedNoSlugTouch) {
         let slug = slugify(this.name, { lower: true, strict: true });
-        let slugExists = await this.constructor.findOne({ slug });
+        
+        // Check for uniqueness
+        let slugExists = await this.constructor.findOne({ slug, _id: { $ne: this._id } });
         let counter = 1;
         while (slugExists) {
             slug = `${slug}-${counter}`;
-            slugExists = await this.constructor.findOne({ slug });
+            slugExists = await this.constructor.findOne({ slug, _id: { $ne: this._id } });
             counter++;
         }
         this.slug = slug;
+    } else if (slugModified) {
+        // If slug was manually set, just ensure it's slugified and unique
+        this.slug = slugify(this.slug, { lower: true, strict: true });
+        
+        let slugExists = await this.constructor.findOne({ slug: this.slug, _id: { $ne: this._id } });
+        let counter = 1;
+        const baseSlug = this.slug;
+        while (slugExists) {
+            this.slug = `${baseSlug}-${counter}`;
+            slugExists = await this.constructor.findOne({ slug: this.slug, _id: { $ne: this._id } });
+            counter++;
+        }
     }
+
     next();
 });
 

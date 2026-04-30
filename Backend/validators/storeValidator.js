@@ -63,7 +63,8 @@ const createStoreSchema = Joi.object({
   isEditorsChoice: Joi.boolean().default(false),
 
   // ✅ NO RESTRICTION ON HEADING ANYMORE
-  heading: Joi.string().trim().optional().default('Coupons & Promo Codes')
+  heading: Joi.string().trim().optional().default('Coupons & Promo Codes'),
+  slug: Joi.string().trim().optional()
 });
 
 const updateStoreSchema = Joi.object({
@@ -111,7 +112,8 @@ const updateStoreSchema = Joi.object({
   isEditorsChoice: Joi.boolean(),
 
   // ✅ NO RESTRICTION ON HEADING ANYMORE
-  heading: Joi.string().trim()
+  heading: Joi.string().trim(),
+  slug: Joi.string().trim()
 });
 
 module.exports = {

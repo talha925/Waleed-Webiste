@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
     searchUrl.searchParams.set('q', sanitizedQuery);
     searchUrl.searchParams.set('page', pageNum.toString());
     searchUrl.searchParams.set('limit', limitNum.toString());
+    searchUrl.searchParams.set('_ts', Date.now().toString()); // 🔥 Cache buster for Next.js fetch cache
 
     const fetchResponse = await fetch(searchUrl.toString(), {
       method: 'GET',

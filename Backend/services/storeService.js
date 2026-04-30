@@ -257,15 +257,55 @@ exports.updateStore = async (models, id, updateData) => {
     const { Store, brandId } = models;
     L1_CACHE.clear(); // 🧹 Clear memory cache on update
     try {
-        const updatedStore = await Store.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).lean();
-        if (!updatedStore) throw new AppError('Store not found', 404);
+        // 🔥 FIX: Use findById + save() instead of findByIdAndUpdate
+        // so the pre('save') hook runs and slug gets regenerated when name changes.
+        const store = await Store.findById(id);
+        if (!store) throw new AppError('Store not found', 404);
+
+        console.log(`[DEBUG] Updating store ${id}. Incoming data keys:`, Object.keys(updateData));
+        console.log(`[DEBUG] Incoming name: "${updateData.name}", Incoming slug: "${updateData.slug}"`);
+        console.log(`[DEBUG] Current store name: ${store.name}, Current slug: ${store.slug}`);
+
+        // Capture old slug for cache invalidation
+        const oldSlug = store.slug;
+
+        // Apply update fields to the document
+        const fieldsToUpdate = ['name', 'trackingUrl', 'short_description', 'long_description',
+            'image', 'categories', 'seo', 'language', 'isTopStore', 'isEditorsChoice', 'heading', 'slug'];
+
+        for (const field of fieldsToUpdate) {
+            if (updateData[field] !== undefined) {
+                // Special handling for slug: only set it if it's actually different from the current one.
+                // If the frontend sends the same slug, we want Mongoose to see it as NOT modified,
+                // so our pre('save') hook can auto-generate a new one if the name changed.
+                if (field === 'slug' && updateData[field] === store.slug) {
+                    continue;
+                }
+                store[field] = updateData[field];
+            }
+        }
+
+        console.log(`[DEBUG] Store document after field mapping: Name="${store.name}", Slug="${store.slug}", isModifiedName=${store.isModified('name')}, isModifiedSlug=${store.isModified('slug')}`);
+
+        // save() triggers pre('save') hook → slug regenerates if name changed
+        const updatedStore = await store.save();
+        const updatedStoreLean = updatedStore.toObject();
 
         // 🚀 NON-BLOCKING: Admin should get response instantly
+        // Invalidate both old and new slug caches
         cacheService.invalidateStoreCachesSafely(id, brandId).catch(err => console.error(`[Store.update] Cache Error: ${err.message}`));
-        getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, updatedStore);
-        callFrontendRevalidation('store', updatedStore.slug || id, brandId).catch(err => console.error(`[Store.update] Revalidation Error: ${err.message}`));
+        if (oldSlug && oldSlug !== updatedStoreLean.slug) {
+            // Also invalidate old slug cache entry
+            cacheService.invalidateStoreCachesSafely(null, brandId).catch(err => console.error(`[Store.update] Old slug cache error: ${err.message}`));
+        }
+        getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, updatedStoreLean);
+        callFrontendRevalidation('store', updatedStoreLean.slug || id, brandId).catch(err => console.error(`[Store.update] Revalidation Error: ${err.message}`));
+        // Also revalidate old slug path if it changed
+        if (oldSlug && oldSlug !== updatedStoreLean.slug) {
+            callFrontendRevalidation('store', oldSlug, brandId, { action: 'deleted' }).catch(err => console.error(`[Store.update] Old slug revalidation error: ${err.message}`));
+        }
 
-        return updatedStore;
+        return updatedStoreLean;
     } catch (error) {
         throw error;
     }

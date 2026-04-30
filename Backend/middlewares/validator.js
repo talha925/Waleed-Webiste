@@ -19,8 +19,11 @@ const validator = (schema, source = 'body') => {
                 .map(detail => detail.message)
                 .join(', ');
 
+            console.log(`[DEBUG] Validation failed for ${source}:`, errorMessage);
             return next(new AppError(errorMessage, 400));
         }
+
+        console.log(`[DEBUG] Validation successful for ${source}. Value after validation:`, JSON.stringify(value, null, 2));
 
         // Replace request data with validated data
         req[source] = value;

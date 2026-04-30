@@ -12,6 +12,32 @@ import { useBrand } from '@/context/BrandContext';
 import { themeClasses } from '@/lib/theme/utils';
 import { Search, Copy, CheckCircle } from 'lucide-react';
 
+
+// --- FAQ Item Component ---
+const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-5 sm:px-8 sm:py-6 text-left flex items-center justify-between gap-4 group"
+      >
+        <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand-primary transition-colors">
+          {question}
+        </h3>
+        <span className={`flex-shrink-0 w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-all duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+        </span>
+      </button>
+      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="px-6 pb-6 sm:px-8 sm:pb-8 text-slate-600 leading-relaxed border-t border-slate-50 pt-4">
+          {answer}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface StoreClientProps {
   initialStore: Store | null;
   serverError?: string;
@@ -99,7 +125,7 @@ const CouponModal = React.memo(({ isOpen, onClose, code, trackingUrl }: Pick<Cou
             <button onClick={handleCopy} className="flex-1 h-12 bg-brand-primary text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95">
               Copy Code
             </button>
-            <a href={trackingUrl ? decodeHTML(trackingUrl) : '#'} target="_blank" rel="sponsored noopener" className="flex-1 h-12 bg-brand-accent text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-1.5">
+            <a href={trackingUrl ? sanitizeUrl(decodeHTML(trackingUrl)) : '#'} target="_blank" rel="sponsored noopener" className="flex-1 h-12 bg-brand-accent text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-1.5">
               Visit Store
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
             </a>
@@ -358,14 +384,14 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       setShowModal(true);
 
       if (initialStore.trackingUrl && !hasRedirected.current) {
-        const storeUrl = decodeHTML(initialStore.trackingUrl);
+        const storeUrl = sanitizeUrl(decodeHTML(initialStore.trackingUrl));
         window.open(storeUrl, '_blank', 'noopener,noreferrer');
         setTimeout(() => {
           hasRedirected.current = true;
         }, 7000);
       }
     } else {
-      if (initialStore.trackingUrl) window.open(decodeHTML(initialStore.trackingUrl), '_blank', 'noopener,noreferrer');
+      if (initialStore.trackingUrl) window.open(sanitizeUrl(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
       toast.success('Deal activated! Redirecting...');
     }
   }, [initialStore]);
@@ -412,7 +438,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
               <div className="flex-1 text-center sm:text-left space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-                    <span className="text-brand-accent">{initialStore.name}</span> Coupons
+                    <span className="text-brand-accent">{initialStore.name}</span> Coupon Codes, Promo Codes & Discounts
                   </h1>
                   <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed mx-auto sm:mx-0 font-medium">
                     {initialStore.short_description || `Verified discount codes and exclusive deals for ${initialStore.name}. Updated daily.`}
@@ -478,6 +504,36 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                 <div className="mt-16 bg-transparent performance-optimized">
                   <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-8">About {initialStore.name}</h2>
                   <SmartDescription text={decodeHTML(initialStore.long_description)} />
+
+                  {/* ═══════════ FAQ SECTION ═══════════ */}
+                  <div className="mt-16 pt-16 border-t border-slate-200">
+                    <div className="flex flex-col items-start mb-8">
+                      <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Frequently Asked Questions</h2>
+                      <p className="text-slate-500 text-sm mt-2">Everything you need to know about {initialStore.name} discounts.</p>
+                    </div>
+                    <div className="space-y-4">
+                      {[
+                        {
+                          q: `How do I use a ${initialStore.name} promo code?`,
+                          a: `To use a ${initialStore.name} promo code, simply find an active offer on this page and click "Show Code". Copy the code and paste it into the "Promo Code" box at checkout on the ${initialStore.name} website.`
+                        },
+                        {
+                          q: `Does ${initialStore.name} offer verified discount codes?`,
+                          a: `Yes, all ${initialStore.name} discount codes on this page are manually verified by our editorial team to ensure they work as described.`
+                        },
+                        {
+                          q: `Why is my ${initialStore.name} coupon not working?`,
+                          a: `If your coupon isn't working, check if it's expired or has specific terms and conditions like a minimum spend or exclusion of certain items.`
+                        },
+                        {
+                          q: `Can I combine multiple ${initialStore.name} coupons?`,
+                          a: `Generally, ${initialStore.name} only allows one promo code per order. Choose the one that gives you the biggest discount!`
+                        }
+                      ].map((item, i) => (
+                        <FAQItem key={i} question={item.q} answer={item.a} />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

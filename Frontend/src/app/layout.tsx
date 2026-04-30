@@ -108,7 +108,7 @@ export default async function RootLayout({
 
   // Resolve brand config for this request
   const brand = getBrandConfig();
-  
+
   // Build gtag inline script dynamically per brand
   const gtagInnerHtml = `
     window.dataLayer = window.dataLayer || [];
@@ -146,7 +146,7 @@ export default async function RootLayout({
         {brand.adSenseAccount && (
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
-        
+
         {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
@@ -158,7 +158,7 @@ export default async function RootLayout({
         {/* 🚀 IMAGE ROOT OPTIMIZATION: Resolve DNS and Handshake for S3 bucket early */}
         <link rel="preconnect" href={`https://${brand.imageDomain}`} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={`https://${brand.imageDomain}`} />
-        
+
         {/* Dynamic favicon */}
         <link rel="icon" href={brand.faviconPath} type="image/svg+xml" />
       </head>
@@ -177,7 +177,7 @@ export default async function RootLayout({
               <RealTimeUpdates />
               <SpeedInsights />
               <Analytics />
-              
+
               {/* Load Scripts after interactive */}
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}

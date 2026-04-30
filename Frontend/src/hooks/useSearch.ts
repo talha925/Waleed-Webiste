@@ -126,7 +126,14 @@ export function useSearch(options: UseSearchOptions = {}) {
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
 
-    setResults(prev => ({ ...prev, isLoading: true, error: null }));
+    // Reset results immediately to avoid showing stale data from previous searches
+    setResults(prev => ({ 
+      ...prev, 
+      stores: [], 
+      blogs: [], 
+      isLoading: true, 
+      error: null 
+    }));
 
     try {
       const endpoint = searchType === 'stores'
@@ -138,6 +145,7 @@ export function useSearch(options: UseSearchOptions = {}) {
       url.searchParams.set('limit', config.limit!.toString());
       const pageToUse = pageOverride ?? 1;
       url.searchParams.set('page', pageToUse.toString());
+      url.searchParams.set('_ts', Date.now().toString()); // 🔥 Cache buster
 
       const abortTimeout = setTimeout(() => {
         if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -270,6 +278,7 @@ export function useSearch(options: UseSearchOptions = {}) {
       url.searchParams.set('q', searchQuery.trim());
       url.searchParams.set('limit', results.limit.toString());
       url.searchParams.set('page', nextPage.toString());
+      url.searchParams.set('_ts', Date.now().toString()); // 🔥 Cache buster
 
       const response = await fetch(url.toString(), {
         signal,

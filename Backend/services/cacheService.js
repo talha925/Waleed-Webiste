@@ -371,14 +371,19 @@ class CacheService {
 
   async _getKeysByPattern(pattern) {
     const keys = [];
-    let cursor = '0';
-
-    do {
-      const result = await this.redis.scan(cursor, { MATCH: pattern, COUNT: 100 });
-      cursor = result.cursor;
-      keys.push(...result.keys);
-    } while (cursor !== '0');
-
+    try {
+      // 🚀 Use scanIterator for node-redis v4+ (more robust and non-blocking)
+      for await (const key of this.redis.scanIterator({
+        MATCH: pattern,
+        COUNT: 100
+      })) {
+        keys.push(key);
+        // Safety break if we somehow get too many keys (prevent memory issues)
+        if (keys.length > 5000) break;
+      }
+    } catch (error) {
+      console.error(`❌ Error scanning for pattern ${pattern}:`, error);
+    }
     return keys;
   }
 
@@ -619,9 +624,9 @@ class CacheService {
   async invalidateStoreCachesSafely(storeId = null, brandId = null) {
     try {
       console.log(`🛡️ Starting safe cache invalidation for store: ${storeId || 'all'} (Brand: ${brandId})`);
-      const result = await this.invalidateStoreCaches(storeId, brandId);
-      console.log(`✅ Safe cache invalidation completed successfully: ${result.totalDeleted} keys deleted`);
-      return result;
+      const success = await this.invalidateStoreCaches(storeId, brandId);
+      console.log(`✅ Safe cache invalidation completed: ${success ? 'SUCCESS' : 'FAILED'} (Brand: ${brandId})`);
+      return success;
     } catch (error) {
       console.error(`❌ Cache invalidation failed for store ${storeId}:`, error.message);
 

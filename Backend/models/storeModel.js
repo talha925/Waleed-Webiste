@@ -57,19 +57,42 @@ storeSchema.index({ createdAt: -1 });
 
 // 🧠 Slug pre-save
 storeSchema.pre('save', async function (next) {
-  if (this.isModified('name')) {
+  // Only auto-generate slug from name if slug wasn't explicitly set by the user
+  const shouldAutoGenerateSlug = this.isModified('name') && !this.isModified('slug');
+  // Also generate slug if this is a new document and no slug was provided
+  const isNewWithoutSlug = this.isNew && !this.slug;
+
+  console.log(`[DEBUG] Pre-save hook for ${this.name}. shouldAutoGenerateSlug: ${shouldAutoGenerateSlug}, isNewWithoutSlug: ${isNewWithoutSlug}, current slug: ${this.slug}`);
+
+  if (shouldAutoGenerateSlug || isNewWithoutSlug) {
     let slug = slugify(this.name, { lower: true, strict: true });
-    let slugExists = await mongoose.model('Store').findOne({ slug });
+    let slugExists = await mongoose.model('Store').findOne({ slug, _id: { $ne: this._id } });
 
     let counter = 1;
     while (slugExists) {
       slug = `${slug}-${counter}`;
-      slugExists = await mongoose.model('Store').findOne({ slug });
+      slugExists = await mongoose.model('Store').findOne({ slug, _id: { $ne: this._id } });
       counter++;
     }
 
     this.slug = slug;
   }
+
+  // If slug was manually set, ensure uniqueness
+  if (this.isModified('slug') && !shouldAutoGenerateSlug) {
+    let slug = slugify(this.slug, { lower: true, strict: true });
+    let slugExists = await mongoose.model('Store').findOne({ slug, _id: { $ne: this._id } });
+
+    let counter = 1;
+    while (slugExists) {
+      slug = `${slug}-${counter}`;
+      slugExists = await mongoose.model('Store').findOne({ slug, _id: { $ne: this._id } });
+      counter++;
+    }
+
+    this.slug = slug;
+  }
+
   next();
 });
 

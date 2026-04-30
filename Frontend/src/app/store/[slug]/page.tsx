@@ -55,12 +55,15 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     };
 
     // Get title with proper prioritization
+    const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
+    const currentYear = new Date().getFullYear();
+
     let finalTitle: string;
     if (!isEmptyOrWhitespace(store?.seo?.meta_title)) {
       finalTitle = cleanText(store?.seo?.meta_title);
     } else {
       const storeName = cleanText(store?.name) || 'Store';
-      finalTitle = `${storeName} Discount Codes, Promos & Coupons (${new Date().getFullYear()})`;
+      finalTitle = `${storeName} Coupon Codes, Promo Codes & Discounts - ${currentMonth} ${currentYear}`;
     }
 
     // Get description with proper prioritization
@@ -70,7 +73,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
     } else {
       const storeName = cleanText(store?.name) || 'this store';
       const shortDesc = cleanText(store?.short_description);
-      description = `Get the latest and verified ${storeName} discount codes, promo codes, and coupons. ${shortDesc ? shortDesc + ' ' : ''}Save money today with our exclusive deals!`;
+      description = `Find the latest ${storeName} discount codes, promo codes, and coupons for ${currentMonth} ${currentYear}. ${shortDesc ? shortDesc + ' ' : ''}Save big on your next purchase with our verified offers!`;
     }
 
     // Get keywords with proper prioritization
@@ -79,7 +82,7 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
       keywords = cleanText(store?.seo?.meta_keywords);
     } else {
       const storeName = cleanText(store?.name) || 'Store';
-      keywords = `${storeName} discount codes, ${storeName} promo codes, ${storeName} coupons, ${storeName} voucher, ${storeName} deals, savings, exclusive offers`;
+      keywords = `${storeName} discount code, ${storeName} promo code, ${storeName} coupon code, ${storeName} coupons, ${storeName} vouchers, ${storeName} deals, ${storeName} offers ${currentYear}`;
     }
 
     return {
@@ -134,10 +137,55 @@ export default async function StorePage({ params }: StorePageProps) {
     notFound();
   }
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": `How do I use a ${store.name} promo code?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `To use a ${store.name} promo code, simply find an active offer on this page and click "Show Code". Copy the code and paste it into the "Promo Code" box at checkout on the ${store.name} website.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `Does ${store.name} offer verified discount codes?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `Yes, all ${store.name} discount codes on this page are manually verified by our editorial team to ensure they work as described.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `Why is my ${store.name} coupon not working?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `If your coupon isn't working, check if it's expired or has specific terms and conditions like a minimum spend or exclusion of certain items.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": `Can I combine multiple ${store.name} coupons?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `Generally, ${store.name} only allows one promo code per order. Choose the one that gives you the biggest discount!`
+        }
+      }
+    ]
+  };
+
   return (
-    <StoreClient
-      initialStore={store}
-      serverError={undefined}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <StoreClient
+        initialStore={store}
+        serverError={undefined}
+      />
+    </>
   );
 }
