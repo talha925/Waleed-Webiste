@@ -5,7 +5,7 @@
 import confetti from 'canvas-confetti';
 import SafeImage from '@/components/ui/SafeImage';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { decodeHTML } from '@/lib/utils/formatting';
+import { decodeHTML, sanitizeUrl } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
 import { useBrand } from '@/context/BrandContext';

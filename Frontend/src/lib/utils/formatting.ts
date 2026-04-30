@@ -62,4 +62,20 @@ export const decodeHTML = (input: string): string => {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'");
-}; 
+};
+
+/**
+ * Sanitizes a URL to prevent XSS attacks
+ */
+export const sanitizeUrl = (url: string): string => {
+  if (!url) return '#';
+  const cleanUrl = url.trim();
+  const lowerUrl = cleanUrl.toLowerCase();
+  
+  const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:'];
+  if (dangerousProtocols.some(protocol => lowerUrl.startsWith(protocol))) {
+    return '#';
+  }
+  
+  return cleanUrl;
+};
