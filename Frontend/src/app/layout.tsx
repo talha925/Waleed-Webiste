@@ -181,15 +181,15 @@ export default async function RootLayout({
               {/* Load Scripts after interactive */}
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                strategy="lazyOnload"
+                strategy="afterInteractive"
               />
               {brand.googleAdsId && (
                 <Script
                   src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
-                  strategy="lazyOnload"
+                  strategy="afterInteractive"
                 />
               )}
-              <Script id="google-analytics" strategy="lazyOnload">
+              <Script id="google-analytics" strategy="afterInteractive">
                 {gtagInnerHtml}
               </Script>
             </div>
