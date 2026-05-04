@@ -4,7 +4,7 @@ const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
 // 🚀 L1 CACHE: In-memory cache to bypass Redis/DB for common lookups
 const L1_CACHE = new Map();
-const L1_TTL = 20000; // 20 seconds
+const L1_TTL = 10000; // 10 seconds
 
 exports.findAll = async (models, queryParams = {}) => {
     const { BlogCategory, brandId } = models;
@@ -45,7 +45,7 @@ exports.findAll = async (models, queryParams = {}) => {
             pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)), limit: parseInt(limit) }
         };
 
-        await cacheService.set(cacheKey, result, 3600);
+        await cacheService.set(cacheKey, result, 300); // 5 minutes
         return result;
     } catch (error) {
         throw new AppError('Failed to fetch blog categories', 500);
@@ -67,9 +67,17 @@ exports.create = async (models, data) => {
     const { BlogCategory, brandId } = models;
     try {
         const category = await BlogCategory.create(data);
-        cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[BlogCategory.create] Cache Error: ${err.message}`));
+
+        // 🧹 Clear L1 cache AFTER successful DB write
+        L1_CACHE.clear();
+
+        // AWAIT cache invalidation
+        try {
+            await cacheService.invalidateBlogCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[BlogCategory.create] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('blogCategory', category.slug || category._id, brandId).catch(err => console.error(`[BlogCategory.create] Revalidation Error: ${err.message}`));
-        L1_CACHE.clear(); // 🧹 Clear memory cache on create
         return category;
     } catch (error) {
         if (error.code === 11000) throw new AppError('Category with this name or slug already exists', 400);
@@ -83,9 +91,16 @@ exports.update = async (models, id, data) => {
         const category = await BlogCategory.findByIdAndUpdate(id, data, { new: true, runValidators: true });
         if (!category) throw new AppError('Blog category not found', 404);
 
-        cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[BlogCategory.update] Cache Error: ${err.message}`));
+        // 🧹 Clear L1 cache AFTER successful DB write
+        L1_CACHE.clear();
+
+        // AWAIT cache invalidation
+        try {
+            await cacheService.invalidateBlogCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[BlogCategory.update] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('blogCategory', category.slug || id, brandId).catch(err => console.error(`[BlogCategory.update] Revalidation Error: ${err.message}`));
-        L1_CACHE.clear(); // 🧹 Clear memory cache on update
         return category;
     } catch (error) {
         if (error.code === 11000) throw new AppError('Category with this name or slug already exists', 400);
@@ -99,9 +114,16 @@ exports.delete = async (models, id) => {
         const category = await BlogCategory.findByIdAndDelete(id);
         if (!category) throw new AppError('Blog category not found', 404);
 
-        cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[BlogCategory.delete] Cache Error: ${err.message}`));
+        // 🧹 Clear L1 cache AFTER successful DB write
+        L1_CACHE.clear();
+
+        // AWAIT cache invalidation
+        try {
+            await cacheService.invalidateBlogCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[BlogCategory.delete] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('blogCategory', category.slug || id, brandId, { action: 'deleted' }).catch(err => console.error(`[BlogCategory.delete] Revalidation Error: ${err.message}`));
-        L1_CACHE.clear(); // 🧹 Clear memory cache on delete
         return null;
     } catch (error) {
         throw error;

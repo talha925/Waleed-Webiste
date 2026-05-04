@@ -7,14 +7,14 @@ class CacheService {
   constructor() {
     this.redis = null;
     this.defaultTTL = {
-      categories: 3600,        // 1 hour
+      categories: 1800,        // 30 minutes
       frontBannerBlogs: 900,   // 15 minutes
       blogPost: 3600,          // 1 hour (Increased for stability)
-      stores: 3600,            // 1 hour (Increased for better hit rate)
-      coupons: 1800,           // 30 minutes
-      store_detail: 3600,      // 1 hour (Critical for store detail performance)
-      coupon_detail: 3600,     // 1 hour
-      homepage: 900            // 15 minutes
+      stores: 300,             // 5 minutes (reduced - invalidation handles freshness)
+      coupons: 300,            // 5 minutes (reduced - invalidation handles freshness)
+      store_detail: 600,       // 10 minutes (reduced - invalidation handles freshness)
+      coupon_detail: 600,      // 10 minutes
+      homepage: 300            // 5 minutes
     };
     this.isInitialized = false;
     this.initializationPromise = null;

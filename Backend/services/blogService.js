@@ -6,7 +6,7 @@ const { deleteImageFromS3 } = require('../utils/s3Utils');
 
 // 🚀 L1 CACHE: Local memory cache for high-traffic lists
 const L1_CACHE = new Map();
-const L1_TTL = 20000; // 20 seconds (Reduced for faster cache sync across instances)
+const L1_TTL = 10000; // 10 seconds (Reduced for faster cache sync)
 
 // ✅ Optimized helper for related posts
 exports.getRelatedPosts = async (models, categoryId, storeId, excludeId, limit = 5) => {
@@ -237,11 +237,20 @@ exports.findById = async (models, id) => {
 exports.create = async (models, data) => {
   const { Blog: BlogPost, brandId } = models;
   const blog = await BlogPost.create(data);
-  L1_CACHE.clear(); // 🧹 Clear memory cache on create
-  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.create] Cache Error: ${err.message}`));
+
+  // 🧹 Clear L1 cache AFTER successful DB write
+  L1_CACHE.clear();
+
+  // 🚀 AWAIT cache invalidation for instant freshness
+  try {
+    await cacheService.invalidateBlogCachesSafely(brandId);
+  } catch (err) {
+    console.error(`[Blog.create] Cache Error: ${err.message}`);
+  }
+
+  // Background tasks
   getWebSocketServer().notifyUpdate(models, 'created', 'blog', blog._id, blog);
-  // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
-  callFrontendRevalidation('blog', blog.slug || blog._id.toString(), brandId);
+  callFrontendRevalidation('blog', blog.slug || blog._id.toString(), brandId).catch(err => console.error(`[Blog.create] Revalidation Error: ${err.message}`));
   return blog;
 };
 
@@ -288,8 +297,17 @@ exports.update = async (models, id, data) => {
 
   console.log(`[BlogService.update] Successfully updated in DB. New status:`, updatedBlog.status);
 
-  L1_CACHE.clear(); // 🧹 Clear memory cache on update
-  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.update] Cache Error: ${err.message}`));
+  // 🧹 Clear L1 cache AFTER successful DB write
+  L1_CACHE.clear();
+
+  // 🚀 AWAIT cache invalidation for instant freshness
+  try {
+    await cacheService.invalidateBlogCachesSafely(brandId);
+  } catch (err) {
+    console.error(`[Blog.update] Cache Error: ${err.message}`);
+  }
+
+  // Background tasks
   getWebSocketServer().notifyUpdate(models, 'updated', 'blog', id, updatedBlog);
   
   // 🔥 Revalidation Fix: Pass category slugs so the frontend clears specific category pages
@@ -301,7 +319,7 @@ exports.update = async (models, id, data) => {
   callFrontendRevalidation('blog', updatedBlog.slug || id.toString(), brandId, { 
     categorySlug,
     oldCategorySlug 
-  });
+  }).catch(err => console.error(`[Blog.update] Revalidation Error: ${err.message}`));
   return updatedBlog;
 };
 
@@ -321,11 +339,19 @@ exports.delete = async (models, id) => {
     deleteImageFromS3(blog.image.url, brandId);
   }
 
-  L1_CACHE.clear(); // 🧹 Clear memory cache on delete
-  cacheService.invalidateBlogCachesSafely(brandId).catch(err => console.error(`[Blog.delete] Cache Error: ${err.message}`));
+  // 🧹 Clear L1 cache AFTER successful DB write
+  L1_CACHE.clear();
+
+  // 🚀 AWAIT cache invalidation for instant freshness
+  try {
+    await cacheService.invalidateBlogCachesSafely(brandId);
+  } catch (err) {
+    console.error(`[Blog.delete] Cache Error: ${err.message}`);
+  }
+
+  // Background tasks
   getWebSocketServer().notifyUpdate(models, 'deleted', 'blog', id, { id });
-  // 🔥 Optimization: Don't wait for revalidation to finish (Prevents Deadlock in Dev)
-  callFrontendRevalidation('blog', blog.slug || id.toString(), brandId, { action: 'deleted' });
+  callFrontendRevalidation('blog', blog.slug || id.toString(), brandId, { action: 'deleted' }).catch(err => console.error(`[Blog.delete] Revalidation Error: ${err.message}`));
   return null;
 };
 

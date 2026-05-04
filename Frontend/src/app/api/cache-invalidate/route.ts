@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
-import { invalidateStoreCache, getCacheStats } from '@/lib/store-service';
+import { getCacheStats } from '@/lib/store-service';
+import { revalidateTag, revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    // Invalidate the store service cache directly
-    invalidateStoreCache();
+    // Invalidate all store-related Next.js caches via tags
+    revalidateTag('stores');
+    revalidateTag('coupons');
+    revalidatePath('/', 'layout');
 
     // Get updated cache stats
     const stats = getCacheStats();

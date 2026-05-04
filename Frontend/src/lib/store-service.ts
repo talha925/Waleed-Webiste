@@ -38,7 +38,7 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     // In dev or when forcing refresh, bypass Next.js fetch cache entirely
     const fetchOptions = (forceRefresh)
       ? { headers, cache: 'no-store' as const }
-      : { headers, next: { revalidate: 3600, tags: ['stores'] } };
+      : { headers, next: { revalidate: 60, tags: ['stores'] } };
 
     const apiUrl = new URL(`${brand.apiBaseUrl}/api/stores`);
     // Use reasonable limit for list fetches; slug uses direct endpoint
@@ -104,7 +104,7 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
     const url = `${brand.apiBaseUrl}/api/stores/slug/${encodeURIComponent(slug)}`;
     const fetchOptions = (forceRefresh)
       ? { headers, cache: 'no-store' as const }
-      : { headers, next: { revalidate: 3600, tags: [`store-${slug}`] } }; // Cache for 1 hour
+      : { headers, next: { revalidate: 60, tags: [`store-${slug}`, 'stores'] } }; // Cache for 60s, revalidate via tags
 
     const controller = new AbortController();
     // 🔥 FIX: Reduced from 30s to 12s - fail fast for better UX during cold starts
@@ -184,14 +184,6 @@ export async function getStoreBySlug(slug: string, forceRefresh: boolean = false
 /**
  * Invalidate all caches (useful for admin operations)
  * NOTE: With Next.js native caching, this should ideally use revalidateTag or revalidatePath
- */
-export function invalidateStoreCache(): void {
-  // Logic to clear invalidation would be server-side revalidateTag
-  log('Manual cache invalidation requested - should be handled via revalidateTag');
-}
-
-/**
- * Get cache statistics
  */
 export function getCacheStats() {
   return {

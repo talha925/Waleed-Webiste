@@ -40,7 +40,7 @@ exports.getCategories = async (models, queryParams) => {
             totalCategories
         };
 
-        await cacheService.set(cacheKey, result, 3600);
+        await cacheService.set(cacheKey, result, 300); // 5 minutes
         return result;
     } catch (error) {
         console.error('Error in categoryService.getCategories:', error);
@@ -75,7 +75,12 @@ exports.createCategory = async (models, categoryData) => {
 
         const newCategory = await Category.create(categoryData);
 
-        cacheService.invalidateCategoryCachesSafely(brandId).catch(err => console.error(`[Category.create] Cache Error: ${err.message}`));
+        // AWAIT cache invalidation for instant freshness
+        try {
+            await cacheService.invalidateCategoryCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[Category.create] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('category', newCategory.slug || newCategory._id, brandId).catch(err => console.error(`[Category.create] Revalidation Error: ${err.message}`));
 
         return newCategory;
@@ -100,7 +105,12 @@ exports.updateCategory = async (models, id, updateData) => {
         const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
         if (!updatedCategory) throw new AppError('Category not found', 404);
 
-        cacheService.invalidateCategoryCachesSafely(brandId).catch(err => console.error(`[Category.update] Cache Error: ${err.message}`));
+        // AWAIT cache invalidation for instant freshness
+        try {
+            await cacheService.invalidateCategoryCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[Category.update] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('category', updatedCategory.slug || updatedCategory._id, brandId).catch(err => console.error(`[Category.update] Revalidation Error: ${err.message}`));
 
         return updatedCategory;
@@ -119,7 +129,12 @@ exports.deleteCategory = async (models, id) => {
         const deletedCategory = await Category.findByIdAndDelete(id);
         if (!deletedCategory) throw new AppError('Category not found', 404);
 
-        cacheService.invalidateCategoryCachesSafely(brandId).catch(err => console.error(`[Category.delete] Cache Error: ${err.message}`));
+        // AWAIT cache invalidation for instant freshness
+        try {
+            await cacheService.invalidateCategoryCachesSafely(brandId);
+        } catch (err) {
+            console.error(`[Category.delete] Cache Error: ${err.message}`);
+        }
         callFrontendRevalidation('category', deletedCategory.slug || deletedCategory._id, brandId, { action: 'deleted' }).catch(err => console.error(`[Category.delete] Revalidation Error: ${err.message}`));
 
         return deletedCategory;

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { invalidateStoreCache } from '@/lib/store-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,19 +104,24 @@ export async function POST(request: NextRequest) {
 
       case 'store':
       case 'stores':
-        // Revalidate stores-related pages and tags
-        revalidatePath('/stores');
+        // 🔥 COMPREHENSIVE store revalidation - clear ALL store-related caches
+        // Revalidate tags first (clears Next.js fetch cache)
         revalidateTag('stores');
+        
         if (storeSlug) {
-          revalidatePath(`/store/${storeSlug}`);
           revalidateTag(`store-${storeSlug}`);
-          // Also revalidate store coupons
           revalidateTag(`store-${storeSlug}-coupons`);
+          // Revalidate the specific store page
+          revalidatePath(`/store/${storeSlug}`);
         }
-        // Ensure service-layer caches are cleared so fresh data is fetched
-        invalidateStoreCache();
+        
+        // Revalidate the root layout to ensure navigation/search picks up new stores
+        revalidatePath('/', 'layout');
+        
+        console.log(`[Revalidation] ✅ Store revalidation complete for: ${storeSlug || 'all'}`);
+        
         return NextResponse.json({
-          message: 'Revalidated stores pages',
+          message: `Revalidated store pages${storeSlug ? ` for ${storeSlug}` : ''}`,
           source,
           timestamp: new Date().toISOString()
         });
@@ -126,14 +130,21 @@ export async function POST(request: NextRequest) {
       case 'coupons':
         // Revalidate coupon-related pages and tags
         revalidateTag('coupons');
+        revalidateTag('stores'); // Also clear store list since coupons affect store data
+        
         if (couponId) {
           revalidateTag(`coupon-${couponId}`);
         }
         if (storeSlug) {
-          // Revalidate store-specific coupons
+          // Revalidate store-specific coupons and the store page
+          revalidateTag(`store-${storeSlug}`);
           revalidateTag(`store-${storeSlug}-coupons`);
           revalidatePath(`/store/${storeSlug}`);
         }
+        
+        // Revalidate root layout for search/navigation freshness
+        revalidatePath('/', 'layout');
+        
         return NextResponse.json({
           message: 'Revalidated coupon pages',
           source,
@@ -160,16 +171,16 @@ export async function POST(request: NextRequest) {
         });
 
       case 'all':
-        // Revalidate all pages
+        // Nuclear: Revalidate everything
+        revalidatePath('/', 'layout');
         revalidatePath('/blog');
         revalidateTag('blogs');
-        revalidatePath('/stores');
         revalidateTag('stores');
-        revalidatePath('/categories');
         revalidateTag('categories');
         revalidateTag('coupons');
-        // Also clear service-layer caches globally
-        invalidateStoreCache();
+        revalidateTag('home-blogs');
+        revalidateTag('banner-blogs');
+        
         return NextResponse.json({
           message: 'Revalidated all pages',
           source,

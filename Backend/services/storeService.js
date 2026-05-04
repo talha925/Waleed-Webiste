@@ -5,9 +5,9 @@ const { callWithCircuitBreaker, getCircuitBreakerStatus } = require('../lib/circ
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 const mongoose = require('mongoose');
 
-// 🚀 L1 CACHE: Local memory cache for VIP speed (60 seconds)
+// 🚀 L1 CACHE: Local memory cache for VIP speed (10 seconds)
 const L1_CACHE = new Map();
-const L1_TTL = 20000;
+const L1_TTL = 10000;
 
 /**
  * Get stores with filtering, pagination, and sorting
@@ -232,7 +232,6 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
 
 exports.createStore = async (models, storeData) => {
     const { Store, brandId } = models;
-    L1_CACHE.clear(); // 🧹 Clear memory cache on create
     try {
         if (storeData.slug) {
             const existingStore = await Store.findOne({ slug: storeData.slug }).lean();
@@ -242,8 +241,17 @@ exports.createStore = async (models, storeData) => {
         const newStore = await Store.create(storeData);
         const storeId = newStore._id.toString();
 
-        // 🚀 NON-BLOCKING: Run invalidation & revalidation in background
-        cacheService.invalidateStoreCachesSafely(null, brandId).catch(err => console.error(`[Store.create] Cache Error: ${err.message}`));
+        // 🧹 Clear L1 cache AFTER successful DB write to prevent stale re-population
+        L1_CACHE.clear();
+
+        // 🚀 AWAIT cache invalidation to guarantee freshness before response
+        try {
+            await cacheService.invalidateStoreCachesSafely(null, brandId);
+        } catch (err) {
+            console.error(`[Store.create] Cache Error: ${err.message}`);
+        }
+
+        // Background tasks (non-blocking)
         getWebSocketServer().notifyUpdate(models, 'created', 'store', storeId, newStore);
         callFrontendRevalidation('store', newStore.slug || storeId, brandId).catch(err => console.error(`[Store.create] Revalidation Error: ${err.message}`));
 
@@ -255,7 +263,6 @@ exports.createStore = async (models, storeData) => {
 
 exports.updateStore = async (models, id, updateData) => {
     const { Store, brandId } = models;
-    L1_CACHE.clear(); // 🧹 Clear memory cache on update
     try {
         // 🔥 FIX: Use findById + save() instead of findByIdAndUpdate
         // so the pre('save') hook runs and slug gets regenerated when name changes.
@@ -276,8 +283,6 @@ exports.updateStore = async (models, id, updateData) => {
         for (const field of fieldsToUpdate) {
             if (updateData[field] !== undefined) {
                 // Special handling for slug: only set it if it's actually different from the current one.
-                // If the frontend sends the same slug, we want Mongoose to see it as NOT modified,
-                // so our pre('save') hook can auto-generate a new one if the name changed.
                 if (field === 'slug' && updateData[field] === store.slug) {
                     continue;
                 }
@@ -291,16 +296,22 @@ exports.updateStore = async (models, id, updateData) => {
         const updatedStore = await store.save();
         const updatedStoreLean = updatedStore.toObject();
 
-        // 🚀 NON-BLOCKING: Admin should get response instantly
-        // Invalidate both old and new slug caches
-        cacheService.invalidateStoreCachesSafely(id, brandId).catch(err => console.error(`[Store.update] Cache Error: ${err.message}`));
-        if (oldSlug && oldSlug !== updatedStoreLean.slug) {
-            // Also invalidate old slug cache entry
-            cacheService.invalidateStoreCachesSafely(null, brandId).catch(err => console.error(`[Store.update] Old slug cache error: ${err.message}`));
+        // 🧹 Clear L1 cache AFTER successful DB write
+        L1_CACHE.clear();
+
+        // 🚀 AWAIT cache invalidation to guarantee freshness
+        try {
+            await cacheService.invalidateStoreCachesSafely(id, brandId);
+            if (oldSlug && oldSlug !== updatedStoreLean.slug) {
+                await cacheService.invalidateStoreCachesSafely(null, brandId);
+            }
+        } catch (err) {
+            console.error(`[Store.update] Cache Error: ${err.message}`);
         }
+
+        // Background tasks (non-blocking)
         getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, updatedStoreLean);
         callFrontendRevalidation('store', updatedStoreLean.slug || id, brandId).catch(err => console.error(`[Store.update] Revalidation Error: ${err.message}`));
-        // Also revalidate old slug path if it changed
         if (oldSlug && oldSlug !== updatedStoreLean.slug) {
             callFrontendRevalidation('store', oldSlug, brandId, { action: 'deleted' }).catch(err => console.error(`[Store.update] Old slug revalidation error: ${err.message}`));
         }
@@ -313,7 +324,6 @@ exports.updateStore = async (models, id, updateData) => {
 
 exports.deleteStore = async (models, id) => {
     const { Store, Coupon, brandId } = models;
-    L1_CACHE.clear(); // 🧹 Clear memory cache on delete
     try {
         const store = await Store.findById(id).lean();
         if (!store) throw new AppError('Store not found', 404);
@@ -321,8 +331,17 @@ exports.deleteStore = async (models, id) => {
         await Coupon.deleteMany({ store: id });
         await Store.findByIdAndDelete(id);
 
-        // 🚀 NON-BLOCKING: Process deletion cleanup in background
-        cacheService.invalidateStoreCachesSafely(id, brandId).catch(err => console.error(`[Store.delete] Cache Error: ${err.message}`));
+        // 🧹 Clear L1 cache AFTER successful DB write
+        L1_CACHE.clear();
+
+        // 🚀 AWAIT cache invalidation to guarantee freshness
+        try {
+            await cacheService.invalidateStoreCachesSafely(id, brandId);
+        } catch (err) {
+            console.error(`[Store.delete] Cache Error: ${err.message}`);
+        }
+
+        // Background tasks
         getWebSocketServer().notifyUpdate(models, 'updated', 'store', id, { event: 'deleted' });
         callFrontendRevalidation('store', store.slug || id, brandId, { action: 'deleted' }).catch(err => console.error(`[Store.delete] Revalidation Error: ${err.message}`));
 
