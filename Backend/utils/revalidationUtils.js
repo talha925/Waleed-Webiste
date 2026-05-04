@@ -14,36 +14,44 @@ const callFrontendRevalidation = async (type, identifier, brandId = null, metada
         async () => {
             const isDev = process.env.NODE_ENV === 'development';
 
-            // 1. Resolve Frontend URL based on brand
-            let frontendUrl;
+            // 1. Resolve Frontend URLs (Support multiple for Dev)
+            const frontendUrls = [];
+            
+            // Always add localhost in dev
             if (isDev) {
-                frontendUrl = 'http://localhost:3000';
-            } else if (brandId === 'blogzenix') {
-                frontendUrl = process.env.BLOGZENIX_FRONTEND_URL;
-            } else if (brandId === 'pennyscroll') {
-                frontendUrl = process.env.PENNYSCROLL_FRONTEND_URL;
+                frontendUrls.push('http://localhost:3000');
             }
 
-            // Global fallback for any older code not passing brandId
-            if (!frontendUrl) frontendUrl = process.env.FRONTEND_URL;
+            // Add brand-specific production URL
+            let productionUrl;
+            if (brandId === 'blogzenix') {
+                productionUrl = process.env.BLOGZENIX_FRONTEND_URL;
+            } else if (brandId === 'pennyscroll') {
+                productionUrl = process.env.PENNYSCROLL_FRONTEND_URL;
+            }
 
-            if (!frontendUrl) {
+            if (productionUrl && !frontendUrls.includes(productionUrl)) {
+                frontendUrls.push(productionUrl);
+            }
+
+            // Fallback
+            if (frontendUrls.length === 0 && process.env.FRONTEND_URL) {
+                frontendUrls.push(process.env.FRONTEND_URL);
+            }
+
+            if (frontendUrls.length === 0) {
                 console.error(`❌ No FRONTEND_URL found for brand: ${brandId || 'global'}. Revalidation aborted.`);
                 return { success: false, error: 'Frontend URL missing' };
             }
 
-            const revalidationEndpoint = `${frontendUrl}/api/revalidate`;
-
             // 2. Resolve Secret based on brand
             let secret;
-
             if (brandId === 'blogzenix') {
                 secret = process.env.BLOGZENIX_REVALIDATE_SECRET;
             } else if (brandId === 'pennyscroll') {
                 secret = process.env.PENNYSCROLL_REVALIDATE_SECRET;
             }
 
-            // Fallback for global context
             if (!secret) secret = process.env.NEXT_REVALIDATE_SECRET || process.env.REVALIDATION_SECRET;
 
             if (!secret) {
@@ -58,23 +66,32 @@ const callFrontendRevalidation = async (type, identifier, brandId = null, metada
                 ...metadata
             };
 
-            console.log(`📡 Triggering frontend revalidation for ${type}: ${identifier}`);
+            console.log(`📡 Triggering frontend revalidation for ${type}: ${identifier} on ${frontendUrls.length} targets`);
 
-            const response = await axios.post(revalidationEndpoint, payload, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${secret}`
-                },
-                timeout: 5000
-            });
+            // 3. Trigger all revalidation requests in parallel
+            const results = await Promise.allSettled(frontendUrls.map(async (url) => {
+                const endpoint = `${url}/api/revalidate`;
+                try {
+                    const res = await axios.post(endpoint, payload, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${secret}`
+                        },
+                        timeout: 5000
+                    });
+                    console.log(`✅ Success: ${url} revalidated for ${type}`);
+                    return { url, success: true, status: res.status };
+                } catch (err) {
+                    console.warn(`⚠️ Failed: ${url} revalidation failed (${err.message})`);
+                    return { url, success: false, error: err.message };
+                }
+            }));
 
-            if (response.status >= 200 && response.status < 300) {
-                console.log(`✅ Frontend revalidation successful for ${type}: ${identifier}`);
-                return { success: true, result: response.data };
-            } else {
-                console.warn(`⚠️ Frontend revalidation failed for ${type}: ${identifier} (HTTP ${response.status})`);
-                return { success: false, error: `HTTP ${response.status}` };
-            }
+            const allSuccessful = results.every(r => r.status === 'fulfilled' && r.value.success);
+            return { 
+                success: allSuccessful, 
+                targets: results.map(r => r.status === 'fulfilled' ? r.value : { success: false, error: 'Rejected' }) 
+            };
         },
         async () => {
             console.warn(`⚠️ Frontend revalidation circuit breaker open for ${type}: ${identifier}`);
