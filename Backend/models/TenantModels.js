@@ -140,6 +140,7 @@ const StoreSchema = new mongoose.Schema({
             message: props => `Invalid heading: ${props.value}`
         }
     },
+    oldSlugs: [{ type: String }], // 🔥 For automatic redirects
     // Tracking Fields
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdByName: { type: String },
@@ -153,6 +154,7 @@ const StoreSchema = new mongoose.Schema({
 
 StoreSchema.index({ name: 'text', slug: 'text', short_description: 'text', long_description: 'text' });
 StoreSchema.index({ slug: 1 }, { unique: true }); // 🔥 CRITICAL: Fast lookup index
+StoreSchema.index({ oldSlugs: 1 }); // Index for redirects
 StoreSchema.index({ name: 1 }); // Regular index for regex search
 StoreSchema.index({ language: 1, createdAt: -1 }); // 🔥 Covers getStores query + sort
 StoreSchema.index({ categories: 1 }); // Category filtering
@@ -166,6 +168,21 @@ StoreSchema.pre('save', async function (next) {
     const nameModified = this.isModified('name');
     const slugModified = this.isModified('slug');
     
+    // 🔥 PUSH TO OLD SLUGS: If slug is changing, save the old one for redirects
+    if (!this.isNew && (nameModified || slugModified) && this.slug) {
+        try {
+            // Find the CURRENT slug from DB before it's updated
+            const doc = await this.constructor.findById(this._id).select('slug').lean();
+            if (doc && doc.slug && doc.slug !== this.slug) {
+                if (!this.oldSlugs.includes(doc.slug)) {
+                    this.oldSlugs.push(doc.slug);
+                }
+            }
+        } catch (err) {
+            console.error('Error tracking old slug:', err);
+        }
+    }
+
     // Auto-generate if:
     // 1. New document and no slug provided
     // 2. Name is modified AND (slug was not touched OR slug is empty)

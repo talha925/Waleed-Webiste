@@ -107,16 +107,20 @@ export async function POST(request: NextRequest) {
         // 🔥 COMPREHENSIVE store revalidation - clear ALL store-related caches
         // Revalidate tags first (clears Next.js fetch cache)
         revalidateTag('stores');
+        revalidateTag('stores-search'); // 🔥 Clear search results
         
         if (storeSlug) {
           revalidateTag(`store-${storeSlug}`);
           revalidateTag(`store-${storeSlug}-coupons`);
           // Revalidate the specific store page
           revalidatePath(`/store/${storeSlug}`);
+          // Also revalidate specific search tag if possible
+          revalidateTag(`search-store-${storeSlug}`);
         }
         
         // Revalidate the root layout to ensure navigation/search picks up new stores
         revalidatePath('/', 'layout');
+        revalidatePath('/stores'); // If there is a stores list page
         
         console.log(`[Revalidation] ✅ Store revalidation complete for: ${storeSlug || 'all'}`);
         
@@ -131,6 +135,7 @@ export async function POST(request: NextRequest) {
         // Revalidate coupon-related pages and tags
         revalidateTag('coupons');
         revalidateTag('stores'); // Also clear store list since coupons affect store data
+        revalidateTag('stores-search'); // 🔥 Clear search results since coupon changes affect store search
         
         if (couponId) {
           revalidateTag(`coupon-${couponId}`);
@@ -159,6 +164,9 @@ export async function POST(request: NextRequest) {
         revalidatePath('/categories');
         revalidateTag('categories');
         revalidateTag('blog-categories');
+        revalidateTag('stores'); // Categories affect store filtering
+        revalidateTag('stores-search');
+        
         if (categorySlug || identifier) {
           const slug = categorySlug || identifier;
           revalidateTag(`category-${slug}`);
