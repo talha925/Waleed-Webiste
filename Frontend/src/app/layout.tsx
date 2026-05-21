@@ -147,7 +147,7 @@ export default async function RootLayout({
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
         {brand.impactSiteVerification && (
-          <meta name="impact-site-verification" value={brand.impactSiteVerification} />
+          <meta name="impact-site-verification" content={brand.impactSiteVerification} />
         )}
 
         {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
