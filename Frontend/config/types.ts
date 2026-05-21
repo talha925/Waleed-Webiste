@@ -52,6 +52,8 @@ export interface BrandConfig {
     googleAdsId?: string;
     /** Google AdSense Account ID (e.g. "ca-pub-XXXXXXXXXXXXXXXX") */
     adSenseAccount?: string;
+    /** Impact site verification value */
+    impactSiteVerification?: string;
     /** Google Ads conversion tag config */
     gtagConversion?: GtagConversion;
 

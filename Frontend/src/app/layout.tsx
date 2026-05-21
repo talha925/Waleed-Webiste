@@ -146,6 +146,9 @@ export default async function RootLayout({
         {brand.adSenseAccount && (
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
+        {brand.impactSiteVerification && (
+          <meta name="impact-site-verification" value={brand.impactSiteVerification} />
+        )}
 
         {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
