@@ -15,6 +15,10 @@ export async function GET() {
     '',
     '/blog',
     '/categories',
+    '/about',
+    '/contact',
+    '/privacy',
+    '/terms',
   ];
 
   // Fetch dynamic blog posts

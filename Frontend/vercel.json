@@ -48,5 +48,13 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "blogzenix.com" }],
+      "destination": "https://www.blogzenix.com/:path",
+      "permanent": true
+    }
   ]
 }

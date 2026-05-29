@@ -28,6 +28,17 @@ exports.getStores = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get store names for dropdowns
+exports.getStoreNames = catchAsync(async (req, res, next) => {
+  const stores = await storeService.getStoreNames(req.models);
+  res.status(200).json({
+    success: true,
+    status: 'success',
+    message: 'Store names retrieved successfully',
+    data: stores
+  });
+});
+
 // Search stores
 exports.searchStores = catchAsync(async (req, res, next) => {
   const { q, page, limit } = req.query;

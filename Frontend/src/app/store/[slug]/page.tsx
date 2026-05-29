@@ -4,7 +4,7 @@ import React, { cache } from 'react';
 import { getStoreBySlug } from '@/lib/store-service';
 import StoreClient from './StoreClient';
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 // Enable dynamic rendering since brand identification depends on host headers
 export const dynamic = 'force-dynamic';
@@ -131,6 +131,10 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 export default async function StorePage({ params }: StorePageProps) {
   // Use shared promise to prevent duplicate fetch
   const store = await getStorePromise(params.slug);
+
+  if (store?.redirectUrl) {
+    redirect(`/store/${store.redirectUrl}`);
+  }
 
   if (!store) {
     // Return proper 404 status code for SEO

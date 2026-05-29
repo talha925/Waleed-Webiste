@@ -10,6 +10,7 @@ const ALLOWED_HEADINGS = [
 const storeSchema = new mongoose.Schema({
   name: { type: String, required: true, index: 'text' },
   slug: { type: String, unique: true }, // Removed redundant manual index assignment
+  previousSlugs: [{ type: String }],
   trackingUrl: { type: String, required: true },
   short_description: { type: String, required: true, index: 'text' },
   long_description: { type: String, required: true, index: 'text' },

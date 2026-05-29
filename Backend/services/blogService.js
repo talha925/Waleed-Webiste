@@ -210,7 +210,17 @@ exports.findById = async (models, id) => {
     const isObjectId = mongoose.Types.ObjectId.isValid(id);
     const query = isObjectId ? { _id: id } : { slug: id };
 
-    const blog = await BlogPost.findOne(query).lean();
+    let blog = await BlogPost.findOne(query).lean();
+    let redirectUrl = null;
+
+    if (!blog && !isObjectId) {
+      // SEO FIX: Check if the slug exists in previousSlugs
+      blog = await BlogPost.findOne({ previousSlugs: id }).lean();
+      if (blog) {
+        redirectUrl = blog.slug;
+      }
+    }
+
     if (!blog) throw new AppError('Blog post not found', 404);
 
     // 4. Related Posts (depends on blog data, but isolated with allSettled for safety)
@@ -221,7 +231,7 @@ exports.findById = async (models, id) => {
       console.error(`[BlogService.findById] Non-fatal error fetching related posts:`, relErr.message);
     }
 
-    const result = { ...blog, relatedPosts };
+    const result = { ...blog, relatedPosts, redirectUrl };
 
     // 5. Cache in both layers
     await cacheService.set(cacheKey, result, cacheService.defaultTTL.blogPost || 3600);
@@ -274,6 +284,9 @@ exports.update = async (models, id, data) => {
   const blogId = oldBlog._id;
 
   // 2. Perform the update
+  if (data.slug && oldBlog.slug && data.slug !== oldBlog.slug) {
+    data.$addToSet = { previousSlugs: oldBlog.slug };
+  }
   const updatedBlog = await BlogPost.findByIdAndUpdate(blogId, data, { new: true, runValidators: true });
 
   // 3. Handle S3 image cleanup if the image URL has changed

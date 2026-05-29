@@ -45,15 +45,9 @@ const createStoreSchema = Joi.object({
   ),
 
   seo: Joi.object({
-    meta_title: Joi.string().trim().max(60).messages({
-      'string.max': 'Meta title cannot exceed {#limit} characters'
-    }),
-    meta_description: Joi.string().trim().max(160).messages({
-      'string.max': 'Meta description cannot exceed {#limit} characters'
-    }),
-    meta_keywords: Joi.string().trim().max(200).messages({
-      'string.max': 'Meta keywords cannot exceed {#limit} characters'
-    })
+    meta_title: Joi.string().trim(),
+    meta_description: Joi.string().trim(),
+    meta_keywords: Joi.string().trim()
   }).required().messages({
     'any.required': 'SEO information is required'
   }),
@@ -96,15 +90,9 @@ const updateStoreSchema = Joi.object({
   ),
 
   seo: Joi.object({
-    meta_title: Joi.string().trim().max(60).messages({
-      'string.max': 'Meta title cannot exceed {#limit} characters'
-    }),
-    meta_description: Joi.string().trim().max(160).messages({
-      'string.max': 'Meta description cannot exceed {#limit} characters'
-    }),
-    meta_keywords: Joi.string().trim().max(200).messages({
-      'string.max': 'Meta keywords cannot exceed {#limit} characters'
-    })
+    meta_title: Joi.string().trim(),
+    meta_description: Joi.string().trim(),
+    meta_keywords: Joi.string().trim()
   }),
 
   language: Joi.string().trim(),

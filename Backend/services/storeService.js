@@ -10,6 +10,39 @@ const L1_CACHE = new Map();
 const L1_TTL = 10000;
 
 /**
+ * Get just store IDs and names for dropdowns (highly optimized)
+ */
+exports.getStoreNames = async (models) => {
+    const { Store } = models;
+    try {
+        const cacheKey = cacheService.generateKey('store_names');
+
+        const now = Date.now();
+        if (L1_CACHE.has(cacheKey)) {
+            const entry = L1_CACHE.get(cacheKey);
+            if (now < entry.expiry) return entry.data;
+        }
+
+        const cachedData = await cacheService.get(cacheKey);
+        if (cachedData) {
+            L1_CACHE.set(cacheKey, { data: cachedData, expiry: now + L1_TTL });
+            return cachedData;
+        }
+
+        const stores = await Store.find()
+            .select('_id name')
+            .sort({ name: 1 })
+            .lean();
+
+        await cacheService.set(cacheKey, stores, cacheService.defaultTTL.stores);
+        return stores;
+    } catch (error) {
+        console.error('Error in storeService.getStoreNames:', error);
+        throw error;
+    }
+};
+
+/**
  * Get stores with filtering, pagination, and sorting
  */
 exports.getStores = async (models, queryParams) => {
@@ -118,11 +151,25 @@ exports.getStoreBySlug = async (models, slug) => {
         const Coupon = models.Coupon;
 
         // Step 1: Get store first (we need its _id for coupon query)
-        const store = await Store.findOne({ slug })
+        let store = await Store.findOne({ slug })
             .populate('categories', 'name slug')
             .lean();
+            
+        let redirectUrl = null;
+        
+        if (!store) {
+            // SEO FIX: Check if the slug exists in previousSlugs
+            store = await Store.findOne({ previousSlugs: slug })
+                .populate('categories', 'name slug')
+                .lean();
+            
+            if (store) {
+                redirectUrl = store.slug;
+            }
+        }
 
         if (!store) throw new AppError('Store not found', 404);
+        if (redirectUrl) store.redirectUrl = redirectUrl;
 
         // Step 2: Fetch coupons (already has _id from step 1)
         store.coupons = await Coupon.find({
@@ -294,6 +341,11 @@ exports.updateStore = async (models, id, updateData) => {
 
         // save() triggers pre('save') hook → slug regenerates if name changed
         const updatedStore = await store.save();
+        
+        if (oldSlug && oldSlug !== updatedStore.slug) {
+            await Store.updateOne({ _id: store._id }, { $addToSet: { previousSlugs: oldSlug } });
+        }
+        
         const updatedStoreLean = updatedStore.toObject();
 
         // 🧹 Clear L1 cache AFTER successful DB write

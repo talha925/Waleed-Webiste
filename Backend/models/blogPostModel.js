@@ -80,8 +80,8 @@ const blogPostSchema = new mongoose.Schema({
     type: String,
     unique: true, 
     lowercase: true
-    // Removed duplicate index: true to fix warning
   },
+  previousSlugs: [{ type: String }],
   shortDescription: {
     type: String,
     trim: true,

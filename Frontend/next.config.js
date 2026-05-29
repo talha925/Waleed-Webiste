@@ -126,6 +126,20 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/stores/:slug',
+        destination: '/store/:slug',
+        permanent: true,
+      },
+      {
+        source: '/stores',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
   // Reduce JavaScript bundle size
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

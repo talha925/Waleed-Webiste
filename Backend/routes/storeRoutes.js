@@ -6,6 +6,9 @@ const { protect, restrictTo } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
+// Get store names for dropdowns (must be before /:id)
+router.get('/names', storeController.getStoreNames);
+
 // Search stores
 router.get('/search', storeController.searchStores);
 

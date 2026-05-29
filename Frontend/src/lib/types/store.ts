@@ -21,6 +21,7 @@ export interface Store {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
+  redirectUrl?: string;
 }
 
 export interface Coupon {

@@ -2,7 +2,6 @@
 
 import { Metadata } from 'next';
 import SafeImage from '@/components/ui/SafeImage';
-import { notFound } from 'next/navigation';
 import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
 import config from '@/lib/config';
 import { decode } from 'html-entities';
@@ -36,6 +35,7 @@ interface Blog {
     name: string;
     slug: string;
   };
+  redirectUrl?: string;
 }
 
 // NEW HELPER: This function will decode the string repeatedly until it's clean.
@@ -88,12 +88,20 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 
+import { redirect, notFound } from 'next/navigation';
+
+// ... other imports
+
 // --- Main Page Component ---
 export default async function BlogDetailPage({ params }: { params: { id: string } }) {
   const [{ data: blog }, { data: recentBlogs }] = await Promise.all([
     fetchBlogDetailServer(params.id),
     fetchRecentBlogsServer(5, params.id)
   ]);
+
+  if (blog?.redirectUrl) {
+    redirect(`/blog/${blog.redirectUrl}`);
+  }
 
   if (!blog) {
     return (
