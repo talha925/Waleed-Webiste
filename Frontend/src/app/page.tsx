@@ -83,7 +83,7 @@ export default async function Blogs() {
               <div className="absolute inset-0 bg-blue-600/10 group-hover:bg-blue-600/0 transition-colors z-20" />
 
               <div className="absolute bottom-0 w-full p-6 z-30 transform transition-transform duration-500 group-hover:translate-y-[-5px]">
-                <div className="inline-block px-3 py-1 rounded-full bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-blue-500/40 ring-2 ring-white/20">
+                <div className="inline-block px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-blue-600/40 ring-2 ring-white/20">
                   Adventure
                 </div>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-2 drop-shadow-2xl">
@@ -112,7 +112,7 @@ export default async function Blogs() {
               <div className="absolute inset-0 bg-emerald-600/10 group-hover:bg-emerald-600/0 transition-colors z-20" />
 
               <div className="absolute bottom-0 w-full p-6 z-30 transform transition-transform duration-500 group-hover:translate-y-[-5px]">
-                <div className="inline-block px-3 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-emerald-500/40 ring-2 ring-white/20">
+                <div className="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-emerald-600/40 ring-2 ring-white/20">
                   Vitality
                 </div>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-2 drop-shadow-2xl">
@@ -141,7 +141,7 @@ export default async function Blogs() {
               <div className="absolute inset-0 bg-purple-600/10 group-hover:bg-purple-600/0 transition-colors z-20" />
 
               <div className="absolute bottom-0 w-full p-6 z-30 transform transition-transform duration-500 group-hover:translate-y-[-5px]">
-                <div className="inline-block px-3 py-1 rounded-full bg-purple-500 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-purple-500/40 ring-2 ring-white/20">
+                <div className="inline-block px-3 py-1 rounded-full bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-purple-600/40 ring-2 ring-white/20">
                   Style
                 </div>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-2 drop-shadow-2xl">
@@ -170,7 +170,7 @@ export default async function Blogs() {
               <div className="absolute inset-0 bg-orange-600/10 group-hover:bg-orange-600/0 transition-colors z-20" />
 
               <div className="absolute bottom-0 w-full p-6 z-30 transform transition-transform duration-500 group-hover:translate-y-[-5px]">
-                <div className="inline-block px-3 py-1 rounded-full bg-orange-500 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-orange-500/40 ring-2 ring-white/20">
+                <div className="inline-block px-3 py-1 rounded-full bg-orange-600 text-white text-[10px] font-bold uppercase tracking-widest mb-3 shadow-lg shadow-orange-600/40 ring-2 ring-white/20">
                   Modern
                 </div>
                 <h3 className="text-2xl md:text-3xl font-black text-white mb-2 drop-shadow-2xl">

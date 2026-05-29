@@ -259,7 +259,7 @@ const SearchBar = React.memo(function SearchBar({
             className={cn(
               "w-full pl-10 pr-10 py-3.5 bg-background-secondary border border-border/60 rounded-2xl text-foreground placeholder-foreground-muted",
               "focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50",
-              "transition-all duration-300 hover:bg-background-tertiary hover:shadow-md",
+              "transition-colors duration-300 hover:bg-background-tertiary hover:shadow-md",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               "relative z-0"
             )}
@@ -291,7 +291,7 @@ const SearchBar = React.memo(function SearchBar({
           className={cn(
             "w-full pl-12 pr-12 py-3 bg-slate-50/50 border border-slate-200/60 rounded-2xl text-sm text-slate-900 placeholder:text-slate-400 font-medium",
             "focus:outline-none focus:bg-white focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary/40",
-            "transition-all duration-300 hover:bg-slate-100/50 hover:border-slate-300/80",
+            "transition-colors duration-300 hover:bg-slate-100/50 hover:border-slate-300/80",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             isFocused && "shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)]",
             "relative z-0"

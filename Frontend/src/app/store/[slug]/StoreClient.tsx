@@ -194,7 +194,7 @@ const CouponCard = React.memo(({
             </div>
 
             <div className="flex-shrink-0 sm:pl-6 flex flex-col items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-600 uppercase tracking-[0.15em]">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-700 uppercase tracking-[0.15em]">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 Verified
               </span>
@@ -284,7 +284,7 @@ const SmartDescription = React.memo(({ text }: { text: string | undefined }) => 
               <span className="text-[13px] font-black text-slate-900">Expert Editorial</span>
               <svg className="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.64.304 1.24.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
             </div>
-            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Verified by {brand.siteName} Team</p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Verified by {brand.siteName} Team</p>
           </div>
         </div>
 
@@ -296,10 +296,10 @@ const SmartDescription = React.memo(({ text }: { text: string | undefined }) => 
             <div className="text-[12px] font-black text-slate-600">{descriptionContent.readTime} Min Read</div>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center text-green-600 border border-green-100 shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center text-green-700 border border-green-100 shadow-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <div className="text-[12px] font-black text-green-600 italic">Latest: Today</div>
+            <div className="text-[12px] font-black text-green-700 italic">Latest: Today</div>
           </div>
         </div>
       </div>
@@ -548,7 +548,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                   <div className="absolute top-0 left-0 bottom-0 w-1 bg-brand-primary opacity-10" />
 
                   <div className="relative z-10">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-7 px-2">
+                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-7 px-2">
                       Guide to Savings
                     </h3>
 
@@ -572,7 +572,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
                           <div className="flex-1 pt-0.5">
                             <div className="text-[13px] font-bold text-slate-800 mb-0.5 transition-colors group-hover/step:text-brand-primary">{step.title}</div>
-                            <div className="text-[11px] text-slate-400 font-medium leading-tight">{step.desc}</div>
+                            <div className="text-[11px] text-slate-500 font-medium leading-tight">{step.desc}</div>
                           </div>
                         </div>
                       ))}

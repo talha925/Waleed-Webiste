@@ -29,7 +29,7 @@ export default function HeaderMobileMenu({
     return (
         <Sheet>
             <SheetTrigger asChild>
-                <button className="lg:hidden p-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 rounded-lg transition-all duration-300">
+                <button className="lg:hidden p-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 rounded-lg transition-all duration-300" aria-label="Toggle mobile menu">
                     <Menu className="h-6 w-6" />
                 </button>
             </SheetTrigger>

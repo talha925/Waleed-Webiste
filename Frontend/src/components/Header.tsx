@@ -138,6 +138,7 @@ export default function Header() {
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="md:hidden p-2 text-foreground-tertiary hover:text-foreground hover:bg-accent/50 rounded-lg transition-all duration-300"
+                aria-label={isSearchOpen ? "Close mobile search" : "Open mobile search"}
               >
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
