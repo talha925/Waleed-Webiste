@@ -4,7 +4,7 @@ import React, { cache } from 'react';
 import { getStoreBySlug } from '@/lib/store-service';
 import StoreClient from './StoreClient';
 import { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, redirect, RedirectType } from 'next/navigation';
 
 // Enable dynamic rendering since brand identification depends on host headers
 export const dynamic = 'force-dynamic';
@@ -139,6 +139,13 @@ export default async function StorePage({ params }: StorePageProps) {
   if (!store) {
     // Return proper 404 status code for SEO
     notFound();
+  }
+  
+  // 🔥 REDIRECT LOGIC: If the found store's slug doesn't match the requested slug,
+  // it means we found it via 'oldSlugs'. Redirect to the canonical URL.
+  if (store.slug && store.slug !== params.slug) {
+    console.log(`🔀 Redirecting old slug "${params.slug}" to new slug "${store.slug}"`);
+    redirect(`/store/${store.slug}`, RedirectType.replace);
   }
 
   const faqSchema = {

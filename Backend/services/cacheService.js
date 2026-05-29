@@ -174,6 +174,8 @@ class CacheService {
       case 'store':
         // list or search
         return `${basePrefix}stores:list:${this._hashParams(cleanParams)}`;
+      case 'store_names':
+        return `${basePrefix}stores:names:${this._hashParams(cleanParams)}`;
       case 'store_detail':
         // detail by slug or id
         const sId = cleanParams.id || cleanParams.slug;

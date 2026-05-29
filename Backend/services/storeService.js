@@ -125,6 +125,26 @@ exports.getStores = async (models, queryParams) => {
     }
 };
 
+exports.getStoreNames = async (models) => {
+    const { Store, brandId } = models;
+    try {
+        const cacheKey = cacheService.generateKey('store_names', { brandId });
+        const cachedData = await cacheService.get(cacheKey);
+        if (cachedData) return cachedData;
+
+        const stores = await Store.find()
+            .select('name slug _id')
+            .sort({ name: 1 })
+            .lean();
+
+        await cacheService.set(cacheKey, stores, cacheService.defaultTTL.stores);
+        return stores;
+    } catch (error) {
+        console.error('Error in storeService.getStoreNames:', error);
+        throw error;
+    }
+};
+
 exports.getStoreBySlug = async (models, slug) => {
     const { Store, brandId } = models;
     try {

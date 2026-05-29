@@ -146,6 +146,9 @@ export default async function RootLayout({
         {brand.adSenseAccount && (
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
+        {brand.impactSiteVerification && (
+          <meta name="impact-site-verification" content={brand.impactSiteVerification} />
+        )}
 
         {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}
         {/* S3 image domain - needed immediately for LCP image */}
