@@ -20,6 +20,7 @@ interface SafeImageProps {
   onError?: () => void;
   fallbackSrc?: string;
   unoptimized?: boolean;
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 /**

@@ -76,7 +76,7 @@ export default async function Blogs() {
                   alt="Travel Destinations"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                   sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, (max-width: 1200px) 50vw, 25vw"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-blue-900/40 to-transparent z-10 opacity-90 group-hover:opacity-100 transition-opacity" />
@@ -105,7 +105,7 @@ export default async function Blogs() {
                   alt="Health & Wellness"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                   sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, (max-width: 1200px) 50vw, 25vw"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/90 via-emerald-900/40 to-transparent z-10 opacity-90 group-hover:opacity-100 transition-opacity" />
@@ -134,7 +134,7 @@ export default async function Blogs() {
                   alt="Lifestyle & Fashion"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                   sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, (max-width: 1200px) 50vw, 25vw"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-purple-900/90 via-purple-900/40 to-transparent z-10 opacity-90 group-hover:opacity-100 transition-opacity" />
@@ -163,7 +163,7 @@ export default async function Blogs() {
                   alt="Home & Tech"
                   fill
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                   sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, (max-width: 1200px) 50vw, 25vw"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-orange-900/90 via-orange-900/40 to-transparent z-10 opacity-90 group-hover:opacity-100 transition-opacity" />

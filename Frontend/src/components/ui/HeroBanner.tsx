@@ -245,6 +245,12 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
             <div className="h-14 w-48 bg-background-tertiary rounded-2xl mx-auto animate-pulse shadow-lg" />
           </div>
         </div>
+        {/* CLS FIX: Pre-render invisible indicators so DOM structure is stable */}
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 opacity-0" aria-hidden="true">
+          <div className="w-4 h-4 rounded-full bg-white/30" />
+          <div className="w-4 h-4 rounded-full bg-white/30" />
+          <div className="w-4 h-4 rounded-full bg-white/30" />
+        </div>
       </div>
     );
   }
@@ -309,6 +315,7 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             priority
+            fetchPriority="high"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
           />
         ) : (

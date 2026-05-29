@@ -147,17 +147,12 @@ export default async function RootLayout({
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
 
-        {/* 🔥 PERFORMANCE: Preconnect to critical domains early */}
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link
-          rel="preconnect"
-          href={brand.apiBaseUrl || config.api.baseUrl}
-          crossOrigin="anonymous"
-        />
-        {/* 🚀 IMAGE ROOT OPTIMIZATION: Resolve DNS and Handshake for S3 bucket early */}
+        {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}
+        {/* S3 image domain - needed immediately for LCP image */}
         <link rel="preconnect" href={`https://${brand.imageDomain}`} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={`https://${brand.imageDomain}`} />
+        {/* GTM: DNS prefetch only (not full preconnect) - scripts load lazily */}
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Dynamic favicon */}
         <link rel="icon" href={brand.faviconPath} type="image/svg+xml" />
@@ -178,18 +173,18 @@ export default async function RootLayout({
               <SpeedInsights />
               <Analytics />
 
-              {/* Load Scripts after interactive */}
+              {/* 🚀 PERFORMANCE: Use lazyOnload so analytics never blocks critical rendering path */}
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                strategy="afterInteractive"
+                strategy="lazyOnload"
               />
               {brand.googleAdsId && (
                 <Script
                   src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
-                  strategy="afterInteractive"
+                  strategy="lazyOnload"
                 />
               )}
-              <Script id="google-analytics" strategy="afterInteractive">
+              <Script id="google-analytics" strategy="lazyOnload">
                 {gtagInnerHtml}
               </Script>
             </div>
