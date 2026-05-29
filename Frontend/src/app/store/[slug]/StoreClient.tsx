@@ -177,7 +177,7 @@ const CouponCard = React.memo(({
           </div>
 
           {/* Main content */}
-          <div className="flex-1 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white z-10">
+          <div className="flex-1 min-w-0 p-6 sm:p-8 flex flex-col md:flex-row xl:flex-col 2xl:flex-row md:items-center xl:items-start 2xl:items-center justify-between gap-6 bg-white z-10">
             <div className="min-w-0 flex-1">
               {coupon.usedCount && (
                 <div className="mb-2">
@@ -192,7 +192,7 @@ const CouponCard = React.memo(({
               </h3>
             </div>
 
-            <div className="flex-shrink-0 sm:pl-6 flex flex-col items-center gap-3">
+            <div className="flex-shrink-0 w-full md:w-auto xl:w-full 2xl:w-auto flex flex-row flex-wrap items-center justify-between md:justify-end xl:justify-between 2xl:justify-end gap-3 md:pl-6 xl:pl-0 2xl:pl-6">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-green-700 uppercase tracking-[0.15em]">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                 Verified
@@ -200,7 +200,7 @@ const CouponCard = React.memo(({
               {coupon.code ? (
                 <button
                   onClick={(e) => onGetDeal(coupon, e)}
-                  className={`h-11 px-6 border-2 text-[12px] font-black uppercase tracking-[0.05em] rounded-xl transition-all whitespace-nowrap ${isRevealed
+                  className={`h-11 px-4 sm:px-6 border-2 text-[12px] font-black uppercase tracking-[0.05em] rounded-xl transition-all whitespace-nowrap ml-auto ${isRevealed
                     ? 'bg-green-100 text-green-800 border-green-800 shadow-[4px_4px_0_0_#166534] hover:shadow-[1px_1px_0_0_#166534] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
                     : 'bg-brand-accent text-[#111827] border-[#111827] shadow-[4px_4px_0_0_#111827] hover:shadow-[1px_1px_0_0_#111827] hover:translate-x-[3px] hover:translate-y-[3px] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
                     }`}
@@ -210,7 +210,7 @@ const CouponCard = React.memo(({
               ) : (
                 <button
                   onClick={(e) => onGetDeal(coupon, e)}
-                  className="h-11 px-6 bg-[#143154] hover:bg-[#0c2038] text-white text-[12px] font-black uppercase tracking-[0.1em] rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:translate-y-0 whitespace-nowrap"
+                  className="h-11 px-4 sm:px-6 bg-[#143154] hover:bg-[#0c2038] text-white text-[12px] font-black uppercase tracking-[0.1em] rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all active:translate-y-0 whitespace-nowrap ml-auto"
                 >
                   Get Deal
                 </button>
