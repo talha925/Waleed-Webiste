@@ -2,7 +2,7 @@
 
 'use client';
 
-import confetti from 'canvas-confetti';
+
 import SafeImage from '@/components/ui/SafeImage';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { decodeHTML, sanitizeUrl } from '@/lib/utils/formatting';
@@ -44,12 +44,11 @@ interface StoreClientProps {
 }
 
 // --- Confetti Animation Helper ---
-const triggerConfetti = (x: number, y: number) => {
-  // Use canvas-confetti for high-performance explosions
-  // We calculate origin based on normalized coordinates (0 to 1) 
-  // since canvas-confetti expects that for its 'origin' property
+const triggerConfetti = async (x: number, y: number) => {
   const originX = x / window.innerWidth;
   const originY = y / window.innerHeight;
+
+  const confetti = (await import('canvas-confetti')).default;
 
   confetti({
     particleCount: 80,
@@ -261,7 +260,7 @@ const SmartDescription = React.memo(({ text }: { text: string | undefined }) => 
     const cleanTextString = text.replace(/<[^>]*>/g, '');
     const words = cleanTextString.split(/\s+/).length;
     const readTime = Math.ceil(words / 200);
-    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+    const isHtml = /<[a-z][^>]*>/i.test(text);
 
     return { isHtml, readTime };
   }, [text]);
