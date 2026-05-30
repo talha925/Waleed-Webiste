@@ -15,8 +15,6 @@ router.get('/search', storeController.searchStores);
 // Get all stores (with pagination and filtering)
 router.get('/', storeController.getStores);
 
-// Get all store names
-router.get('/names', storeController.getStoreNames);
 
 // Get store by slug
 router.get('/slug/:slug', storeController.getStoreBySlug);

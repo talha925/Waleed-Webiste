@@ -6,9 +6,8 @@ const cacheService = require('./cacheService');
 const { callWithCircuitBreaker } = require('../lib/circuitBreaker');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 
-// 🚀 L1 CACHE: For high-traffic store coupons
-const L1_CACHE = new Map();
-const L1_TTL = 10000; // 10 seconds
+// Removed L1_CACHE to prevent stale data in multi-instance environments.
+// Redis (L2) cache is fast enough and guarantees distributed consistency.
 
 // Get all coupons for a specific store with pagination (20 coupons per page)
 exports.getCouponsByStore = async (models, queryParams, storeId) => {
@@ -24,17 +23,9 @@ exports.getCouponsByStore = async (models, queryParams, storeId) => {
 
     const cacheKey = cacheService.generateKey('store_coupons', { storeId, ...queryParams, brandId });
     
-    // 1. Check L1 Cache
-    const now = Date.now();
-    if (L1_CACHE.has(cacheKey)) {
-      const entry = L1_CACHE.get(cacheKey);
-      if (now < entry.expiry) return entry.data;
-    }
-
-    // 2. Check L2 Cache (Redis)
+    // Check Redis Cache (L2)
     const cached = await cacheService.get(cacheKey);
     if (cached) {
-      L1_CACHE.set(cacheKey, { data: cached, expiry: now + L1_TTL });
       return cached;
     }
 
@@ -118,8 +109,6 @@ exports.createCoupon = async (models, couponData) => {
 
     await Store.findByIdAndUpdate(couponData.store, { $push: { coupons: newCoupon._id } });
 
-    // 🧹 Clear L1 cache AFTER successful DB write
-    L1_CACHE.clear();
 
     const storeId = newCoupon.store.toString();
     const storeSlug = store.slug || storeId;
@@ -157,8 +146,6 @@ exports.updateCoupon = async (models, id, updateData) => {
 
     const updatedCoupon = await Coupon.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true });
 
-    // 🧹 Clear L1 cache AFTER successful DB write
-    L1_CACHE.clear();
 
     const storeId = updatedCoupon.store.toString();
     // 🔥 FIX: Fetch store slug for proper revalidation
@@ -192,8 +179,6 @@ exports.deleteCoupon = async (models, id) => {
 
     await Store.findByIdAndUpdate(deletedCoupon.store, { $pull: { coupons: deletedCoupon._id } });
 
-    // 🧹 Clear L1 cache AFTER successful DB write
-    L1_CACHE.clear();
 
     const storeId = deletedCoupon.store.toString();
     // 🔥 FIX: Fetch store slug for proper revalidation
@@ -266,7 +251,6 @@ exports.updateCouponOrder = async (models, storeId, orderedCouponIds) => {
     await Store.findByIdAndUpdate(storeId, { coupons: orderedCouponIds, updatedAt: new Date() });
 
     // 🧹 Clear L1 cache AFTER successful DB write
-    L1_CACHE.clear();
 
     // 🔥 FIX: Fetch store slug for proper revalidation
     const store = await Store.findById(storeId).select('slug').lean();

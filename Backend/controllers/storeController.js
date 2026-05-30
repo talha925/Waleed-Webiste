@@ -60,16 +60,7 @@ exports.searchStores = catchAsync(async (req, res, next) => {
   });
 });
 
-// Get all store names (for dropdowns/selection)
-exports.getStoreNames = catchAsync(async (req, res, next) => {
-  const stores = await storeService.getStoreNames(req.models);
-  res.status(200).json({
-    success: true,
-    status: 'success',
-    message: 'Store names retrieved successfully',
-    data: stores
-  });
-});
+
 
 // Fetch a store by slug
 exports.getStoreBySlug = catchAsync(async (req, res, next) => {

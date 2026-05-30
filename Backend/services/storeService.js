@@ -5,32 +5,24 @@ const { callWithCircuitBreaker, getCircuitBreakerStatus } = require('../lib/circ
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
 const mongoose = require('mongoose');
 
-// 🚀 L1 CACHE: Local memory cache for VIP speed (10 seconds)
-const L1_CACHE = new Map();
-const L1_TTL = 10000;
-
+// Redis (L2) cache provides sub-millisecond response times with guaranteed distributed consistency.
 /**
- * Get just store IDs and names for dropdowns (highly optimized)
+ * Get just store IDs, names, slugs, and tracking URLs for dropdowns & lightweight tables (highly optimized)
  */
 exports.getStoreNames = async (models) => {
-    const { Store } = models;
+    const { Store, brandId } = models;
     try {
-        const cacheKey = cacheService.generateKey('store_names');
+        const cacheKey = cacheService.generateKey('store_names', { brandId });
 
-        const now = Date.now();
-        if (L1_CACHE.has(cacheKey)) {
-            const entry = L1_CACHE.get(cacheKey);
-            if (now < entry.expiry) return entry.data;
-        }
+
 
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData) {
-            L1_CACHE.set(cacheKey, { data: cachedData, expiry: now + L1_TTL });
             return cachedData;
         }
 
         const stores = await Store.find()
-            .select('_id name')
+            .select('_id name slug trackingUrl')
             .sort({ name: 1 })
             .lean();
 
@@ -52,16 +44,10 @@ exports.getStores = async (models, queryParams) => {
         const { _ts, ...cacheParams } = queryParams;
         const cacheKey = cacheService.generateKey('store', { ...cacheParams, brandId });
 
-        // 🚀 L1 CACHE: Instant list retrieval
-        const now = Date.now();
-        if (L1_CACHE.has(cacheKey)) {
-            const entry = L1_CACHE.get(cacheKey);
-            if (now < entry.expiry) return entry.data;
-        }
+
 
         const cachedData = await cacheService.get(cacheKey);
         if (cachedData) {
-            L1_CACHE.set(cacheKey, { data: cachedData, expiry: now + L1_TTL });
             return cachedData;
         }
 
@@ -125,43 +111,15 @@ exports.getStores = async (models, queryParams) => {
     }
 };
 
-exports.getStoreNames = async (models) => {
-    const { Store, brandId } = models;
-    try {
-        const cacheKey = cacheService.generateKey('store_names', { brandId });
-        const cachedData = await cacheService.get(cacheKey);
-        if (cachedData) return cachedData;
-
-        const stores = await Store.find()
-            .select('name slug _id')
-            .sort({ name: 1 })
-            .lean();
-
-        await cacheService.set(cacheKey, stores, cacheService.defaultTTL.stores);
-        return stores;
-    } catch (error) {
-        console.error('Error in storeService.getStoreNames:', error);
-        throw error;
-    }
-};
-
 exports.getStoreBySlug = async (models, slug) => {
     const { Store, brandId } = models;
     try {
         const cacheKey = cacheService.generateKey('store_detail', { slug, brandId });
 
-        // 1. Check L1 Cache
-        const now = Date.now();
-        if (L1_CACHE.has(cacheKey)) {
-            const entry = L1_CACHE.get(cacheKey);
-            if (now < entry.expiry) return entry.data;
-        }
-
-        // 2. Check L2 Cache (Redis)
-        const cachedStore = await cacheService.get(cacheKey);
-        if (cachedStore) {
-            L1_CACHE.set(cacheKey, { data: cachedStore, expiry: now + L1_TTL });
-            return cachedStore;
+        // Check Redis Cache (L2)
+        const cached = await cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
         }
 
         // 🚀 PARALLEL FETCH: Store + Coupons simultaneously (Senior Dev Pattern)
@@ -309,7 +267,6 @@ exports.createStore = async (models, storeData) => {
         const storeId = newStore._id.toString();
 
         // 🧹 Clear L1 cache AFTER successful DB write to prevent stale re-population
-        L1_CACHE.clear();
 
         // 🚀 AWAIT cache invalidation to guarantee freshness before response
         try {
@@ -369,7 +326,6 @@ exports.updateStore = async (models, id, updateData) => {
         const updatedStoreLean = updatedStore.toObject();
 
         // 🧹 Clear L1 cache AFTER successful DB write
-        L1_CACHE.clear();
 
         // 🚀 AWAIT cache invalidation to guarantee freshness
         try {
@@ -404,7 +360,6 @@ exports.deleteStore = async (models, id) => {
         await Store.findByIdAndDelete(id);
 
         // 🧹 Clear L1 cache AFTER successful DB write
-        L1_CACHE.clear();
 
         // 🚀 AWAIT cache invalidation to guarantee freshness
         try {
