@@ -57,7 +57,7 @@ exports.findAll = async (models, queryParams = {}) => {
     } = queryParams;
 
     const cacheKey = cacheService.generateKey('blogs', { ...queryParams, brandId });
-    
+
     // 1. Check L1 Cache
     const now = Date.now();
     if (L1_CACHE.has(cacheKey)) {
@@ -102,8 +102,8 @@ exports.findAll = async (models, queryParams = {}) => {
     if (slug) query.slug = slug;
 
     // Optimised Count Logic
-    const isFilterEmpty = Object.keys(query).length === 0 || 
-                         (Object.keys(query).length === 1 && query.status === 'published');
+    const isFilterEmpty = Object.keys(query).length === 0 ||
+      (Object.keys(query).length === 1 && query.status === 'published');
 
     let mongoQuery = BlogPost.find(query);
 
@@ -114,8 +114,8 @@ exports.findAll = async (models, queryParams = {}) => {
         .sort({ score: { $meta: 'textScore' } });
     } else {
       // Allow dynamic field selection for optimized fetching (e.g. sitemaps)
-      const selectFields = queryParams.fields 
-        ? queryParams.fields.split(',').join(' ') 
+      const selectFields = queryParams.fields
+        ? queryParams.fields.split(',').join(' ')
         : 'title slug shortDescription image.url image.alt publishDate author.name category.name category.slug FrontBanner isFeaturedForHome engagement.readingTime updatedAt createdAt';
 
       mongoQuery = mongoQuery
@@ -144,7 +144,7 @@ exports.findAll = async (models, queryParams = {}) => {
         ],
         status: status === 'all' ? { $exists: true } : status
       };
-      
+
       blogs = await BlogPost.find(fallbackQuery)
         .sort({ publishDate: -1 })
         .limit(parseInt(limit))
@@ -322,16 +322,16 @@ exports.update = async (models, id, data) => {
 
   // Background tasks
   getWebSocketServer().notifyUpdate(models, 'updated', 'blog', id, updatedBlog);
-  
+
   // 🔥 Revalidation Fix: Pass category slugs so the frontend clears specific category pages
   const categorySlug = updatedBlog.category?.slug;
   const oldCategorySlug = oldBlog.category?.slug;
-  
+
   console.log(`[BlogService.update] Triggering revalidation for blog: ${updatedBlog.slug}, Category: ${categorySlug}`);
-  
-  callFrontendRevalidation('blog', updatedBlog.slug || id.toString(), brandId, { 
+
+  callFrontendRevalidation('blog', updatedBlog.slug || id.toString(), brandId, {
     categorySlug,
-    oldCategorySlug 
+    oldCategorySlug
   }).catch(err => console.error(`[Blog.update] Revalidation Error: ${err.message}`));
   return updatedBlog;
 };

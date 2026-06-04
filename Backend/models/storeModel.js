@@ -21,9 +21,9 @@ const storeSchema = new mongoose.Schema({
   coupons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' }],
   categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   seo: {
-    meta_title: { type: String, maxlength: 60 },
-    meta_description: { type: String, maxlength: 160 },
-    meta_keywords: { type: String, maxlength: 200 },
+    meta_title: { type: String },
+    meta_description: { type: String },
+    meta_keywords: { type: String },
   },
   language: { type: String, default: 'English' },
   isTopStore: { type: Boolean, default: false },

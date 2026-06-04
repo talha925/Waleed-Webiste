@@ -5,7 +5,7 @@ const { callWithCircuitBreaker } = require('../lib/circuitBreaker');
 // Prevents slamming the frontend with 50+ requests during bulk updates.
 // Stores pending revalidations by key (type:identifier:brandId)
 const pendingRevalidations = new Map();
-const DEBOUNCE_MS = 2000; // 2 seconds delay to aggregate bursts
+const DEBOUNCE_MS = 500; // 0.5 seconds delay to aggregate bursts
 
 /**
  * Call frontend revalidation endpoint to refresh Next.js cache

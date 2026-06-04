@@ -5,6 +5,7 @@ const { getWebSocketServer } = require('../lib/websocket-server');
 const cacheService = require('./cacheService');
 const { callWithCircuitBreaker } = require('../lib/circuitBreaker');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
+const perf = require('../utils/performance');
 
 // Removed L1_CACHE to prevent stale data in multi-instance environments.
 // Redis (L2) cache is fast enough and guarantees distributed consistency.
@@ -22,9 +23,12 @@ exports.getCouponsByStore = async (models, queryParams, storeId) => {
     if (isValid !== undefined) query.isValid = isValid === 'true';
 
     const cacheKey = cacheService.generateKey('store_coupons', { storeId, ...queryParams, brandId });
-    
+
     // Check Redis Cache (L2)
+    // ==== Redis GET timing ==== 
+    perf.start('redis-get');
     const cached = await cacheService.get(cacheKey);
+    perf.end('redis-get');
     if (cached) {
       return cached;
     }
@@ -46,7 +50,11 @@ exports.getCouponsByStore = async (models, queryParams, storeId) => {
       currentPage: parseInt(page),
     };
 
+    // ==== Redis SET timing & payload size ==== 
+    perf.start('redis-set');
     await cacheService.set(cacheKey, result, 1800);
+    perf.end('redis-set');
+    perf.logSize('coupon-list', result);
     return result;
   } catch (error) {
     console.error('Error in couponService.getCouponsByStore:', error);
@@ -116,7 +124,7 @@ exports.createCoupon = async (models, couponData) => {
     // 🚀 AWAIT cache invalidation for instant freshness
     try {
       await cacheService.invalidateCouponCache(null, storeId, brandId);
-      await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+      await cacheService.invalidateStoreCaches(storeId, storeSlug, brandId);
     } catch (err) {
       console.error(`[Coupon.create] Cache Error: ${err.message}`);
     }
@@ -144,25 +152,49 @@ exports.updateCoupon = async (models, id, updateData) => {
       if (!hasCode) throw new AppError('Cannot set coupon inactive without a code', 400);
     }
 
-    const updatedCoupon = await Coupon.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true });
+    // 🚀 PARALLEL: Run update + store slug fetch simultaneously
+    // existingCoupon.store already gives us storeId — no need to wait for update
+    const storeId = existingCoupon.store.toString();
 
+    const [updatedCoupon, store] = await Promise.all([
+      perf.run('mongo-update', () =>
+        Coupon.findByIdAndUpdate(id, { ...updateData, updatedAt: new Date() }, { new: true, runValidators: true })
+      ),
+      perf.safeRun('store-query', () =>
+        Store.findById(storeId).select('slug').lean()
+      ),
+    ]);
 
-    const storeId = updatedCoupon.store.toString();
-    // 🔥 FIX: Fetch store slug for proper revalidation
-    const store = await Store.findById(storeId).select('slug').lean();
     const storeSlug = store?.slug || storeId;
 
-    // 🚀 AWAIT cache invalidation
+    // 🚀 Cache invalidation – SYNCHRONOUS (ensures admin panel sees fresh data immediately)
     try {
-      await cacheService.invalidateCouponCache(id, storeId, brandId);
-      await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+      await Promise.all([
+        cacheService.invalidateCouponCache(id, storeId, brandId),
+        cacheService.invalidateStoreCaches(storeId, storeSlug, brandId),
+      ]);
     } catch (err) {
       console.error(`[Coupon.update] Cache Error: ${err.message}`);
     }
 
-    // Background tasks
+    // Notify WebSocket (fire-and-forget)
     getWebSocketServer().notifyUpdate(models, 'updated', 'coupon', id, updatedCoupon);
-    callFrontendRevalidation('store', storeSlug, brandId, { storeId, updatedFields: Object.keys(updateData) }).catch(err => console.error(`[Coupon.update] Revalidation Error: ${err.message}`));
+
+    // 🚀 Revalidation ONLY in background (setImmediate) – does NOT block response
+    setImmediate(async () => {
+      const bgStart = Date.now();
+      try {
+        await callFrontendRevalidation('store', storeSlug, brandId, { storeId, updatedFields: Object.keys(updateData) });
+        console.log(`[BG] Revalidation complete in ${Date.now() - bgStart}ms`);
+      } catch (err) {
+        console.error(JSON.stringify({
+          level: 'error',
+          message: '[Coupon.update] Revalidation failed',
+          storeSlug, storeId, brandId,
+          error: err.message,
+        }));
+      }
+    });
 
     return formatCoupon(updatedCoupon);
   } catch (error) {
@@ -188,7 +220,7 @@ exports.deleteCoupon = async (models, id) => {
     // 🚀 AWAIT cache invalidation
     try {
       await cacheService.invalidateCouponCache(id, storeId, brandId);
-      await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+      await cacheService.invalidateStoreCaches(storeId, storeSlug, brandId);
     } catch (err) {
       console.error(`[Coupon.delete] Cache Error: ${err.message}`);
     }
@@ -258,7 +290,7 @@ exports.updateCouponOrder = async (models, storeId, orderedCouponIds) => {
 
     // AWAIT cache invalidation
     try {
-      await cacheService.invalidateStoreCachesSafely(storeId, brandId);
+      await cacheService.invalidateStoreCaches(storeId, storeSlug, brandId);
     } catch (err) {
       console.error(`[Coupon.order] Cache Error: ${err.message}`);
     }

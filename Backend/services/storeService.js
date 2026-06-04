@@ -2,7 +2,9 @@ const AppError = require('../errors/AppError');
 const cacheService = require('./cacheService');
 const { getWebSocketServer } = require('../lib/websocket-server');
 const { callWithCircuitBreaker, getCircuitBreakerStatus } = require('../lib/circuitBreaker');
+const perf = require('../utils/performance');
 const { callFrontendRevalidation } = require('../utils/revalidationUtils');
+
 const mongoose = require('mongoose');
 
 // Redis (L2) cache provides sub-millisecond response times with guaranteed distributed consistency.
@@ -117,7 +119,10 @@ exports.getStoreBySlug = async (models, slug) => {
         const cacheKey = cacheService.generateKey('store_detail', { slug, brandId });
 
         // Check Redis Cache (L2)
+        // ==== Redis GET timing ====
+        perf.start(`redis-get:${slug}`);
         const cached = await cacheService.get(cacheKey);
+        perf.end(`redis-get:${slug}`);
         if (cached) {
             return cached;
         }
@@ -129,10 +134,14 @@ exports.getStoreBySlug = async (models, slug) => {
         const Coupon = models.Coupon;
 
         // Step 1: Get store first (we need its _id for coupon query)
-        let store = await Store.findOne({ slug })
+        // ==== Store query timing ====
+        let store = await perf.safeRun('store-query', async () => {
+          return await Store.findOne({ slug })
             .populate('categories', 'name slug')
             .lean();
-            
+        });
+
+        // SEO‑friendly redirect handling (unchanged)
         let redirectUrl = null;
         
         if (!store) {
@@ -161,7 +170,11 @@ exports.getStoreBySlug = async (models, slug) => {
 
         store.couponCount = store.coupons.length;
 
+        // ==== Redis SET timing & payload size ====
+        perf.start(`redis-set:${slug}`);
         await cacheService.set(cacheKey, store, cacheService.defaultTTL.store_detail);
+        perf.end(`redis-set:${slug}`);
+        perf.logSize('store-detail', store);
         return store;
     } catch (error) {
         if (error.status === 404) throw error;

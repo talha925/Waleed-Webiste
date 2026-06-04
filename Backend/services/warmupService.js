@@ -57,6 +57,11 @@ async function preWarmCache(models) {
         // 6. 🔥 DYNAMIC VIP STORES (Ad Landing Pages / Top Stores)
         // Root Fix: Warm up by database flags instead of hardcoding slugs.
         // This ensures the top 50 most important stores are always in memory.
+
+        // 5. Stores List (Admin panel uses limit=50, frontend uses limit=10)
+        await storeService.getStores(models, { page: '1', limit: '50' });
+        await storeService.getStores(models, { page: '1', limit: '10' });
+
         const Store = models.Store;
         const vipStores = await Store.find({ 
             $or: [

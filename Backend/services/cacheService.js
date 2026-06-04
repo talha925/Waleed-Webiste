@@ -323,7 +323,7 @@ class CacheService {
       // Bulk Delete
       if (keysToDelete.length > 0) {
         const uniqueKeys = [...new Set(keysToDelete)];
-        await this.redis.del(...uniqueKeys);
+        await this.redis.del(uniqueKeys);
         console.log(`🧹 Invalidated ${uniqueKeys.length} store-related keys for store ${storeId || storeSlug} [${brandId}]`);
       }
 
@@ -346,21 +346,21 @@ class CacheService {
       // Coupon-specific keys
       keysToDelete.push(this.generateKey('coupon_detail', { id: couponId, brandId }));
 
-      // Store coupons cache if storeId provided
+      const patternPromises = [];
+      
       if (storeId) {
-        const storeCouponPattern = `${brandPrefix}coupon_backend:store:${storeId}:coupons:*`;
-        const storeCouponKeys = await this._getKeysByPattern(storeCouponPattern);
-        keysToDelete.push(...storeCouponKeys);
+        patternPromises.push(this._getKeysByPattern(`${brandPrefix}coupon_backend:store:${storeId}:coupons:*`));
       }
+      patternPromises.push(this._getKeysByPattern(`${brandPrefix}coupon_backend:coupons:list:*`));
 
-      // General coupons list cache
-      const couponsPattern = `${brandPrefix}coupon_backend:coupons:list:*`;
-      const couponsKeys = await this._getKeysByPattern(couponsPattern);
-      keysToDelete.push(...couponsKeys);
+      const results = await Promise.all(patternPromises);
+      for (const keys of results) {
+        keysToDelete.push(...keys);
+      }
 
       // Delete all keys
       if (keysToDelete.length > 0) {
-        await this.redis.del(...keysToDelete);
+        await this.redis.del(keysToDelete);
         console.log(`✅ Invalidated ${keysToDelete.length} coupon cache keys for coupon ${couponId} (Brand: ${brandId})`);
       }
 
@@ -375,11 +375,15 @@ class CacheService {
     const keys = [];
     try {
       // 🚀 Use scanIterator for node-redis v4+ (more robust and non-blocking)
-      for await (const key of this.redis.scanIterator({
+      for await (const keyOrBatch of this.redis.scanIterator({
         MATCH: pattern,
         COUNT: 100
       })) {
-        keys.push(key);
+        if (Array.isArray(keyOrBatch)) {
+          keys.push(...keyOrBatch);
+        } else {
+          keys.push(keyOrBatch);
+        }
         // Safety break if we somehow get too many keys (prevent memory issues)
         if (keys.length > 5000) break;
       }
@@ -401,7 +405,7 @@ class CacheService {
       // instead of letting the entire request hang for 5-10 seconds.
       const data = await Promise.race([
         this.redis.get(key),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis Timeout')), 1500))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis Timeout')), 3000))
       ]);
       
       const hit = data !== null;
@@ -437,7 +441,7 @@ class CacheService {
       
       await Promise.race([
         setOp,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis SET Timeout')), 2000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis SET Timeout')), 3000))
       ]);
       trackCache('SET', key, true);
       return true;
@@ -491,7 +495,7 @@ class CacheService {
       const batchSize = 100;
       for (let i = 0; i < keys.length; i += batchSize) {
         const batch = keys.slice(i, i + batchSize);
-        // node-redis v4 supports array in DEL
+        // node-redis v4: pass array directly to del()
         const result = await this.redis.del(batch);
         deletedCount += result;
       }
@@ -522,9 +526,7 @@ class CacheService {
         `${prefix}coupon_backend:homepage*`
       ];
 
-      for (const pattern of patterns) {
-        await this.delPattern(pattern);
-      }
+      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
       return true;
     } catch (err) {
       console.error('❌ invalidateBlogCaches Error:', err);
@@ -534,12 +536,13 @@ class CacheService {
 
 
   // ✅ COMPREHENSIVE CACHE INVALIDATION WITH ALL REQUIRED PATTERNS
-  async invalidateStoreCaches(storeId = null, brandId = null) {
+  async invalidateStoreCaches(storeId = null, storeSlug = null, brandId = null) {
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
         `${prefix}coupon_backend:stores:list*`,
-        `${prefix}coupon_backend:store:detail*`,
+        `${prefix}coupon_backend:stores:names*`,
+        storeSlug ? `${prefix}coupon_backend:store:detail:${storeSlug}` : `${prefix}coupon_backend:store:detail*`,
         `${prefix}coupon_backend:store_search*`,
         `${prefix}coupon_backend:homepage*`,
         `${prefix}coupon_backend:categories:list*`,
@@ -552,9 +555,7 @@ class CacheService {
         );
       }
 
-      for (const pattern of patterns) {
-        await this.delPattern(pattern);
-      }
+      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
       return true;
     } catch (error) {
       console.error('❌ Store cache invalidation error:', error);
@@ -573,11 +574,8 @@ class CacheService {
         `${prefix}coupon_backend:stores*`
       ];
 
-      let totalDeleted = 0;
-      for (const pattern of patterns) {
-        const deleted = await this.delPattern(pattern);
-        totalDeleted += deleted;
-      }
+      const results = await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
+      const totalDeleted = results.reduce((sum, count) => sum + count, 0);
 
       console.log(`✅ Homepage caches invalidated for brand ${brandId}: ${totalDeleted} keys deleted`);
       return totalDeleted;
@@ -598,9 +596,7 @@ class CacheService {
         `${prefix}coupon_backend:homepage*`
       ];
 
-      for (const pattern of patterns) {
-        await this.delPattern(pattern);
-      }
+      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
 
       console.log(`✅ Category caches invalidated for brand ${brandId}`);
       return true;
@@ -623,10 +619,10 @@ class CacheService {
   }
 
   // ✅ PRODUCTION-READY: SAFE CACHE INVALIDATION WITH ERROR HANDLING
-  async invalidateStoreCachesSafely(storeId = null, brandId = null) {
+  async invalidateStoreCachesSafely(storeId = null, storeSlug = null, brandId = null) {
     try {
-      console.log(`🛡️ Starting safe cache invalidation for store: ${storeId || 'all'} (Brand: ${brandId})`);
-      const success = await this.invalidateStoreCaches(storeId, brandId);
+      console.log(`🛡️ Starting safe cache invalidation for store: ${storeSlug || storeId || 'all'} (Brand: ${brandId})`);
+      const success = await this.invalidateStoreCaches(storeId, storeSlug, brandId);
       console.log(`✅ Safe cache invalidation completed: ${success ? 'SUCCESS' : 'FAILED'} (Brand: ${brandId})`);
       return success;
     } catch (error) {

@@ -2,6 +2,10 @@ const express = require('express');
 const dotenv = require('dotenv');
 const compression = require('compression');
 
+// 🔧 FIX: Node.js c-ares DNS resolver doesn't support SRV lookups on some networks.
+// Force Google DNS so mongodb+srv:// connections discover all replica set members correctly.
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 // Load environment variables BEFORE requiring any other modules
 dotenv.config();
@@ -65,6 +69,39 @@ async function initializeServices() {
         await getCentralConnection();
 
         console.log(`✅ Base services & central connection initialized`);
+
+        // 3. 🔥 Pre-warm the blogzenix tenant DB connection in the background
+        // This prevents the first real request from seeing 15-18s brand detection delays
+        const { BRAND_MAP } = require('./config/brands');
+        const { getTenantConnection } = require('./config/db');
+        const { getTenantModels } = require('./models/TenantModels');
+
+        // Pre-warm tenant connections in the background (non-blocking)
+        setImmediate(async () => {
+            const seenBrands = new Set();
+            for (const brand of BRAND_MAP) {
+                if (!brand.brandId || !brand.mongoUri) continue;
+                if (seenBrands.has(brand.brandId)) continue; // skip duplicates
+                seenBrands.add(brand.brandId);
+                try {
+                    const conn = await getTenantConnection(brand.brandId, brand.mongoUri);
+                    console.log(`🔥 Pre-warmed DB connection for [${brand.brandId}]`);
+
+                    // 4. Pre-warm Redis cache with frequently-accessed data
+                    if (redisConfig.isReady()) {
+                        const tenantModels = getTenantModels(conn);
+                        tenantModels.brandId = brand.brandId;
+                        preWarmCache(tenantModels).then(() => {
+                            console.log(`🔥 Cache pre-warm complete for [${brand.brandId}]`);
+                        }).catch(err => {
+                            console.warn(`⚠️ Cache pre-warm failed for [${brand.brandId}]:`, err.message);
+                        });
+                    }
+                } catch (err) {
+                    console.warn(`⚠️ Background DB pre-warm failed for [${brand.brandId}]:`, err.message);
+                }
+            }
+        });
     } catch (error) {
         console.error('❌ Service initialization error:', error);
     }
