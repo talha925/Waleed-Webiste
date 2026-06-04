@@ -127,22 +127,32 @@ const executeRevalidation = async (type, identifier, brandId, metadata) => {
 
             console.log(`📡 [DEBOUNCED] Triggering frontend revalidation for ${type}: ${identifier} on ${frontendUrls.length} targets: ${frontendUrls.join(', ')}`);
 
-            // 3. Trigger all revalidation requests in parallel
+            // 3. Trigger all revalidation requests in parallel with retries
             const results = await Promise.allSettled(frontendUrls.map(async (url) => {
                 const endpoint = `${url}/api/revalidate`;
-                try {
-                    const res = await axios.post(endpoint, payload, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${secret}`
-                        },
-                        timeout: 10000 // Increased to 10s for slow cold starts
-                    });
-                    console.log(`✅ Success: ${url} revalidated for ${type}`);
-                    return { url, success: true, status: res.status };
-                } catch (err) {
-                    console.warn(`⚠️ Failed: ${url} revalidation failed (${err.message})`);
-                    return { url, success: false, error: err.message };
+                const maxRetries = 2;
+                const delay = 1000;
+                
+                for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+                    try {
+                        const res = await axios.post(endpoint, payload, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${secret}`
+                            },
+                            timeout: 10000 // 10s timeout
+                        });
+                        console.log(`✅ Success: ${url} revalidated for ${type} (Attempt ${attempt})`);
+                        return { url, success: true, status: res.status };
+                    } catch (err) {
+                        const isNetworkError = !err.response || (err.code && err.code !== 'ECONNABORTED');
+                        if (attempt > maxRetries || !isNetworkError) {
+                            console.warn(`⚠️ Failed: ${url} revalidation failed on final attempt (${err.message})`);
+                            return { url, success: false, error: err.message };
+                        }
+                        console.warn(`⚠️ Attempt ${attempt} failed: ${url} revalidation error (${err.message}). Retrying in ${delay * attempt}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+                    }
                 }
             }));
 

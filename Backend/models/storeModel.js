@@ -48,6 +48,7 @@ const storeSchema = new mongoose.Schema({
 
 // 🔍 Indexes
 storeSchema.index({ slug: 1 }); // CRITICAL: Optimize store detail lookups
+storeSchema.index({ previousSlugs: 1 }); // Optimize fallback / SEO redirect lookups
 storeSchema.index({ name: 'text', slug: 'text', short_description: 'text', long_description: 'text' });
 storeSchema.index({ name: 1 }); // Regular index for regex search performance
 storeSchema.index({ language: 1, createdAt: -1 }); // Covers getStores query + sort

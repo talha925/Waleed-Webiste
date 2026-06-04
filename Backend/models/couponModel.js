@@ -17,6 +17,7 @@ const couponSchema = new mongoose.Schema({
 });
 
 couponSchema.index({ store: 1, isValid: 1, active: 1, order: 1 });
+couponSchema.index({ store: 1, isValid: 1, order: 1, createdAt: -1 }); // CRITICAL: Optimize sorting of active/valid store coupons
 couponSchema.index({ store: 1, order: 1 });
 couponSchema.index({ store: 1, featuredForHome: 1 });
 couponSchema.index({ store: 1, code: 1 }, { partialFilterExpression: { code: { $type: 'string' } } });

@@ -18,17 +18,24 @@ exports.getStoreNames = async (models) => {
 
 
 
+        perf.start('redis-get:store_names');
         const cachedData = await cacheService.get(cacheKey);
+        perf.end('redis-get:store_names');
         if (cachedData) {
             return cachedData;
         }
+
+        perf.start('mongo:store_names');
 
         const stores = await Store.find()
             .select('_id name slug trackingUrl')
             .sort({ name: 1 })
             .lean();
+        perf.end('mongo:store_names');
 
+        perf.start('redis-set:store_names');
         await cacheService.set(cacheKey, stores, cacheService.defaultTTL.stores);
+        perf.end('redis-set:store_names');
         return stores;
     } catch (error) {
         console.error('Error in storeService.getStoreNames:', error);
@@ -48,7 +55,9 @@ exports.getStores = async (models, queryParams) => {
 
 
 
+        perf.start('redis-get:stores_list');
         const cachedData = await cacheService.get(cacheKey);
+        perf.end('redis-get:stores_list');
         if (cachedData) {
             return cachedData;
         }
@@ -63,40 +72,48 @@ exports.getStores = async (models, queryParams) => {
         const isFilterEmpty = Object.keys(query).length === 1 && query.language === 'English';
 
         // Parallelize Count and Data Fetch
+        perf.start('mongo:stores_list:count+find');
         const [totalStores, stores] = await Promise.all([
             isFilterEmpty ? Store.estimatedDocumentCount() : Store.countDocuments(query),
             Store.find(query)
+                .select('-short_description -long_description -seo -createdAt -updatedAt -__v')
                 .sort({ createdAt: -1 })
                 .skip((parseInt(page) - 1) * parseInt(limit))
                 .limit(parseInt(limit))
                 .populate('categories', 'name slug')
                 .lean()
         ]);
+        perf.end('mongo:stores_list:count+find');
 
         // Optimized Parent-Referencing for Coupons
         if (stores.length > 0) {
+            perf.start('mongo:stores_list:coupons');
             const Coupon = models.Coupon;
             const storeIds = stores.map(s => s._id);
-            const allCoupons = await Coupon.find({
-                store: { $in: storeIds },
-                isValid: true,
-                $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
-            })
-                .sort({ order: 1, createdAt: -1 })
-                .select('_id store offerDetails code active isValid order hits lastAccessed')
-                .lean();
 
-            const couponMap = allCoupons.reduce((acc, c) => {
-                const sid = c.store.toString();
-                if (!acc[sid]) acc[sid] = [];
-                acc[sid].push(c);
+            // 🔥 MASSIVE FIX: Don't fetch full coupons, just count them via Aggregation
+            const couponCounts = await Coupon.aggregate([
+                {
+                    $match: {
+                        store: { $in: storeIds },
+                        isValid: true,
+                        $or: [{ active: true }, { code: { $exists: true, $ne: '' } }]
+                    }
+                },
+                { $group: { _id: '$store', count: { $sum: 1 } } }
+            ]);
+
+            const countMap = couponCounts.reduce((acc, curr) => {
+                acc[curr._id.toString()] = curr.count;
                 return acc;
             }, {});
 
             stores.forEach(s => {
-                s.coupons = couponMap[s._id.toString()] || [];
-                s.couponCount = s.coupons.length;
+                s.couponCount = countMap[s._id.toString()] || 0;
+                // Specifically REMOVE the coupons array to shrink the payload
+                delete s.coupons;
             });
+            perf.end('mongo:stores_list:coupons');
         }
 
         const response = {
@@ -105,7 +122,11 @@ exports.getStores = async (models, queryParams) => {
             timestamp: new Date().toISOString()
         };
 
+        perf.start('redis-set:stores_list');
         await cacheService.set(cacheKey, response, cacheService.defaultTTL.stores);
+        perf.end('redis-set:stores_list');
+
+        perf.logSize('stores_list', response);
         return response;
     } catch (error) {
         console.error('Error in storeService.getStores:', error);
@@ -136,20 +157,20 @@ exports.getStoreBySlug = async (models, slug) => {
         // Step 1: Get store first (we need its _id for coupon query)
         // ==== Store query timing ====
         let store = await perf.safeRun('store-query', async () => {
-          return await Store.findOne({ slug })
-            .populate('categories', 'name slug')
-            .lean();
+            return await Store.findOne({ slug })
+                .populate('categories', 'name slug')
+                .lean();
         });
 
         // SEO‑friendly redirect handling (unchanged)
         let redirectUrl = null;
-        
+
         if (!store) {
             // SEO FIX: Check if the slug exists in previousSlugs
             store = await Store.findOne({ previousSlugs: slug })
                 .populate('categories', 'name slug')
                 .lean();
-            
+
             if (store) {
                 redirectUrl = store.slug;
             }
@@ -243,6 +264,7 @@ exports.searchStores = async (models, query, page = 1, limit = 10) => {
         };
 
         const stores = await Store.find(optimizedQuery)
+            .select('-short_description -long_description -seo -createdAt -updatedAt -__v -coupons')
             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit))
             .populate('categories', 'name slug')
@@ -331,11 +353,11 @@ exports.updateStore = async (models, id, updateData) => {
 
         // save() triggers pre('save') hook → slug regenerates if name changed
         const updatedStore = await store.save();
-        
+
         if (oldSlug && oldSlug !== updatedStore.slug) {
             await Store.updateOne({ _id: store._id }, { $addToSet: { previousSlugs: oldSlug } });
         }
-        
+
         const updatedStoreLean = updatedStore.toObject();
 
         // 🧹 Clear L1 cache AFTER successful DB write

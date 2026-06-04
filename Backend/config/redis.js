@@ -23,10 +23,12 @@ class RedisConfig {
                 database: process.env.REDIS_DB || 0
             };
 
-            // Add socket configuration with better error handling
+            // Add socket configuration with better error handling and remote-connection optimizations
             options.socket = {
                 connectTimeout: 2000,
                 commandTimeout: 2000,
+                keepAlive: 5000, // Reuse connection and prevent extra TCP handshakes
+                noDelay: true,   // Disable Nagle's algorithm for faster small-packet transmission
                 reconnectStrategy: (retries) => {
                     if (retries > 3) return false;
                     return Math.min(retries * 100, 3000);

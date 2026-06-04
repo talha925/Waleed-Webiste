@@ -29,6 +29,9 @@ class CacheService {
       isHealthy: false
     };
 
+    this.pendingInvalidations = new Map();
+    this.invalidationTimeout = null;
+
     if (!CacheService.initializing) {
       CacheService.initializing = true;
       this.initializeCache();
@@ -75,6 +78,12 @@ class CacheService {
 
   _setupRedisEventListeners() {
     if (!this.redis) return;
+
+    // Prevent duplicate event listeners from accumulating on reconnection
+    this.redis.removeAllListeners('error');
+    this.redis.removeAllListeners('connect');
+    this.redis.removeAllListeners('disconnect');
+    this.redis.removeAllListeners('reconnecting');
 
     this.redis.on('error', (error) => {
       console.error('🔴 Redis connection error:', error.message);
@@ -373,22 +382,35 @@ class CacheService {
 
   async _getKeysByPattern(pattern) {
     const keys = [];
+    let timedOut = false;
+    
+    const timeout = setTimeout(() => {
+      timedOut = true;
+    }, 2000);
+
     try {
-      // 🚀 Use scanIterator for node-redis v4+ (more robust and non-blocking)
+      // 🚀 Use non-blocking scanIterator with a loop-level timeout flag to prevent background runaway scans
       for await (const keyOrBatch of this.redis.scanIterator({
         MATCH: pattern,
-        COUNT: 100
+        COUNT: 250 // Optimal batch size for high performance / low overhead
       })) {
+        if (timedOut) {
+          console.warn(`⚠️ Redis SCAN Timeout reached for pattern: ${pattern}`);
+          break;
+        }
+
         if (Array.isArray(keyOrBatch)) {
           keys.push(...keyOrBatch);
         } else {
           keys.push(keyOrBatch);
         }
-        // Safety break if we somehow get too many keys (prevent memory issues)
-        if (keys.length > 5000) break;
+
+        if (keys.length > 5000) break; // Hard threshold safety check
       }
     } catch (error) {
-      console.error(`❌ Error scanning for pattern ${pattern}:`, error);
+      console.error(`❌ Error scanning keys for pattern ${pattern}:`, error.message);
+    } finally {
+      clearTimeout(timeout);
     }
     return keys;
   }
@@ -508,6 +530,32 @@ class CacheService {
     }
   }
 
+  // ✅ SCHEDULED INVALIDATION DEBOUNCER
+  scheduleInvalidation(patterns) {
+    if (!this.pendingPatterns) this.pendingPatterns = new Set();
+    patterns.forEach(p => this.pendingPatterns.add(p));
+
+    if (this.invalidationTimeout) clearTimeout(this.invalidationTimeout);
+
+    this.invalidationTimeout = setTimeout(async () => {
+      const patternsToProcess = Array.from(this.pendingPatterns);
+      this.pendingPatterns.clear();
+      
+      console.log(`⏱️ Processing batched cache invalidation for ${patternsToProcess.length} patterns...`);
+      
+      try {
+        // Execute sequentially to prevent event loop / Redis pressure spikes
+        let totalDeleted = 0;
+        for (const pattern of patternsToProcess) {
+          totalDeleted += await this.delPattern(pattern);
+        }
+        console.log(`✅ Batched invalidation complete. Total keys deleted: ${totalDeleted}`);
+      } catch (err) {
+        console.error('❌ Batched invalidation error:', err);
+      }
+    }, 2000); // 2-second debounce window
+  }
+
   // ✅ ENHANCED: Professional Invalidation with guaranteed patterns
   async invalidateBlogCaches(brandId = null) {
     if (!this.isAvailable()) return false;
@@ -526,7 +574,7 @@ class CacheService {
         `${prefix}coupon_backend:homepage*`
       ];
 
-      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
+      this.scheduleInvalidation(patterns);
       return true;
     } catch (err) {
       console.error('❌ invalidateBlogCaches Error:', err);
@@ -555,7 +603,7 @@ class CacheService {
         );
       }
 
-      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
+      this.scheduleInvalidation(patterns);
       return true;
     } catch (error) {
       console.error('❌ Store cache invalidation error:', error);
@@ -574,11 +622,8 @@ class CacheService {
         `${prefix}coupon_backend:stores*`
       ];
 
-      const results = await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
-      const totalDeleted = results.reduce((sum, count) => sum + count, 0);
-
-      console.log(`✅ Homepage caches invalidated for brand ${brandId}: ${totalDeleted} keys deleted`);
-      return totalDeleted;
+      this.scheduleInvalidation(patterns);
+      return 1;
     } catch (error) {
       console.error('❌ Homepage cache invalidation error:', error);
       throw error;
@@ -596,9 +641,7 @@ class CacheService {
         `${prefix}coupon_backend:homepage*`
       ];
 
-      await Promise.all(patterns.map(pattern => this.delPattern(pattern)));
-
-      console.log(`✅ Category caches invalidated for brand ${brandId}`);
+      this.scheduleInvalidation(patterns);
       return true;
     } catch (error) {
       console.error('❌ Category cache invalidation error:', error);
@@ -609,7 +652,8 @@ class CacheService {
   // ✅ NUCLEAR OPTION: INVALIDATE ALL CACHES
   async invalidateAllCaches() {
     try {
-      const deleted = await this.delPattern('coupon_backend:*');
+      // Matches both global namespace and brand-prefixed keys (e.g. brandId:coupon_backend:*)
+      const deleted = await this.delPattern('*coupon_backend:*');
       console.log(`🚨 ALL CACHES INVALIDATED: ${deleted} keys deleted`);
       return deleted;
     } catch (error) {
