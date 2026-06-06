@@ -5,7 +5,6 @@ import { getBrandConfig } from '@config/server-config';
 import { fetchBlogCategoriesServer, fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 const FETCH_TIMEOUT = 5000;
 
@@ -19,6 +18,11 @@ interface CategoryPageProps {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  if (params.slug === '[slug]' || !params.slug) {
+    return {
+      title: 'Blog Category',
+    };
+  }
   const brand = getBrandConfig();
   const { data: categories } = await fetchBlogCategoriesServer();
   const category = categories.find((cat: any) => cat.slug === params.slug);
@@ -106,6 +110,9 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
+  if (params.slug === '[slug]' || !params.slug) {
+    return null;
+  }
   const [ { data: categories }, { data: blogs } ] = await Promise.all([
     fetchBlogCategoriesServer(),
     fetchBlogsByCategoryServer(params.slug)

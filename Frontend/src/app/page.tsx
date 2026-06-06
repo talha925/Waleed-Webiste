@@ -10,7 +10,6 @@ import { fetchHomeDataServer } from "@/lib/serverData";
 
 // Force dynamic rendering since brand detection depends on the hostname header
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 // Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {

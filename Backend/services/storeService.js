@@ -305,7 +305,7 @@ exports.createStore = async (models, storeData) => {
 
         // 🚀 AWAIT cache invalidation to guarantee freshness before response
         try {
-            await cacheService.invalidateStoreCachesSafely(null, brandId);
+            await cacheService.invalidateStoreCachesSafely(null, null, brandId);
         } catch (err) {
             console.error(`[Store.create] Cache Error: ${err.message}`);
         }
@@ -364,9 +364,9 @@ exports.updateStore = async (models, id, updateData) => {
 
         // 🚀 AWAIT cache invalidation to guarantee freshness
         try {
-            await cacheService.invalidateStoreCachesSafely(id, brandId);
+            await cacheService.invalidateStoreCachesSafely(id, updatedStoreLean.slug || null, brandId);
             if (oldSlug && oldSlug !== updatedStoreLean.slug) {
-                await cacheService.invalidateStoreCachesSafely(null, brandId);
+                await cacheService.invalidateStoreCachesSafely(null, oldSlug, brandId);
             }
         } catch (err) {
             console.error(`[Store.update] Cache Error: ${err.message}`);
@@ -398,7 +398,7 @@ exports.deleteStore = async (models, id) => {
 
         // 🚀 AWAIT cache invalidation to guarantee freshness
         try {
-            await cacheService.invalidateStoreCachesSafely(id, brandId);
+            await cacheService.invalidateStoreCachesSafely(id, store.slug || null, brandId);
         } catch (err) {
             console.error(`[Store.delete] Cache Error: ${err.message}`);
         }

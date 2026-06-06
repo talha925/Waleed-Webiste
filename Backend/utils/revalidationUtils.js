@@ -121,6 +121,8 @@ const executeRevalidation = async (type, identifier, brandId, metadata) => {
             const payload = {
                 type,
                 identifier,
+                // 🔥 FIX: Include storeSlug explicitly so frontend /api/revalidate can call revalidatePath('/store/slug')
+                storeSlug: type === 'store' || type === 'stores' ? identifier : undefined,
                 timestamp: new Date().toISOString(),
                 ...metadata
             };
