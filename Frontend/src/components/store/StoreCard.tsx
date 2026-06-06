@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Store } from '@/lib/types';
-import { decodeHTML } from '@/lib/utils/formatting';
+import { decodeHTML, cleanTrackingUrl } from '@/lib/utils/formatting';
 import SafeImage from '@/components/ui/SafeImage';
 
 interface StoreCardProps {
@@ -23,8 +23,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
 
     // Redirect to store tracking URL
     if (store?.trackingUrl) {
-      const decodedUrl = decodeHTML(store.trackingUrl);
-      window.open(decodedUrl, '_blank');
+      const decodedUrl = cleanTrackingUrl(decodeHTML(store.trackingUrl));
+      window.open(decodedUrl, '_blank', 'noopener,noreferrer');
     } else {
       alert('Tracking URL not available for this store.');
     }

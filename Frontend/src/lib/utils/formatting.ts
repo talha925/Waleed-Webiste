@@ -79,3 +79,54 @@ export const sanitizeUrl = (url: string): string => {
   
   return cleanUrl;
 };
+
+/**
+ * Strips PPC/ad click tracking parameters from a URL.
+ * This prevents affiliate networks from detecting paid search traffic
+ * (gclid, msclkid, fbclid, etc.) and zeroing out commissions.
+ */
+const PPC_PARAMS = [
+  'gclid',       // Google Ads
+  'gbraid',      // Google Ads (iOS)
+  'wbraid',      // Google Ads (web-to-app)
+  'msclkid',     // Microsoft/Bing Ads
+  'fbclid',      // Facebook Ads
+  'dclid',       // Google Display & Video 360
+  'gclsrc',      // Google Ads source
+  'utm_source',  // UTM tracking
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'li_fat_id',   // LinkedIn Ads
+  'ttclid',      // TikTok Ads
+  'twclid',      // Twitter/X Ads
+  'igshid',      // Instagram
+  'mc_cid',      // Mailchimp
+  'mc_eid',      // Mailchimp
+];
+
+export const stripPPCParams = (url: string): string => {
+  if (!url || url === '#') return url;
+  try {
+    const urlObj = new URL(url);
+    let changed = false;
+    for (const param of PPC_PARAMS) {
+      if (urlObj.searchParams.has(param)) {
+        urlObj.searchParams.delete(param);
+        changed = true;
+      }
+    }
+    return changed ? urlObj.toString() : url;
+  } catch {
+    // If URL parsing fails, return as-is
+    return url;
+  }
+};
+
+/**
+ * Sanitize + strip PPC params in one call — use this for all affiliate/tracking URLs
+ */
+export const cleanTrackingUrl = (url: string): string => {
+  return stripPPCParams(sanitizeUrl(url));
+};

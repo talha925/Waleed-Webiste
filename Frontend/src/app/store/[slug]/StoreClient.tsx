@@ -5,7 +5,7 @@
 
 import SafeImage from '@/components/ui/SafeImage';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { decodeHTML, sanitizeUrl } from '@/lib/utils/formatting';
+import { decodeHTML, sanitizeUrl, cleanTrackingUrl } from '@/lib/utils/formatting';
 import toast, { Toaster } from 'react-hot-toast';
 import { Store, Coupon } from '@/lib/types/store';
 import { useBrand } from '@/context/BrandContext';
@@ -124,7 +124,7 @@ const CouponModal = React.memo(({ isOpen, onClose, code, trackingUrl }: Pick<Cou
             <button onClick={handleCopy} className="flex-1 h-12 bg-brand-primary text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95">
               Copy Code
             </button>
-            <a href={trackingUrl ? sanitizeUrl(decodeHTML(trackingUrl)) : '#'} target="_blank" rel="sponsored noopener" className="flex-1 h-12 bg-brand-accent text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-1.5">
+            <a href={trackingUrl ? cleanTrackingUrl(decodeHTML(trackingUrl)) : '#'} target="_blank" rel="sponsored noopener noreferrer" className="flex-1 h-12 bg-brand-accent text-white rounded-xl font-bold text-sm hover:brightness-110 transition-all active:scale-95 flex items-center justify-center gap-1.5">
               Visit Store
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
             </a>
@@ -383,14 +383,14 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
       setShowModal(true);
 
       if (initialStore.trackingUrl && !hasRedirected.current) {
-        const storeUrl = sanitizeUrl(decodeHTML(initialStore.trackingUrl));
+        const storeUrl = cleanTrackingUrl(decodeHTML(initialStore.trackingUrl));
         window.open(storeUrl, '_blank', 'noopener,noreferrer');
         setTimeout(() => {
           hasRedirected.current = true;
         }, 7000);
       }
     } else {
-      if (initialStore.trackingUrl) window.open(sanitizeUrl(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
+      if (initialStore.trackingUrl) window.open(cleanTrackingUrl(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
       toast.success('Deal activated! Redirecting...');
     }
   }, [initialStore]);
