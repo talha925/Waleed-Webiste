@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useBrand } from '@/context/BrandContext';
+import { getCdnUrl } from '@/lib/cdn';
 
 interface SafeImageProps {
   src: string;
@@ -24,8 +26,8 @@ interface SafeImageProps {
 }
 
 /**
- * SafeImage component that handles URL encoding and provides fallback for broken images
- * Specifically designed to handle AWS S3 URLs with special characters
+ * SafeImage component that handles URL encoding, serves images via CDN,
+ * and provides a graceful fallback chain: CDN -> S3 -> placeholder/fallbackSrc.
  */
 const SafeImage: React.FC<SafeImageProps> = ({
   src,
@@ -46,7 +48,19 @@ const SafeImage: React.FC<SafeImageProps> = ({
   unoptimized,
   ...props
 }) => {
-  const [hasError, setHasError] = React.useState(false);
+  const brand = useBrand();
+  const cdnUrl = getCdnUrl(src, brand);
+  const isCdnDifferent = cdnUrl !== src;
+
+  const [currentSrc, setCurrentSrc] = useState(isCdnDifferent ? cdnUrl : src);
+  const [hasError, setHasError] = useState(false);
+
+  // Sync state if src or brand changes
+  useEffect(() => {
+    const updatedCdnUrl = getCdnUrl(src, brand);
+    setCurrentSrc(updatedCdnUrl !== src ? updatedCdnUrl : src);
+    setHasError(false);
+  }, [src, brand]);
 
   // Derive the clean source for the current render cycle
   // This prevents hydration flickering compared to using useEffect
@@ -64,18 +78,21 @@ const SafeImage: React.FC<SafeImageProps> = ({
   };
 
   const handleError = () => {
-    if (!hasError) {
+    // Fallback path: CDN -> S3 Origin -> fallbackSrc
+    if (currentSrc === cdnUrl && isCdnDifferent) {
+      console.warn(`[SafeImage] CDN image failed to load, falling back to S3 origin:`, cdnUrl);
+      setCurrentSrc(src);
+    } else if (!hasError) {
       setHasError(true);
       onError?.();
     }
   };
 
   const handleLoad = () => {
-    // We don't Reset hasError here to avoid loops if fallback also fails
     onLoad?.();
   };
 
-  const cleanSrc = getCleanSrc(src);
+  const cleanSrc = getCleanSrc(currentSrc);
 
   if (!cleanSrc && !fill) return null;
 

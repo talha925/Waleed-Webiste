@@ -80,6 +80,8 @@ export interface BrandConfig {
     bucketName?: string;
     /** S3 Bucket domain host for images (e.g. "mybucket.s3.region.amazonaws.com") */
     imageDomain?: string;
+    /** CloudFront CDN domain host for serving S3 images (e.g. "d123.cloudfront.net") */
+    cdnDomain?: string;
 
     // ─── Layout ──────────────────────────────────────────────
     /** Homepage layout variant (e.g. "default", "compact", "magazine") */

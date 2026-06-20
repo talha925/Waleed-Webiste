@@ -146,9 +146,9 @@ export default async function RootLayout({
         )}
 
         {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}
-        {/* S3 image domain - needed immediately for LCP image */}
-        <link rel="preconnect" href={`https://${brand.imageDomain}`} crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href={`https://${brand.imageDomain}`} />
+        {/* Image domain / CDN - needed immediately for LCP image */}
+        <link rel="preconnect" href={`https://${brand.cdnDomain || brand.imageDomain}`} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={`https://${brand.cdnDomain || brand.imageDomain}`} />
         {/* GTM: DNS prefetch only (not full preconnect) - scripts load lazily */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 

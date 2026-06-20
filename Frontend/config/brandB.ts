@@ -64,6 +64,7 @@ const brandB: BrandConfig = {
     mongoDBName: process.env.MONGO_DB_NAME_BRAND_B || undefined,
     bucketName: process.env.AWS_BUCKET_NAME_BRAND_B || 'blogzenix-images',
     imageDomain: process.env.BLOGZENIX_IMAGE_DOMAIN || 'blogzenix-images.s3.us-east-1.amazonaws.com',
+    cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
 
     // ─── Layout ──────────────────────────────────────────────
     homepageLayout: 'default',

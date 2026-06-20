@@ -62,6 +62,7 @@ const brandA: BrandConfig = {
   // ─── Database & Storage ──────────────────────────────────
   bucketName: process.env.AWS_BUCKET_NAME || 'coupon-app-image',
   imageDomain: process.env.PENNYSCROLL_IMAGE_DOMAIN || 'coupon-app-image.s3.us-east-1.amazonaws.com',
+  cdnDomain: process.env.PENNYSCROLL_CDN_DOMAIN || 'd2o27hd92ee531.cloudfront.net',
 
   // ─── Layout ──────────────────────────────────────────────
   homepageLayout: 'default',
