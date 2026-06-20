@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { Store } from '@/lib/types';
 import { decodeHTML, cleanTrackingUrl } from '@/lib/utils/formatting';
 import SafeImage from '@/components/ui/SafeImage';
+import { useBrand } from '@/context/BrandContext';
 
 interface StoreCardProps {
   store: Store;
 }
 
 const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
+  const brand = useBrand();
+
   const handleGetDeal = () => {
     // Get the first available coupon
     const firstCoupon = store.coupons?.[0];
@@ -23,6 +26,20 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
 
     // Redirect to store tracking URL
     if (store?.trackingUrl) {
+      // 🚀 Trigger Google Ads Conversion Event
+      if (typeof window !== 'undefined' && window.gtag && brand.gtagConversion) {
+        window.gtag('event', 'conversion', {
+          'send_to': brand.gtagConversion.sendTo,
+          'value': brand.gtagConversion.value,
+          'currency': brand.gtagConversion.currency
+        });
+      }
+
+      // 🚀 Track click in Backend Database
+      if (brand.apiBaseUrl && firstCoupon?._id) {
+        fetch(`${brand.apiBaseUrl}/api/coupons/${firstCoupon._id}/track`, { method: 'POST' }).catch(err => console.error('Tracking error:', err));
+      }
+
       const decodedUrl = cleanTrackingUrl(decodeHTML(store.trackingUrl));
       window.open(decodedUrl, '_blank', 'noopener,noreferrer');
     } else {

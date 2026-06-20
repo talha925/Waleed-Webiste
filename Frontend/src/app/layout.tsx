@@ -112,15 +112,10 @@ export default async function RootLayout({
   // Build gtag inline script dynamically per brand
   const gtagInnerHtml = `
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    window.gtag = window.gtag || function(){window.dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', '${brand.gaId}');
     ${brand.googleAdsId ? `gtag('config', '${brand.googleAdsId}');` : ''}
-    ${brand.gtagConversion ? `gtag('event', 'conversion', {
-      'send_to': '${brand.gtagConversion.sendTo}',
-      'value': ${brand.gtagConversion.value},
-      'currency': '${brand.gtagConversion.currency}'
-    });` : ''}
   `;
 
   return (
@@ -176,18 +171,18 @@ export default async function RootLayout({
               <SpeedInsights />
               <Analytics />
 
-              {/* 🚀 PERFORMANCE: Use lazyOnload so analytics never blocks critical rendering path */}
+              {/* 🚀 FIXED: Use afterInteractive so analytics correctly tracks early pageviews and clicks */}
               <Script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                strategy="lazyOnload"
+                strategy="afterInteractive"
               />
               {brand.googleAdsId && (
                 <Script
                   src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
-                  strategy="lazyOnload"
+                  strategy="afterInteractive"
                 />
               )}
-              <Script id="google-analytics" strategy="lazyOnload">
+              <Script id="google-analytics" strategy="afterInteractive">
                 {gtagInnerHtml}
               </Script>
             </div>

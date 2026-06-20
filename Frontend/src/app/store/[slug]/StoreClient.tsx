@@ -357,6 +357,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const [areCouponsUnlocked, setAreCouponsUnlocked] = useState(false);
   const [revealedCoupons, setRevealedCoupons] = useState<Record<string, boolean>>({});
   const hasRedirected = useRef(false);
+  const brand = useBrand();
 
   const activeCoupons = useMemo(() => initialStore?.coupons?.filter(c => c.isValid) || [], [initialStore?.coupons]);
   const totalCoupons = useMemo(() => initialStore?.coupons?.length || 0, [initialStore?.coupons]);
@@ -368,6 +369,20 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
 
     setAreCouponsUnlocked(true);
     setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
+
+    // 🚀 Trigger Google Ads Conversion Event
+    if (typeof window !== 'undefined' && window.gtag && brand.gtagConversion) {
+      window.gtag('event', 'conversion', {
+        'send_to': brand.gtagConversion.sendTo,
+        'value': brand.gtagConversion.value,
+        'currency': brand.gtagConversion.currency
+      });
+    }
+
+    // 🚀 Track click in Backend Database
+    if (brand.apiBaseUrl && coupon._id) {
+      fetch(`${brand.apiBaseUrl}/api/coupons/${coupon._id}/track`, { method: 'POST' }).catch(err => console.error('Tracking error:', err));
+    }
 
     if (coupon.code) {
       navigator.clipboard.writeText(coupon.code)
