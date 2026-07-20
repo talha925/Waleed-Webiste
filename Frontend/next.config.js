@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   assetPrefix: process.env.CDN_URL || '',
@@ -36,11 +38,8 @@ const nextConfig = {
       }] : []),
     ],
   },
-  // 🚀 Next.js 16: Turbopack is the default bundler. 
-  // Empty config tells Next.js we acknowledge Turbopack and silences the webpack migration warning.
-  turbopack: {
-    root: '..',
-  },
+// Turbopack config removed – let Next.js infer workspace root
+
   experimental: {
     optimizeCss: true,
     optimizePackageImports: [
