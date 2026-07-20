@@ -166,6 +166,7 @@ const OptimizedTinyMCEWrapper: React.FC<OptimizedTinyMCEWrapperProps> = memo(({
   }, [onInit]);
 
   return (
+    // @ts-ignore
     <Editor
       apiKey="6be041uk7orm1ngovq1ze4udc28my9puzhlaeosuhcm6g3lg"
       id={id}
