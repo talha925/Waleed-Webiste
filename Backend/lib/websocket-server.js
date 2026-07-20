@@ -51,6 +51,7 @@ class WebSocketServer {
         }
     }
 
+
     _retryPubSubConnection() {
         if (this.pubSubRetryAttempts >= this.maxPubSubRetries) {
             console.error(`❌ Redis Pub/Sub: Max retries (${this.maxPubSubRetries}) reached. WebSocket will work without cross-instance sync.`);
