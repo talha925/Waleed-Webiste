@@ -173,7 +173,7 @@ export default async function RootLayout({
                   async
                 ></script>
               )}
-              <Script id="google-analytics" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }} />
+              <script id="google-analytics" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }} />
             </div>
           </ErrorBoundary>
         </Providers>
