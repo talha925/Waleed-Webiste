@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
 import { getBrandConfig } from '@config/server-config';
 
-export default function robots(): MetadataRoute.Robots {
-    const brand = getBrandConfig();
+export default async function robots(): Promise<MetadataRoute.Robots> {
+    const brand = await getBrandConfig();
     const siteUrl = brand.siteUrl;
 
     return {

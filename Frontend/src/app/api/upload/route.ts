@@ -48,7 +48,7 @@ function sanitizeFilename(filename: string): string {
 }
 
 export async function POST(request: Request): Promise<NextResponse<UploadResponse>> {
-  const headersList = headers();
+  const headersList = await headers();
   const authorization = headersList.get('authorization');
 
   // Basic authentication check (replace with your actual authentication logic)

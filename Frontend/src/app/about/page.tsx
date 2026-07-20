@@ -3,7 +3,7 @@ import { getBrandConfig } from '@config/server-config';
 import { themeClasses } from '@/lib/theme/utils';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   return {
     title: `About Us - ${brand.siteName}`,
     description: `Learn about ${brand.siteName}, your trusted source for savings, deals, and shopping guides. Discover our mission to help you make informed purchasing decisions.`,
@@ -11,8 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function AboutPage() {
-  const brand = getBrandConfig();
+export default async function AboutPage() {
+  const brand = await getBrandConfig();
 
   return (
     <div className="min-h-screen bg-background">

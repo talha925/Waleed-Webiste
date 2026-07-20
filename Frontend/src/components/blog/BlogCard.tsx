@@ -16,9 +16,10 @@ interface BlogCardProps {
     };
   };
   variant?: string;
+  priority?: boolean;
 }
 
-export default function BlogCard({ blog, variant }: BlogCardProps) {
+export default function BlogCard({ blog, variant, priority = false }: BlogCardProps) {
   return (
     <Link href={`/blog/${blog.slug || blog._id}`} className="block">
       <div className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-2xl overflow-hidden transform transition-all duration-500 hover:scale-[1.03] shadow-xl hover:shadow-2xl hover:border-primary/60 cursor-pointer">
@@ -38,7 +39,8 @@ export default function BlogCard({ blog, variant }: BlogCardProps) {
               height={450}
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              loading="lazy" // Use lazy loading for non-critical images
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
             />
 
           </div>

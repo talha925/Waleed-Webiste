@@ -210,11 +210,12 @@ const BlogList: React.FC<BlogListProps> = ({
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
+            {blogPosts.map((post, idx) => (
               <BlogCard
                 key={post._id}
                 blog={post}
                 variant="list"
+                priority={idx < 3} // Eager load first row for LCP
               />
             ))}
           </div>

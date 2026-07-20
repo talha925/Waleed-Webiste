@@ -34,7 +34,8 @@ export async function POST(request: Request) {
     const { user } = userData;
 
     // Set HTTP-only cookie with the REAL token from Backend
-    cookies().set({
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: 'authToken',
       value: token,
       httpOnly: true,

@@ -4,7 +4,7 @@ import { getBrandConfig } from '@config/server-config';
 import { fetchBlogsByCategoryServer } from '@/lib/serverData';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   return {
     title: `Our Blog | ${brand.siteName}`,
     description: `Stay updated with the latest trends, tips, and insights from ${brand.siteName}.`,

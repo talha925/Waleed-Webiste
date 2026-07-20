@@ -10,7 +10,7 @@ import { notFound, redirect, RedirectType } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 interface StorePageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // Helper function to get store data directly from store-service
@@ -24,13 +24,14 @@ import { getBrandConfig } from '@config/server-config';
 
 // ... imports
 
-export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
+export async function generateMetadata(props: StorePageProps): Promise<Metadata> {
+  const params = await props.params;
   if (params.slug === '[slug]' || !params.slug) {
     return {
       title: 'Store',
     };
   }
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   try {
     // Use shared promise to prevent duplicate fetch
     const store = await getStorePromise(params.slug);
@@ -132,7 +133,8 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 }
 
 // Server Component - fetches initial data with shared promise
-export default async function StorePage({ params }: StorePageProps) {
+export default async function StorePage(props: StorePageProps) {
+  const params = await props.params;
   if (params.slug === '[slug]' || !params.slug) {
     return null;
   }
@@ -155,7 +157,7 @@ export default async function StorePage({ params }: StorePageProps) {
     redirect(`/store/${store.slug}`, RedirectType.replace);
   }
 
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
   const currentYear = new Date().getFullYear();
 

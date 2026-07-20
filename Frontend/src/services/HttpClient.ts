@@ -22,10 +22,9 @@ class HttpClient implements IHttpClient {
 
   constructor(baseURL: string = '') {
     this.baseURL = baseURL;
-    
-    // Resolve brand ID dynamically
+
     let brandId = process.env.NEXT_PUBLIC_APP_BRAND_ID || 'pennyscroll';
-    
+
     if (typeof window !== 'undefined') {
       // Client-side detection
       const host = window.location.hostname;
@@ -33,19 +32,6 @@ class HttpClient implements IHttpClient {
         brandId = 'blogzenix';
       } else if (host.includes('pennyscroll.com') || host.includes('pennyscroll-frontend.vercel.app')) {
         brandId = 'pennyscroll';
-      }
-    } else {
-      // Server-side detection
-      try {
-        // Use process.env.NEXT_RUNTIME to hide server-only code from client bundles
-        // without using eval() which violates Content Security Policy (CSP).
-        if (process.env.NEXT_RUNTIME === 'nodejs') {
-          // @ts-ignore hiding require from client bundler
-          const { getBrandConfig } = require(/* webpackIgnore: true */ '@config/server-config');
-          brandId = getBrandConfig().brandId;
-        }
-      } catch (e) {
-        // Fallback if not in a request context
       }
     }
 
@@ -179,8 +165,21 @@ class HttpClient implements IHttpClient {
   }
 
   private async buildRequestOptions(config: RequestConfig & { url: string }): Promise<RequestInit> {
+    let serverBrandId = '';
+    if (typeof window === 'undefined') {
+      try {
+        if (process.env.NEXT_RUNTIME === 'nodejs') {
+          // @ts-ignore hiding require from client bundler
+          const { getBrandConfig } = require(/* webpackIgnore: true */ '@config/server-config');
+          const brandConfig = await getBrandConfig();
+          serverBrandId = brandConfig.brandId;
+        }
+      } catch (e) { }
+    }
+
     const headers = new Headers({
       ...this.defaultHeaders,
+      ...(serverBrandId ? { 'x-brand-id': serverBrandId } : {}),
       ...config.headers
     });
 

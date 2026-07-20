@@ -5,8 +5,8 @@ import config from '@/lib/config';
 export const dynamic = 'force-dynamic';
 
 // GET /api/blogs/[id]
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
 
   if (!id || id === 'undefined') {
     return NextResponse.json({ message: 'Blog ID is required' }, { status: 400 });
@@ -49,14 +49,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // PUT /api/blogs/[id]
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
   try {
     const formData = await request.json();
     console.log(`[PUT /api/blogs/${id}] Data received from frontend:`, JSON.stringify(formData).substring(0, 300) + "...");
 
     const { cookies } = await import('next/headers');
-    const token = cookies().get('authToken')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('authToken')?.value;
 
     const host = request.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
@@ -107,14 +108,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     revalidatePath('/'); // Home page for Featured Blogs
 
     // 4. Invalidate data cache tags
-    revalidateTag('blogs');
-    revalidateTag('featured-blogs');
-    revalidateTag('home-blogs');
-    revalidateTag('banner-blogs');
-    revalidateTag('recent-blogs');
-    revalidateTag(`blog-${id}`);
+    revalidateTag('blogs', 'max');
+    revalidateTag('featured-blogs', 'max');
+    revalidateTag('home-blogs', 'max');
+    revalidateTag('banner-blogs', 'max');
+    revalidateTag('recent-blogs', 'max');
+    revalidateTag(`blog-${id}`, 'max');
     if (slug) {
-      revalidateTag(`blog-${slug}`);
+      revalidateTag(`blog-${slug}`, 'max');
     }
 
     console.log(`[Blog Update] Cache invalidated for blog ${id}${slug ? ` (slug: ${slug})` : ''}`);
@@ -127,11 +128,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 
 // DELETE /api/blogs/[id]
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
   try {
     const { cookies } = await import('next/headers');
-    const token = cookies().get('authToken')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('authToken')?.value;
 
     const host = request.headers.get('host') || '';
     const { getBrandConfigByHost } = await import('@config/index');
@@ -164,12 +166,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     revalidatePath('/blog/[id]', 'page');
     revalidatePath('/blog');
     revalidatePath('/'); // Home page for Featured Blogs
-    revalidateTag('blogs');
-    revalidateTag('featured-blogs');
-    revalidateTag('home-blogs');
-    revalidateTag('banner-blogs');
-    revalidateTag('recent-blogs');
-    revalidateTag(`blog-${id}`);
+    revalidateTag('blogs', 'max');
+    revalidateTag('featured-blogs', 'max');
+    revalidateTag('home-blogs', 'max');
+    revalidateTag('banner-blogs', 'max');
+    revalidateTag('recent-blogs', 'max');
+    revalidateTag(`blog-${id}`, 'max');
 
     console.log(`[Blog Delete] Cache invalidated for blog ${id}`);
 

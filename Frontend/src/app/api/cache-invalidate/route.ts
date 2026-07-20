@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     // Invalidate all store-related Next.js caches via tags
-    revalidateTag('stores');
-    revalidateTag('coupons');
+    revalidateTag('stores', 'max');
+    revalidateTag('coupons', 'max');
     revalidatePath('/', 'layout');
 
     // Get updated cache stats

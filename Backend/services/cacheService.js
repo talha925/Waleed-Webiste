@@ -1,5 +1,17 @@
 const redisConfig = require('../config/redis');
 const { trackCache } = require('../middlewares/performanceMonitoring');
+const NodeCache = require('node-cache');
+
+// 🚀 L1 Cache: In-memory (node-cache) for sub-millisecond response times
+// This is the LOCAL cache layer that sits in front of Redis (L2 cache)
+// L1 TTL is short (30s) - prevents stale data while eliminating ~200-400ms Redis network round-trips
+const l1Cache = new NodeCache({
+  stdTTL: 30,           // Default 30 seconds - short enough to stay fresh
+  checkperiod: 60,      // Cleanup expired keys every 60 seconds
+  useClones: false,     // No deep-clone (faster, we trust our own data)
+  maxKeys: 1000,        // Max 1000 keys in memory to prevent OOM
+  deleteOnExpire: true  // Auto-delete on expire
+});
 
 class CacheService {
   static initializing = false;
@@ -332,6 +344,7 @@ class CacheService {
       // Bulk Delete
       if (keysToDelete.length > 0) {
         const uniqueKeys = [...new Set(keysToDelete)];
+        this._flushL1ForKeys(uniqueKeys); // 🔥 ROOT FIX: Also clear L1 memory cache
         await this.redis.del(uniqueKeys);
         console.log(`🧹 Invalidated ${uniqueKeys.length} store-related keys for store ${storeId || storeSlug} [${brandId}]`);
       }
@@ -369,6 +382,7 @@ class CacheService {
 
       // Delete all keys
       if (keysToDelete.length > 0) {
+        this._flushL1ForKeys(keysToDelete); // 🔥 ROOT FIX: Also clear L1 memory cache
         await this.redis.del(keysToDelete);
         console.log(`✅ Invalidated ${keysToDelete.length} coupon cache keys for coupon ${couponId} (Brand: ${brandId})`);
       }
@@ -415,29 +429,52 @@ class CacheService {
     return keys;
   }
 
+  // 🔥 ROOT FIX: Centralized L1 cache flush for bulk Redis deletions
+  // Without this, pattern-based invalidation only cleared Redis (L2) but left
+  // stale data in L1 memory cache for up to 30 seconds after updates
+  _flushL1ForKeys(keys) {
+    if (!keys || keys.length === 0) return;
+    for (const key of keys) {
+      l1Cache.del(key);
+    }
+  }
+
   async get(key) {
     await this.ensureInitialized();
+
+    // 🚀 L1 CHECK: In-memory cache (0ms) - check before hitting Redis (~200-400ms network)
+    const l1Value = l1Cache.get(key);
+    if (l1Value !== undefined) {
+      if (typeof trackCache === 'function') trackCache('GET', key, true);
+      return l1Value;
+    }
+
     if (!this.isAvailable()) {
       trackCache('GET', key, false);
       return null;
     }
+    
+    let timer;
     try {
-      // 🚨 NETWORK FIX: Add a 1.5s timeout to Redis operations.
-      // If Redis DNS lookup (EAI_AGAIN) or connection is slow, we fallback to DB immediately
-      // instead of letting the entire request hang for 5-10 seconds.
+      // 🚨 L2: Redis GET with timeout
       const data = await Promise.race([
         this.redis.get(key),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis Timeout')), 3000))
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Redis Timeout')), 3000); })
       ]);
+      clearTimeout(timer);
       
       const hit = data !== null;
       if (typeof trackCache === 'function') trackCache('GET', key, hit);
       
       if (data) {
-        return JSON.parse(data);
+        const parsed = JSON.parse(data);
+        // 🔥 Populate L1 cache so next request is instant
+        l1Cache.set(key, parsed);
+        return parsed;
       }
       return null;
     } catch (error) {
+      clearTimeout(timer);
       if (error.message !== 'Redis Timeout') {
         console.error('❌ Cache get error:', error);
       } else {
@@ -450,24 +487,35 @@ class CacheService {
 
   async set(key, data, ttl = null) {
     await this.ensureInitialized();
+
+    // 🚀 Always write to L1 cache immediately (synchronous, instant)
+    // L1 TTL is capped at 30s regardless of Redis TTL to keep data fresh
+    const l1Ttl = Math.min(ttl || 30, 30);
+    l1Cache.set(key, data, l1Ttl);
+
     if (!this.isAvailable()) {
       trackCache('SET', key, false);
       return false;
     }
+    
+    let timer;
     try {
       const serializedData = JSON.stringify(data);
-      // 🔥 FIX: Add 2s timeout to SET operations to prevent blocking responses
+      // 🔥 FIX: Write to Redis (L2) with timeout - non-blocking for L1 already done
       const setOp = ttl 
         ? this.redis.setEx(key, ttl, serializedData)
         : this.redis.set(key, serializedData);
       
       await Promise.race([
         setOp,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis SET Timeout')), 3000))
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Redis SET Timeout')), 3000); })
       ]);
+      clearTimeout(timer);
+      
       trackCache('SET', key, true);
       return true;
     } catch (error) {
+      clearTimeout(timer);
       if (error.message !== 'Redis SET Timeout') {
         console.error('❌ Cache set error:', error.message);
       }
@@ -477,6 +525,9 @@ class CacheService {
   }
 
   async del(key) {
+    // 🚀 Always invalidate L1 immediately
+    l1Cache.del(key);
+
     await this.ensureInitialized();
     if (!this.isAvailable()) return false;
     try {
@@ -517,6 +568,7 @@ class CacheService {
       const batchSize = 100;
       for (let i = 0; i < keys.length; i += batchSize) {
         const batch = keys.slice(i, i + batchSize);
+        this._flushL1ForKeys(batch); // 🔥 ROOT FIX: Also clear L1 memory cache
         // node-redis v4: pass array directly to del()
         const result = await this.redis.del(batch);
         deletedCount += result;

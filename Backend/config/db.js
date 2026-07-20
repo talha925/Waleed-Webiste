@@ -7,14 +7,14 @@ const tenantConnections = {};
 let centralConnection = null;
 
 const mongoOptions = {
-  maxPoolSize: 3,                  // 🔥 FIX: Serverless needs small pools (was 20, causing thundering herd)
+  maxPoolSize: 3,                  // Keep small for serverless/local
   minPoolSize: 1,                  // Keep at least 1 connection alive
-  serverSelectionTimeoutMS: 10000, // 🔥 FIX: Fail fast (was 20s)
-  socketTimeoutMS: 20000,          // 🔥 FIX: Reduced from 45s
-  connectTimeoutMS: 10000,         // 🔥 FIX: Reduced from 20s
-  heartbeatFrequencyMS: 30000,     // 🔥 FIX: Less frequent heartbeats to reduce overhead (was 10s)
+  serverSelectionTimeoutMS: 30000, // 🚀 FIX: Increased from 10s. MongoDB Atlas needs more time on slow networks
+  socketTimeoutMS: 45000,          // 🚀 FIX: Increased from 20s to prevent premature socket drops
+  connectTimeoutMS: 30000,         // 🚀 FIX: Increased from 10s
+  heartbeatFrequencyMS: 10000,     // Reverted to default 10s for reliable failure detection
   autoIndex: process.env.NODE_ENV === 'development',
-  maxIdleTimeMS: 60000,            // Close idle connections after 60s to free resources
+  maxIdleTimeMS: 60000,            // Close idle connections after 60s
 };
 
 // Map of brandId -> Promise<Connection>

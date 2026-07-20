@@ -440,7 +440,7 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
                 <div className="relative w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-[2rem] p-4 shadow-2xl flex items-center justify-center ring-1 ring-white/10 overflow-hidden group/logo">
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-slate-500/5 to-transparent translate-x-[-100%] group-hover/logo:translate-x-[100%] transition-transform duration-1000" />
                   {initialStore.image?.url ? (
-                    <SafeImage src={initialStore.image.url} alt={initialStore.name} width={130} height={130} className="object-contain relative z-10" priority />
+                    <SafeImage src={initialStore.image.url} alt={initialStore.name} width={130} height={130} className="object-contain relative z-10" style={{ width: 'auto', height: 'auto' }} priority />
                   ) : <span className="text-5xl">🏪</span>}
                 </div>
                 <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-1.5 rounded-full ring-4 ring-[#143154] z-20 shadow-lg">

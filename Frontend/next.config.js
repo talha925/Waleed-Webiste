@@ -4,16 +4,11 @@ const nextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 300, // 🚀 Root Fix: Increase timeout to 5 mins for slow backend fetches during build
   poweredByHeader: false,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: process.env.NODE_ENV === 'production' ? 31536000 : 0, // 🚀 Standard: Cache for 1 year in production
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    minimumCacheTTL: 3600, // 🚀 FIX: Cache optimized images for 1 hour to reduce repeated fetches
     remotePatterns: [
       {
         protocol: 'https',
@@ -41,10 +36,13 @@ const nextConfig = {
       }] : []),
     ],
   },
+  // 🚀 Next.js 16: Turbopack is the default bundler. 
+  // Empty config tells Next.js we acknowledge Turbopack and silences the webpack migration warning.
+  turbopack: {
+    root: '..',
+  },
   experimental: {
     optimizeCss: true,
-    scrollRestoration: true,
-    webVitalsAttribution: ['CLS', 'LCP'],
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-dialog',
@@ -123,15 +121,6 @@ const nextConfig = {
           },
         ],
       },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
     ];
   },
   async redirects() {
@@ -154,41 +143,6 @@ const nextConfig = {
   },
   // Enable gzip compression
   compress: true,
-  webpack: (config, { isDev, isServer }) => {
-    if (isDev) {
-      config.devtool = 'cheap-module-source-map';
-    }
-
-    // Optimize chunk splitting for better caching
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          chunks: 'all',
-          cacheGroups: {
-            ...config.optimization.splitChunks.cacheGroups,
-            // Separate TinyMCE into its own chunk
-            tinymce: {
-              test: /[\\/]node_modules[\\/]@tinymce[\\/]/,
-              name: 'tinymce',
-              chunks: 'all',
-              priority: 30,
-              reuseExistingChunk: true,
-            },
-            // Separate web-vitals into its own chunk
-            webVitals: {
-              test: /[\\/]node_modules[\\/]web-vitals[\\/]/,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-
-    return config;
-  },
-
 };
 
 // Add bundle analyzer in analyze mode

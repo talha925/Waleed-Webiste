@@ -13,7 +13,6 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
-    "@aws-sdk/middleware-stack": "^3.374.0",
     "@aws-sdk/s3-request-presigner": "^3.651.1",
     "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
@@ -34,13 +33,13 @@
     "mongoose": "^8.15.1",
     "multer": "^1.4.5-lts.1",
     "multer-s3": "^3.0.1",
+    "node-cache": "^5.1.2",
     "nodemailer": "^6.10.1",
     "redis": "^5.8.2",
     "sanitize-html": "^2.17.0",
     "slugify": "^1.6.6",
-    "uuid": "^9.0.1",
-    "ws": "^8.18.3",
-    "xss-clean": "^0.1.4"
+    "uuid": "^10.0.0",
+    "ws": "^8.18.3"
   },
   "keywords": [],
   "devDependencies": {

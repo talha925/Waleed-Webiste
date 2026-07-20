@@ -77,8 +77,11 @@ function customParser(html: string) {
   });
 }
 
+type Params = Promise<{ id: string }>;
+
 // Generate metadata - no changes needed here
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
+  const params = await props.params;
   const { data: blog } = await fetchBlogDetailServer(params.id);
   if (!blog) return { title: 'Blog Not Found' };
   return {
@@ -93,7 +96,8 @@ import { redirect, notFound } from 'next/navigation';
 // ... other imports
 
 // --- Main Page Component ---
-export default async function BlogDetailPage({ params }: { params: { id: string } }) {
+export default async function BlogDetailPage(props: { params: Params }) {
+  const params = await props.params;
   const [{ data: blog }, { data: recentBlogs }] = await Promise.all([
     fetchBlogDetailServer(params.id),
     fetchRecentBlogsServer(5, params.id)
@@ -147,7 +151,7 @@ export default async function BlogDetailPage({ params }: { params: { id: string 
   }
 
 
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   const fullUrl = `${brand.siteUrl}/blog/${blog.slug || params.id}`;
 
   return (

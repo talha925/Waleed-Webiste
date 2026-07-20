@@ -30,8 +30,8 @@ const StoreGrid: React.FC<StoreGridProps> = ({ stores, loading = false, error = 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 overflow-hidden">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-        {stores.map((store) => (
-          <StoreCard key={store._id} store={store} />
+        {stores.map((store, index) => (
+          <StoreCard key={store._id} store={store} priority={index < 6} />
         ))}
       </div>
     </div>

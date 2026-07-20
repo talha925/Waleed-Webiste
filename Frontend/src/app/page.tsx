@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 // Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   return {
     title: `Featured Blogs | ${brand.siteName}`,
     description: brand.metaDescription,
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 
 export default async function Blogs() {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   
   // Use our optimized server-side helper
   const { featuredBlogs, bannerBlogs } = await fetchHomeDataServer();

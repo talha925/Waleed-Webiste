@@ -226,7 +226,7 @@ export function createApiHandler(
 
         // Rate limiting
         if (config.rateLimit) {
-          const clientId = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+          const clientId = (request as any).ip || request.headers.get('x-forwarded-for') || 'unknown';
           const rateLimitKey = `${clientId}:${request.nextUrl.pathname}`;
 
           if (!RateLimiter.check(

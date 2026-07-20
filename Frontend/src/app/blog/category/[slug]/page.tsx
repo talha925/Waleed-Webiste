@@ -9,21 +9,20 @@ export const dynamic = 'force-dynamic';
 const FETCH_TIMEOUT = 5000;
 
 interface CategoryPageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 // Function to get category by slug
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+export async function generateMetadata(props: CategoryPageProps): Promise<Metadata> {
+  const params = await props.params;
   if (params.slug === '[slug]' || !params.slug) {
     return {
       title: 'Blog Category',
     };
   }
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   const { data: categories } = await fetchBlogCategoriesServer();
   const category = categories.find((cat: any) => cat.slug === params.slug);
 
@@ -109,7 +108,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage(props: CategoryPageProps) {
+  const params = await props.params;
   if (params.slug === '[slug]' || !params.slug) {
     return null;
   }

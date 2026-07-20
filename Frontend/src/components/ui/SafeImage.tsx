@@ -23,6 +23,7 @@ interface SafeImageProps {
   fallbackSrc?: string;
   unoptimized?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
+  style?: React.CSSProperties;
 }
 
 /**
@@ -46,6 +47,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
   onError,
   fallbackSrc = '',
   unoptimized,
+  style,
   ...props
 }) => {
   const brand = useBrand();
@@ -112,7 +114,8 @@ const SafeImage: React.FC<SafeImageProps> = ({
       loading={priority ? undefined : loading}
       onLoad={handleLoad}
       onError={handleError}
-      unoptimized={unoptimized}
+      unoptimized={unoptimized || process.env.NODE_ENV === 'development'}
+      style={style}
       {...props}
     />
   );

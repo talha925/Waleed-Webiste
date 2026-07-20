@@ -17,17 +17,24 @@ const { getTenantModels, getCentralModels } = require('../models/TenantModels');
 
 /**
  * Brand & Database Detection Middleware
- * 🔥 PERFORMANCE FIX: Added initialization gate + 15s timeout guard
+ * 🔥 PERFORMANCE FIX: Added initialization gate with timeout + 15s DB timeout guard
  */
+let initializationDone = false; // One-time flag: once init is done, skip awaiting it forever
+
 async function brandDetection(req, res, next) {
     const startTime = Date.now();
 
     try {
-        // 🔥 CRITICAL FIX: Wait for background initialization to complete FIRST
-        // This prevents the race condition where brandDetection and initializeServices()
-        // both try to establish DB connections simultaneously during cold starts.
-        if (req.app.locals.initPromise) {
-            await req.app.locals.initPromise;
+        // 🚀 CRITICAL FIX: Wait for init BUT with a 3s timeout max.
+        // Without timeout: all concurrent startup requests pile up waiting 10s+.
+        // With timeout: we proceed after 3s even if init isn't done yet.
+        // DB connections (getTenantConnection) handle their own pooling so this is safe.
+        if (!initializationDone && req.app.locals.initPromise) {
+            await Promise.race([
+                req.app.locals.initPromise,
+                new Promise(resolve => setTimeout(resolve, 3000)) // Max 3s wait
+            ]);
+            initializationDone = true; // Never wait again after first resolution
         }
 
         // 1. Resolve Brand from Header or Host FIRST (Needed for DB detection)

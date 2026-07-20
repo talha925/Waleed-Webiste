@@ -7,20 +7,11 @@ import Header from '@/components/Header'
 import ConditionalFooter from '@/components/ConditionalFooter'
 import { Providers } from '@/context/Providers'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import dynamic from 'next/dynamic'
+import RealTimeUpdatesWrapper from '@/components/common/RealTimeUpdatesWrapper'
 import config from '@/lib/config'
 import { getBrandConfig } from '../../config/server-config'
 import React from 'react'
 import Script from 'next/script'
-
-// Dynamically import WebSocket components for real-time functionality
-const RealTimeUpdates = dynamic(
-  () => import('@/components/common/RealTimeUpdates').then(mod => ({ default: mod.RealTimeUpdates })),
-  {
-    ssr: false,
-    loading: () => null
-  }
-)
 
 // Load Inter font with display: swap for better performance
 const inter = Inter({
@@ -32,7 +23,7 @@ const inter = Inter({
 
 // Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
 
   return {
     title: {
@@ -107,7 +98,7 @@ export default async function RootLayout({
   const initialToken = null;
 
   // Resolve brand config for this request
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
 
   // Build gtag inline script dynamically per brand
   const gtagInnerHtml = `
@@ -119,7 +110,7 @@ export default async function RootLayout({
   `;
 
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html lang="en" suppressHydrationWarning className={inter.variable} data-scroll-behavior="smooth">
       <head>
         {/* Inject brand theme colors as CSS custom properties */}
         <style
@@ -167,7 +158,7 @@ export default async function RootLayout({
                 <ConditionalFooter />
               </React.Suspense>
               {/* Real-time updates notifications */}
-              <RealTimeUpdates />
+              <RealTimeUpdatesWrapper />
               <SpeedInsights />
               <Analytics />
 

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const currentToken = cookieStore.get('authToken')?.value;
     
     // We also need the refreshToken from the body or cookies, but frontend doesn't store refreshToken in cookies.

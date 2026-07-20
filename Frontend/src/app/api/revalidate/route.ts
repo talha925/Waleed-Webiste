@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         if (!tag) {
           return NextResponse.json({ error: 'Tag is required for tag revalidation' }, { status: 400 });
         }
-        revalidateTag(tag);
+        revalidateTag(tag, 'max');
         return NextResponse.json({
           message: `Revalidated tag: ${tag}`,
           source,
@@ -70,28 +70,28 @@ export async function POST(request: NextRequest) {
         revalidatePath('/blog');
         revalidatePath('/blog/[id]', 'page');
         
-        revalidateTag('blogs');
-        revalidateTag('home-blogs');
-        revalidateTag('banner-blogs');
-        revalidateTag('recent-blogs');
-        revalidateTag('featured-blogs');
-        revalidateTag('category-'); // Main blog listing
+        revalidateTag('blogs', 'max');
+        revalidateTag('home-blogs', 'max');
+        revalidateTag('banner-blogs', 'max');
+        revalidateTag('recent-blogs', 'max');
+        revalidateTag('featured-blogs', 'max');
+        revalidateTag('category-', 'max'); // Main blog listing
         
         const bId = blogId || identifier;
         if (bId) {
           revalidatePath(`/blog/${bId}`);
-          revalidateTag(`blog-${bId}`);
+          revalidateTag(`blog-${bId}`, 'max');
         }
 
         const currentCategorySlug = categorySlug;
 
         if (currentCategorySlug) {
-          revalidateTag(`category-${currentCategorySlug}`);
+          revalidateTag(`category-${currentCategorySlug}`, 'max');
           revalidatePath(`/blog/category/${currentCategorySlug}`, 'page');
         }
         
         if (oldCategorySlug && oldCategorySlug !== currentCategorySlug) {
-          revalidateTag(`category-${oldCategorySlug}`);
+          revalidateTag(`category-${oldCategorySlug}`, 'max');
           revalidatePath(`/blog/category/${oldCategorySlug}`, 'page');
         }
 
@@ -106,16 +106,16 @@ export async function POST(request: NextRequest) {
       case 'stores':
         // 🔥 COMPREHENSIVE store revalidation - clear ALL store-related caches
         // Revalidate tags first (clears Next.js fetch cache)
-        revalidateTag('stores');
-        revalidateTag('stores-search'); // 🔥 Clear search results
+        revalidateTag('stores', 'max');
+        revalidateTag('stores-search', 'max'); // 🔥 Clear search results
         
         if (storeSlug) {
-          revalidateTag(`store-${storeSlug}`);
-          revalidateTag(`store-${storeSlug}-coupons`);
+          revalidateTag(`store-${storeSlug}`, 'max');
+          revalidateTag(`store-${storeSlug}-coupons`, 'max');
           // Revalidate the specific store page
           revalidatePath(`/store/${storeSlug}`);
           // Also revalidate specific search tag if possible
-          revalidateTag(`search-store-${storeSlug}`);
+          revalidateTag(`search-store-${storeSlug}`, 'max');
         }
         
         // Revalidate the root layout to ensure navigation/search picks up new stores
@@ -133,17 +133,17 @@ export async function POST(request: NextRequest) {
       case 'coupon':
       case 'coupons':
         // Revalidate coupon-related pages and tags
-        revalidateTag('coupons');
-        revalidateTag('stores'); // Also clear store list since coupons affect store data
-        revalidateTag('stores-search'); // 🔥 Clear search results since coupon changes affect store search
+        revalidateTag('coupons', 'max');
+        revalidateTag('stores', 'max'); // Also clear store list since coupons affect store data
+        revalidateTag('stores-search', 'max'); // 🔥 Clear search results since coupon changes affect store search
         
         if (couponId) {
-          revalidateTag(`coupon-${couponId}`);
+          revalidateTag(`coupon-${couponId}`, 'max');
         }
         if (storeSlug) {
           // Revalidate store-specific coupons and the store page
-          revalidateTag(`store-${storeSlug}`);
-          revalidateTag(`store-${storeSlug}-coupons`);
+          revalidateTag(`store-${storeSlug}`, 'max');
+          revalidateTag(`store-${storeSlug}-coupons`, 'max');
           revalidatePath(`/store/${storeSlug}`);
         }
         
@@ -162,14 +162,14 @@ export async function POST(request: NextRequest) {
       case 'blogCategories':
         // Revalidate categories-related pages and tags
         revalidatePath('/categories');
-        revalidateTag('categories');
-        revalidateTag('blog-categories');
-        revalidateTag('stores'); // Categories affect store filtering
-        revalidateTag('stores-search');
+        revalidateTag('categories', 'max');
+        revalidateTag('blog-categories', 'max');
+        revalidateTag('stores', 'max'); // Categories affect store filtering
+        revalidateTag('stores-search', 'max');
         
         if (categorySlug || identifier) {
           const slug = categorySlug || identifier;
-          revalidateTag(`category-${slug}`);
+          revalidateTag(`category-${slug}`, 'max');
           revalidatePath(`/blog/category/${slug}`);
         }
         return NextResponse.json({
@@ -182,12 +182,12 @@ export async function POST(request: NextRequest) {
         // Nuclear: Revalidate everything
         revalidatePath('/', 'layout');
         revalidatePath('/blog');
-        revalidateTag('blogs');
-        revalidateTag('stores');
-        revalidateTag('categories');
-        revalidateTag('coupons');
-        revalidateTag('home-blogs');
-        revalidateTag('banner-blogs');
+        revalidateTag('blogs', 'max');
+        revalidateTag('stores', 'max');
+        revalidateTag('categories', 'max');
+        revalidateTag('coupons', 'max');
+        revalidateTag('home-blogs', 'max');
+        revalidateTag('banner-blogs', 'max');
         
         return NextResponse.json({
           message: 'Revalidated all pages',

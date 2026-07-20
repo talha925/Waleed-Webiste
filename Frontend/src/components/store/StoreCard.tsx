@@ -9,9 +9,10 @@ import { useBrand } from '@/context/BrandContext';
 
 interface StoreCardProps {
   store: Store;
+  priority?: boolean;
 }
 
-const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
+const StoreCard: React.FC<StoreCardProps> = ({ store, priority = false }) => {
   const brand = useBrand();
 
   const handleGetDeal = () => {
@@ -59,8 +60,9 @@ const StoreCard: React.FC<StoreCardProps> = ({ store }) => {
           width={160}
           height={80}
           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          priority={false}
+          priority={priority}
           className="object-contain max-h-24"
+          style={{ width: 'auto', height: 'auto' }}
           fallbackSrc="/placeholder-store.png"
         />
       </div>

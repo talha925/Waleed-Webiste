@@ -12,10 +12,8 @@ import { usePathname } from "next/navigation";
 import SearchBar from "@/components/ui/SearchBar";
 import { useState, useEffect } from "react";
 import { themeClasses } from "@/lib/theme/utils";
-import dynamic from "next/dynamic";
-
-const NotificationToast = dynamic(() => import("@/components/ui/NotificationToast"), { ssr: false });
-const HeaderMobileMenu = dynamic(() => import("@/components/HeaderMobileMenu"), { ssr: false });
+import NotificationToast from "@/components/ui/NotificationToast";
+import HeaderMobileMenu from "@/components/HeaderMobileMenu";
 
 interface HeaderProps {
   categories?: any[];

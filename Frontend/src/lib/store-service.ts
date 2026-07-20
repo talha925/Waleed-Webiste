@@ -20,7 +20,7 @@ const log = (msg: string) => {
  */
 export async function fetchAllStores(forceRefresh: boolean = false): Promise<Store[]> {
   try {
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
     };
 
     try {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const token = cookieStore.get('authToken')?.value;
       if (token && !forceRefresh) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -83,7 +83,7 @@ export async function fetchAllStores(forceRefresh: boolean = false): Promise<Sto
  */
 async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-brand-id': brand.brandId,
@@ -92,7 +92,7 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
     // Safely attempt to get auth token without breaking static generation
     // Only use cookies if we're in a request context where they are available
     try {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const token = cookieStore.get('authToken')?.value;
       if (token && !forceRefresh) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -143,7 +143,7 @@ async function fetchStoreBySlugDirect(slug: string, forceRefresh: boolean = fals
  */
 export async function getStoreBySlug(slug: string, forceRefresh: boolean = false): Promise<Store | null> {
   try {
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     // Attempt to fetch from direct backend slug endpoint
     // The backend already populates coupons, so no need for second-pass hydration

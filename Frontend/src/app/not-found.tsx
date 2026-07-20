@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getBrandConfig } from '@config/server-config';
 
-export default function NotFound() {
-  const brand = getBrandConfig();
+export default async function NotFound() {
+  const brand = await getBrandConfig();
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4">

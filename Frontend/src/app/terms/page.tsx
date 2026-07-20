@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { getBrandConfig } from '@config/server-config';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   return {
     title: `Terms & Conditions - ${brand.siteName}`,
     description: `Terms and Conditions for ${brand.siteName}. Please read these terms carefully before using our website.`,
@@ -10,8 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function TermsPage() {
-  const brand = getBrandConfig();
+export default async function TermsPage() {
+  const brand = await getBrandConfig();
 
   return (
     <div className="min-h-screen bg-background">

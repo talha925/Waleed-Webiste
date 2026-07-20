@@ -20,13 +20,13 @@ export async function fetchStoresServer({ noCache = false }: { noCache?: boolean
 export async function fetchCategoriesServer() {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     // Fix IPv6 delay on localhost
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 🔥 FIX: Reduced from 25s - fail fast for better UX
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased back to 25s to avoid timeouts on cold starts
 
     // Fetch directly from backend to avoid local proxy overhead
     const response = await fetch(`${apiBaseUrl}/api/categories`, {
@@ -55,12 +55,12 @@ export async function fetchCategoriesServer() {
 export async function fetchBlogCategoriesServer() {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 🔥 FIX: Reduced from 25s - fail fast for better UX
+    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased back to 25s to avoid timeouts on cold starts
 
     const response = await fetch(`${apiBaseUrl}/api/blog-categories`, {
       headers: {
@@ -90,13 +90,13 @@ export async function fetchBlogCategoriesServer() {
 export async function fetchHomeDataServer() {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
     
     // Normalize localhost to 127.0.0.1 to avoid IPv6 resolution delays on some systems
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000); // 🔥 FIX: Reduced from 30s - fail fast for better UX
+    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased to 25s to avoid timeouts on cold starts
 
     // Parallel fetch for speed
     const [featured, banner] = await Promise.all([
@@ -135,12 +135,12 @@ export async function fetchHomeDataServer() {
 export async function fetchBlogDetailServer(slugOrId: string) {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 🔥 FIX: Reduced from 25s
+    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased back to 25s
 
     const response = await fetch(`${apiBaseUrl}/api/blogs/${slugOrId}`, {
       headers: { 'x-brand-id': brand.brandId },
@@ -166,7 +166,7 @@ export async function fetchBlogDetailServer(slugOrId: string) {
 export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
@@ -176,7 +176,7 @@ export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
     if (excludeId) url.searchParams.set('exclude', excludeId);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 🔥 FIX: Reduced from 25s
+    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased back to 25s
 
     const response = await fetch(url.toString(), {
       headers: { 'x-brand-id': brand.brandId },
@@ -201,7 +201,7 @@ export async function fetchRecentBlogsServer(limit = 5, excludeId?: string) {
 export async function fetchBlogsByCategoryServer(categorySlug: string, page = 1, limit = 9) {
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = getBrandConfig();
+    const brand = await getBrandConfig();
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
@@ -212,7 +212,7 @@ export async function fetchBlogsByCategoryServer(categorySlug: string, page = 1,
     url.searchParams.set('status', 'published');
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 🔥 FIX: Reduced from 25s
+    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased back to 25s
 
     const response = await fetch(url.toString(), {
       headers: { 'x-brand-id': brand.brandId },
@@ -256,7 +256,7 @@ export async function fetchStoreServer(slug: string) {
 /**
  * Get the server-side authentication token from cookies
  */
-export const getServerAuthToken = () => {
-  const cookieStore = cookies();
+export const getServerAuthToken = async () => {
+  const cookieStore = await cookies();
   return cookieStore.get('authToken')?.value || null;
 }

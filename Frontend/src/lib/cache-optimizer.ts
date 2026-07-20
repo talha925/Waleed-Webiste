@@ -180,12 +180,12 @@ class CacheOptimizer {
    */
   async smartInvalidate(primaryKey: string, dependencies: string[] = []): Promise<void> {
     // Invalidate primary key
-    revalidateTag(primaryKey);
+    revalidateTag(primaryKey, 'max');
     this.recordInvalidation(primaryKey);
 
     // Invalidate dependencies
     for (const dep of dependencies) {
-      revalidateTag(dep);
+      revalidateTag(dep, 'max');
       this.recordInvalidation(dep);
     }
 
@@ -211,7 +211,7 @@ class CacheOptimizer {
 
     // Batch revalidate tags
     for (const tag of tagKeys) {
-      revalidateTag(tag);
+      revalidateTag(tag, 'max');
       this.recordInvalidation(tag);
     }
 

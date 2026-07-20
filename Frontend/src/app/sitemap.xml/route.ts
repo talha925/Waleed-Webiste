@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const FETCH_TIMEOUT = 15000; // 15 seconds timeout
 export async function GET() {
-  const brand = getBrandConfig();
+  const brand = await getBrandConfig();
   const apiBaseUrl = brand.apiBaseUrl;
   const baseUrl = brand.siteUrl;
   const currentDate = new Date().toISOString();

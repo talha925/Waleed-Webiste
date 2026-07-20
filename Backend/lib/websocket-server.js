@@ -13,6 +13,8 @@ class WebSocketServer {
         this.port = process.env.WS_PORT || 8080;
         this.connections = new Set();
         this.stats = { totalConnections: 0, activeConnections: 0, messagesPublished: 0, messagesReceived: 0, startTime: new Date() };
+        this.pubSubRetryAttempts = 0;
+        this.maxPubSubRetries = 5;
     }
 
     async initialize(server = null) {
@@ -28,7 +30,8 @@ class WebSocketServer {
 
     async setupRedisSubscriber() {
         if (!redisConfig.isReady()) {
-            console.warn('⚠️ Redis not ready for WebSocket Pub/Sub. Retrying in background...');
+            console.warn('⚠️ Redis not ready for WebSocket Pub/Sub. Will retry when Redis connects...');
+            this._retryPubSubConnection();
             return;
         }
         try {
@@ -40,9 +43,23 @@ class WebSocketServer {
             await this.redisSubscriber.subscribe('tenant_updates', (message) => {
                 this.handleRedisMessage('tenant_updates', message);
             });
+            this.pubSubRetryAttempts = 0; // Reset on success
+            console.log('✅ Redis Pub/Sub connected for WebSocket');
         } catch (error) {
-            console.error('❌ Redis Pub/Sub setup failed:', error);
+            console.error('❌ Redis Pub/Sub setup failed:', error.message);
+            this._retryPubSubConnection();
         }
+    }
+
+    _retryPubSubConnection() {
+        if (this.pubSubRetryAttempts >= this.maxPubSubRetries) {
+            console.error(`❌ Redis Pub/Sub: Max retries (${this.maxPubSubRetries}) reached. WebSocket will work without cross-instance sync.`);
+            return;
+        }
+        this.pubSubRetryAttempts++;
+        const delay = Math.min(2000 * Math.pow(2, this.pubSubRetryAttempts - 1), 30000);
+        console.log(`🔄 Redis Pub/Sub retry ${this.pubSubRetryAttempts}/${this.maxPubSubRetries} in ${delay}ms...`);
+        setTimeout(() => this.setupRedisSubscriber(), delay);
     }
 
     setupWebSocketServer(server = null) {

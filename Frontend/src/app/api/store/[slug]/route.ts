@@ -8,8 +8,9 @@ const log = (msg: string) => {
   if (process.env.NODE_ENV !== 'production') console.log(msg);
 };
 
-export async function GET(req: Request, { params }: { params: { slug: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ slug: string }> }) {
   try {
+    const params = await props.params;
     const { searchParams } = new URL(req.url);
     const noCacheParam = searchParams.get('noCache') === 'true';
     // Honor client cache-busting headers

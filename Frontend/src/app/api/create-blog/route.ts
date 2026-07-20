@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 const createBlog = async (blogData: any, brand: any) => {
   try {
     const { cookies } = await import('next/headers');
-    const token = cookies().get('authToken')?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('authToken')?.value;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -283,11 +284,11 @@ export async function POST(request: NextRequest) {
     revalidatePath('/blog/[id]', 'page');
     revalidatePath('/blog');
     revalidatePath('/'); // Revalidate home page for Featured Blogs
-    revalidateTag('blogs');
-    revalidateTag('featured-blogs');
+    revalidateTag('blogs', 'max');
+    revalidateTag('featured-blogs', 'max');
     if (result?.data?.id || result?.id) {
       const blogId = result?.data?.id || result?.id;
-      revalidateTag(`blog-${blogId}`);
+      revalidateTag(`blog-${blogId}`, 'max');
     }
     // Also revalidate by slug if available
     const newSlug = result?.data?.slug || result?.slug;

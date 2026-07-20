@@ -149,7 +149,10 @@ class PerformanceMonitor {
     const hitRate = this.metrics.cacheStats.hits / this.metrics.cacheStats.totalRequests;
     
     // Alert on low cache hit rate
-    if (hitRate < this.thresholds.cacheHitRate && this.metrics.cacheStats.totalRequests > 10) {
+    // 🔥 ROOT FIX: Skip alerts during startup grace period (60s) and require 50+ requests
+    // to prevent false CRITICAL alerts during cold start when cache is being populated
+    const uptimeSeconds = (Date.now() - this.metrics.startTime) / 1000;
+    if (hitRate < this.thresholds.cacheHitRate && this.metrics.cacheStats.totalRequests > 50 && uptimeSeconds > 60) {
       this.generateAlert('LOW_CACHE_HIT_RATE', {
         hitRate: (hitRate * 100).toFixed(2),
         threshold: (this.thresholds.cacheHitRate * 100).toFixed(2),
@@ -183,6 +186,11 @@ class PerformanceMonitor {
     
     this.metrics.alerts.push(alert);
     this.lastAlerts.set(alertKey, now);
+
+    // 🔥 ROOT FIX: Cap alerts array to prevent unbounded memory growth
+    if (this.metrics.alerts.length > 200) {
+      this.metrics.alerts = this.metrics.alerts.slice(-100);
+    }
     
     // Log alert
     console.log(`🚨 ALERT [${alert.severity}]: ${alert.message}`);
@@ -234,7 +242,8 @@ Data: ${JSON.stringify(alert.data, null, 2)}
 
   // 🚨 PERFORMANCE DASHBOARD: Get current metrics
   getMetrics() {
-    const uptime = Date.now() - this.startTime;
+    // 🔥 ROOT FIX: Was this.startTime (undefined) → this.metrics.startTime
+    const uptime = Date.now() - this.metrics.startTime;
     const cacheHitRate = this.metrics.cacheStats.totalRequests > 0 
       ? (this.metrics.cacheStats.hits / this.metrics.cacheStats.totalRequests * 100).toFixed(2)
       : 0;

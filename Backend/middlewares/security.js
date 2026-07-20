@@ -5,7 +5,7 @@
 
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const sanitizeHtml = require('sanitize-html');
 const hpp = require('hpp');
 
 /**
@@ -16,9 +16,9 @@ const rateLimiter = (options = {}) => {
         windowMs: options.windowMs || 15 * 60 * 1000, // 15 minutes default
         max: options.max || (process.env.NODE_ENV === 'development' ? 2000 : 300), // Increased for dev/prod stability
         message: 'Too many requests from this IP, please try again after 15 minutes',
-        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-        keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || '127.0.0.1', // Fix for undefined req.ip
+        standardHeaders: true,
+        legacyHeaders: false,
+        keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
         ...options
     });
 };
@@ -29,9 +29,29 @@ const rateLimiter = (options = {}) => {
 const sanitizeData = mongoSanitize();
 
 /**
- * Data sanitization against XSS
+ * Data sanitization against XSS using sanitize-html
  */
-const preventXSS = xss();
+const preventXSS = (req, res, next) => {
+    const sanitize = (obj) => {
+        if (!obj) return;
+        for (let key in obj) {
+            if (typeof obj[key] === 'string') {
+                obj[key] = sanitizeHtml(obj[key], {
+                    allowedTags: [],
+                    allowedAttributes: {}
+                });
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                sanitize(obj[key]);
+            }
+        }
+    };
+    
+    if (req.body) sanitize(req.body);
+    if (req.query) sanitize(req.query);
+    if (req.params) sanitize(req.params);
+    
+    next();
+};
 
 /**
  * Prevent parameter pollution

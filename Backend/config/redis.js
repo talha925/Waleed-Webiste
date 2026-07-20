@@ -25,8 +25,8 @@ class RedisConfig {
 
             // Add socket configuration with better error handling and remote-connection optimizations
             options.socket = {
-                connectTimeout: 2000,
-                commandTimeout: 2000,
+                connectTimeout: 5000,
+                commandTimeout: 3000,
                 keepAlive: 5000, // Reuse connection and prevent extra TCP handshakes
                 noDelay: true,   // Disable Nagle's algorithm for faster small-packet transmission
                 reconnectStrategy: (retries) => {
@@ -75,7 +75,7 @@ class RedisConfig {
             await Promise.race([
                 this.client.connect(),
                 new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Connection timeout')), 3000)  // 🔥 FIX: Reduced from 6s to 3s
+                    setTimeout(() => reject(new Error('Connection timeout')), 10000)  // 🔥 FIX: Increased to 10s
                 )
             ]);
 

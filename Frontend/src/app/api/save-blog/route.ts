@@ -95,10 +95,10 @@ export async function POST(request: NextRequest) {
 
     // Revalidate blog-related pages and tags after saving
     revalidatePath('/blog');
-    revalidateTag('blogs');
+    revalidateTag('blogs', 'max');
     if (result?.blog?.id) {
       revalidatePath(`/blog/${result.blog.id}`);
-      revalidateTag(`blog-${result.blog.id}`);
+      revalidateTag(`blog-${result.blog.id}`, 'max');
     }
 
     return NextResponse.json(result, { status: 200 });
