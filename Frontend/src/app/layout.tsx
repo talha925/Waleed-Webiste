@@ -11,7 +11,7 @@ import RealTimeUpdatesWrapper from '@/components/common/RealTimeUpdatesWrapper'
 import config from '@/lib/config'
 import { getBrandConfig } from '../../config/server-config'
 import React from 'react'
-import Script from 'next/script'
+// import Script from 'next/script' // removed as not needed
 
 // Load Inter font with display: swap for better performance
 const inter = Inter({
@@ -173,7 +173,7 @@ export default async function RootLayout({
                   async
                 ></script>
               )}
-              <script id="google-analytics" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }} />
+              <script id="google-analytics" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }}></script>
             </div>
           </ErrorBoundary>
         </Providers>
