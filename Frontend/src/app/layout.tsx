@@ -163,19 +163,17 @@ export default async function RootLayout({
               <Analytics />
 
               {/* 🚀 FIXED: Use afterInteractive so analytics correctly tracks early pageviews and clicks */}
-              <Script
+              <script
                 src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                strategy="afterInteractive"
-              />
+                async
+              ></script>
               {brand.googleAdsId && (
-                <Script
+                <script
                   src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
-                  strategy="afterInteractive"
-                />
+                  async
+                ></script>
               )}
-              <Script id="google-analytics" strategy="afterInteractive">
-                {gtagInnerHtml}
-              </Script>
+              <Script id="google-analytics" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }} />
             </div>
           </ErrorBoundary>
         </Providers>
