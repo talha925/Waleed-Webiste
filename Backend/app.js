@@ -6,7 +6,11 @@ const compression = require('compression');
 // 🔧 FIX: Node.js c-ares DNS resolver doesn't support SRV lookups on some networks.
 // Force Google DNS so mongodb+srv:// connections discover all replica set members correctly.
 const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+try {
+    dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (err) {
+    console.warn('⚠️ Could not set DNS servers:', err.message);
+}
 
 // Load environment variables BEFORE requiring any other modules
 dotenv.config();
