@@ -38,7 +38,8 @@ const nextConfig = {
       }] : []),
     ],
   },
-// Turbopack config removed – let Next.js infer workspace root
+  // Explicitly set Turbopack root to the project root
+  turbopack: { root: path.resolve(__dirname, '..') },
 
   experimental: {
     optimizeCss: true,
