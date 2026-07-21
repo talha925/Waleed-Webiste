@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { cleanAndFormatUrl } from '@/lib/utils/validation';
 
 interface Store {
   _id: string;
@@ -17,23 +18,7 @@ interface StoreSelectorProps {
   className?: string;
 }
 
-// Utility function to clean and format URLs
-const cleanAndFormatUrl = (url: string): string => {
-  if (!url) return '';
-  
-  // Remove any HTML entity encoding
-  let cleanUrl = url.replace(/&#x2F;/g, '/');
-  
-  // Remove any existing protocol to avoid duplication
-  cleanUrl = cleanUrl.replace(/^https?:\/\//, '');
-  
-  // Add https:// protocol if URL is not empty
-  if (cleanUrl) {
-    cleanUrl = 'https://' + cleanUrl;
-  }
-  
-  return cleanUrl;
-};
+
 
 const StoreSelector = ({
   value,

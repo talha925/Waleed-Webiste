@@ -61,7 +61,8 @@ export const decodeHTML = (input: string): string => {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'");
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'");
 };
 
 /**

@@ -13,7 +13,39 @@ async function verifyToken(token: string) {
   }
 }
 
+// Ad click tracking parameters that must be stripped to prevent
+// affiliate commissions from being zeroed
+const AD_TRACKING_PARAMS = [
+  'gclid',      // Google Ads
+  'msclkid',    // Microsoft/Bing Ads
+  'fbclid',     // Facebook Ads
+  'dclid',      // Google Display & Video 360
+  'gbraid',     // Google Ads (iOS)
+  'wbraid',     // Google Ads (web-to-app)
+  'gclsrc',     // Google Ads source
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+];
+
 export async function middleware(req: NextRequest) {
+  // --- Strip ad tracking parameters from URL ---
+  const url = req.nextUrl.clone();
+  let hasAdParams = false;
+
+  for (const param of AD_TRACKING_PARAMS) {
+    if (url.searchParams.has(param)) {
+      url.searchParams.delete(param);
+      hasAdParams = true;
+    }
+  }
+
+  if (hasAdParams) {
+    return NextResponse.redirect(url, 301);
+  }
+
   const token = req.cookies.get('authToken')?.value;
   const { pathname } = req.nextUrl;
 
@@ -112,9 +144,18 @@ export async function middleware(req: NextRequest) {
 }
 
 // Configure which paths the middleware will run on
+// Run on all pages to strip ad tracking params, but exclude static assets & API internals
 export const config = {
   matcher: [
     '/admin/:path*',
     '/stores/:path*', // Include stores path for redirect handling
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico, sitemap.xml, robots.txt
+     * - public folder assets
+     */
+    '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$).*)',
   ],
 };
