@@ -114,7 +114,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
       loading={priority ? undefined : loading}
       onLoad={handleLoad}
       onError={handleError}
-      unoptimized={unoptimized || process.env.NODE_ENV === 'development'}
+      unoptimized={unoptimized ?? true}
       style={style}
       {...props}
     />
