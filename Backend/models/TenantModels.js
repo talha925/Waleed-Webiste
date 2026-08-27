@@ -349,12 +349,11 @@ BlogPostSchema.index({ 'store.id': 1, status: 1, publishDate: -1 }); // Store fi
 BlogPostSchema.index({ tags: 1, status: 1 }); // Tag filtering
 
 function safeHtml(input) {
+    if (!input || typeof input !== 'string') return input;
     return sanitizeHtml(input, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h2', 'h3']),
-        allowedAttributes: {
-            ...sanitizeHtml.defaults.allowedAttributes,
-            img: ['src', 'alt', 'width', 'height'],
-        }
+        allowedTags: false,
+        allowedAttributes: false,
+        allowVulnerableTags: true
     });
 }
 

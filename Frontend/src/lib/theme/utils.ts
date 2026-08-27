@@ -30,8 +30,8 @@ export const themeClasses = {
 
   // Button styles (preserving existing design)
   buttons: {
-    // Orange button (primary CTA) - Now using vibrant brand tones
-    orange: 'bg-gradient-brand-to-accent text-white font-bold py-2.5 px-8 rounded-full shadow-lg shadow-brand-accent/20 hover:shadow-brand-accent/40 transition-all duration-300 transform hover:scale-105 active:scale-95 uppercase tracking-wider text-xs',
+    // Orange button (primary CTA) - Ticket / Show Code style with dark navy text and 3D offset shadow
+    orange: 'bg-brand-accent text-[#0F3D5E] border-2 border-[#0F3D5E] font-black py-2.5 px-8 rounded-full shadow-[3px_3px_0_0_#0F3D5E] hover:shadow-[1px_1px_0_0_#0F3D5E] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[3px] active:translate-y-[3px] transition-all duration-200 uppercase tracking-wider text-xs',
 
     // Blue button - Using primary brand color
     blue: 'bg-brand-primary text-white font-bold py-2.5 px-8 rounded-xl shadow-lg shadow-brand-primary/20 hover:bg-brand-secondary transition-all duration-300 transform hover:-translate-y-0.5',

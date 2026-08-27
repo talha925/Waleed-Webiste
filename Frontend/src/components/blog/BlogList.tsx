@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
 import BlogCard from './BlogCard';
 import { themeClasses } from '@/lib/theme/utils';
+import { useBrand } from '@/context/BrandContext';
 
 export interface BlogPost {
   _id: string;
@@ -39,6 +41,7 @@ interface BlogListProps {
   emptyStateMessage?: string;
   emptyStateDescription?: string;
   isEmbedded?: boolean;
+  layout?: 'grid' | 'bento';
   initialPosts?: BlogPost[];
 }
 
@@ -50,8 +53,12 @@ const BlogList: React.FC<BlogListProps> = ({
   emptyStateMessage = "No Blog Posts Yet",
   emptyStateDescription = "Start creating amazing content with our blog form!",
   isEmbedded = false,
+  layout = 'grid',
   initialPosts = []
 }) => {
+  const brand = useBrand();
+  const isNeonGlass = brand?.cardStyle === 'neon-glass' || brand?.brandId === 'specreveal';
+
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(initialPosts);
   const [loading, setLoading] = useState(initialPosts.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -209,26 +216,81 @@ const BlogList: React.FC<BlogListProps> = ({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post, idx) => (
-              <BlogCard
-                key={post._id}
-                blog={post}
-                variant="list"
-                priority={idx < 3} // Eager load first row for LCP
-              />
-            ))}
-          </div>
+          {layout === 'bento' && blogPosts.length >= 3 ? (
+            <div className="space-y-8">
+              {/* Bento Magazine Top Showcase */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+                {/* Main Hero Spotlight Story (7 cols on lg) */}
+                <div className="lg:col-span-7">
+                  <BlogCard
+                    blog={blogPosts[0]}
+                    variant="hero"
+                    priority={true}
+                  />
+                </div>
+
+                {/* Secondary Stories Stacked (5 cols on lg) */}
+                <div className="lg:col-span-5 flex flex-col gap-6 justify-between">
+                  {blogPosts.slice(1, 3).map((post, idx) => (
+                    <div key={post._id} className="flex-1">
+                      <BlogCard
+                        blog={post}
+                        variant="horizontal"
+                        priority={idx === 0}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Remaining Posts Grid (if any) */}
+              {blogPosts.length > 3 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
+                  {blogPosts.slice(3).map((post, idx) => (
+                    <BlogCard
+                      key={post._id}
+                      blog={post}
+                      variant="grid"
+                      priority={false}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogPosts.map((post, idx) => (
+                <BlogCard
+                  key={post._id}
+                  blog={post}
+                  variant="grid"
+                  priority={idx < 3}
+                />
+              ))}
+            </div>
+          )}
 
           {hasMore && (
             <div className="mt-12 text-center">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className={themeClasses.buttons.orange}
-              >
-                {loadingMore ? 'Loading More...' : 'Load More'}
-              </button>
+              {isNeonGlass ? (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-2xl border-2 border-brand-primary/40 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 uppercase tracking-wider text-xs shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  <span>{loadingMore ? 'Loading More...' : 'Load More Stories'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${loadingMore ? 'animate-spin' : ''}`} />
+                </button>
+              ) : (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-accent text-[#0F3D5E] border-2 border-[#0F3D5E] font-black rounded-full shadow-[3px_3px_0_0_#0F3D5E] hover:shadow-[1px_1px_0_0_#0F3D5E] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[3px] active:translate-y-[3px] uppercase tracking-wider text-xs transition-all duration-200 disabled:opacity-50 cursor-pointer"
+                >
+                  <span>{loadingMore ? 'Loading More...' : 'Load More'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${loadingMore ? 'animate-spin' : ''}`} />
+                </button>
+              )}
             </div>
           )}
         </>

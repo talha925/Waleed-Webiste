@@ -45,7 +45,7 @@ export default function HeaderMobileMenu({
                                     width={80}
                                     height={80}
                                     priority
-                                    className="w-20 h-20"
+                                    className={brand.logoClassName || "w-20 h-20"}
                                 />
                             </div>
                         </div>

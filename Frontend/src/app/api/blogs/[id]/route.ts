@@ -84,7 +84,14 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 
     console.log(`[PUT /api/blogs/${id}] Backend response status:`, response.status);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errText = await response.text();
+      let errMsg = `HTTP error! status: ${response.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        errMsg = errJson.message || errMsg;
+      } catch (e) {}
+      console.error(`[PUT /api/blogs/${id}] Backend error:`, errMsg);
+      return NextResponse.json({ message: errMsg, error: errMsg }, { status: response.status });
     }
     const data = await response.json();
 

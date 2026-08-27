@@ -14,6 +14,8 @@
 import type { BrandConfig } from './types';
 import brandA from './brandA';
 import brandB from './brandB';
+import brandC from './brandC';
+import brandD from './brandD';
 
 // ─── Domain → Brand mapping ───────────────────────────────
 // Keys can be full hostnames or partial matches (checked via includes).
@@ -22,6 +24,8 @@ import brandB from './brandB';
 const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
     { match: 'pennyscroll.com', config: brandA },
     { match: 'blogzenix.com', config: brandB },
+    { match: 'specreveal.com', config: brandC },
+    { match: 'trendfiltered.com', config: brandD },
     // ↑ Add new domains here
 ];
 
@@ -58,4 +62,4 @@ export function getBrandConfigByHost(host: string): BrandConfig {
 
 // Re-export types and individual brands for convenience
 export type { BrandConfig } from './types';
-export { brandA, brandB };
+export { brandA, brandB, brandC, brandD };

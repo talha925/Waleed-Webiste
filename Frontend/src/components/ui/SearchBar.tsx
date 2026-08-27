@@ -274,10 +274,10 @@ const SearchBar = React.memo(function SearchBar({
       <div className="relative group">
         <div className={cn(
           "absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3 transition-colors duration-300 z-10",
-          isFocused ? "text-brand-primary" : "text-slate-400 group-hover:text-brand-primary"
+          isFocused ? "text-brand-primary" : "text-foreground-muted group-hover:text-brand-primary"
         )}>
           <Search className="w-4 h-4" />
-          <div className="w-px h-4 bg-slate-200" />
+          <div className="w-px h-4 bg-border" />
         </div>
         <input
           ref={inputRef}
@@ -289,11 +289,11 @@ const SearchBar = React.memo(function SearchBar({
           placeholder={placeholderText}
           disabled={!isHydrated}
           className={cn(
-            "w-full pl-12 pr-12 py-3 bg-slate-50/50 border border-slate-200/60 rounded-2xl text-sm text-slate-900 placeholder:text-slate-400 font-medium",
-            "focus:outline-none focus:bg-white focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary/40",
-            "transition-colors duration-300 hover:bg-slate-100/50 hover:border-slate-300/80",
+            "w-full pl-12 pr-12 py-3 bg-background-secondary/80 border border-border/60 rounded-2xl text-sm text-foreground placeholder:text-foreground-muted font-medium backdrop-blur-sm",
+            "focus:outline-none focus:bg-background-elevated focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary/50",
+            "transition-colors duration-300 hover:bg-background-tertiary hover:border-border",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            isFocused && "shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)]",
+            isFocused && "shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)]",
             "relative z-0"
           )}
         />
@@ -304,7 +304,7 @@ const SearchBar = React.memo(function SearchBar({
             type="button"
             onClick={handleClear}
             onMouseDown={(e) => e.preventDefault()} // Prevent input blur
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-slate-400 hover:text-brand-primary hover:bg-slate-100 rounded-xl transition-all z-10"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-foreground-muted hover:text-brand-primary hover:bg-background-tertiary rounded-xl transition-all z-10"
           >
             <X className="w-4 h-4" />
           </button>

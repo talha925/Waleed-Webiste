@@ -5,6 +5,7 @@ import { getStoreBySlug } from '@/lib/store-service';
 import StoreClient from './StoreClient';
 import { Metadata } from 'next';
 import { notFound, redirect, RedirectType } from 'next/navigation';
+import { sanitizeBrandText } from '@/lib/utils/formatting';
 
 // Enable dynamic rendering since brand identification depends on host headers
 export const dynamic = 'force-dynamic';
@@ -59,35 +60,42 @@ export async function generateMetadata(props: StorePageProps): Promise<Metadata>
       return !text || typeof text !== 'string' || text.trim() === '';
     };
 
-    // Get title with proper prioritization
+    // Get title & discount percentage for high CTR and Google Ads Quality Score
     const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date());
     const currentYear = new Date().getFullYear();
 
+    const maxDiscountMatch = (store?.coupons || []).reduce((max: string, c: any) => {
+      const match = (c.offerDetails || '').match(/(\d+%\s*OFF|\d+%\s*DISCOUNT|\d+%)/i);
+      return match ? match[1].toUpperCase() : max;
+    }, '');
+
     let finalTitle: string;
     if (!isEmptyOrWhitespace(store?.seo?.meta_title)) {
-      finalTitle = cleanText(store?.seo?.meta_title);
+      finalTitle = sanitizeBrandText(cleanText(store?.seo?.meta_title), brand.siteName);
     } else {
       const storeName = cleanText(store?.name) || 'Store';
-      finalTitle = `${storeName} Coupon Codes, Promo Codes & Discounts - ${currentMonth} ${currentYear}`;
+      const discountPrefix = maxDiscountMatch ? `${maxDiscountMatch} ` : '';
+      finalTitle = `${discountPrefix}${storeName} Coupon Codes, Promo Codes & Discounts (${currentMonth} ${currentYear})`;
     }
 
-    // Get description with proper prioritization
+    // Get description with proper keyword density for Google Ads
     let description: string;
     if (!isEmptyOrWhitespace(store?.seo?.meta_description)) {
-      description = cleanText(store?.seo?.meta_description);
+      description = sanitizeBrandText(cleanText(store?.seo?.meta_description), brand.siteName);
     } else {
       const storeName = cleanText(store?.name) || 'this store';
-      const shortDesc = cleanText(store?.short_description);
-      description = `Find the latest ${storeName} discount codes, promo codes, and coupons for ${currentMonth} ${currentYear}. ${shortDesc ? shortDesc + ' ' : ''}Save big on your next purchase with our verified offers!`;
+      const shortDesc = sanitizeBrandText(cleanText(store?.short_description), brand.siteName);
+      const discountText = maxDiscountMatch ? ` Save up to ${maxDiscountMatch} at checkout.` : '';
+      description = `Get verified ${storeName} coupon codes, promo codes, and discount deals for ${currentMonth} ${currentYear}.${discountText} ${shortDesc ? shortDesc + ' ' : ''}Hand-tested vouchers on ${brand.siteName}.`;
     }
 
-    // Get keywords with proper prioritization
+    // Get targeted keywords for search intent
     let keywords: string;
     if (!isEmptyOrWhitespace(store?.seo?.meta_keywords)) {
-      keywords = cleanText(store?.seo?.meta_keywords);
+      keywords = sanitizeBrandText(cleanText(store?.seo?.meta_keywords), brand.siteName);
     } else {
       const storeName = cleanText(store?.name) || 'Store';
-      keywords = `${storeName} discount code, ${storeName} promo code, ${storeName} coupon code, ${storeName} coupons, ${storeName} vouchers, ${storeName} deals, ${storeName} offers ${currentYear}`;
+      keywords = `${storeName} discount code, ${storeName} promo code, ${storeName} coupon code, ${storeName} coupons, ${storeName} promo codes ${currentMonth} ${currentYear}, ${storeName} voucher codes, verified ${storeName} discount, ${storeName} deals ${currentYear}`;
     }
 
     return {
@@ -149,7 +157,7 @@ export default async function StorePage(props: StorePageProps) {
     // Return proper 404 status code for SEO
     notFound();
   }
-  
+
   // 🔥 REDIRECT LOGIC: If the found store's slug doesn't match the requested slug,
   // it means we found it via 'oldSlugs'. Redirect to the canonical URL.
   if (store.slug && store.slug !== params.slug) {
@@ -202,9 +210,9 @@ export default async function StorePage(props: StorePageProps) {
 
   // 1. Aggregate Rating Schema to get 5 Stars in Google SERP
   // Using pseudo-random but consistent numbers based on store name length to look natural
-  const ratingValue = (4.7 + (store.name.length % 3) * 0.1).toFixed(1); 
+  const ratingValue = (4.7 + (store.name.length % 3) * 0.1).toFixed(1);
   const reviewCount = 45 + (store.name.length * 7);
-  
+
   const storeSchema = {
     "@context": "https://schema.org",
     "@type": "Store",
@@ -274,6 +282,31 @@ export default async function StorePage(props: StorePageProps) {
     ]
   };
 
+  // 4. HowTo Schema for Step-by-Step Google Rich Snippets
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": `How to use a ${store.name} promo code`,
+    "description": `Follow these simple steps to apply a verified ${store.name} promo code and get instant savings at checkout.`,
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Find an Active Offer",
+        "text": `Browse active ${store.name} coupon codes on this page and select "Show Code".`
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Copy the Code",
+        "text": "Copy the discount code to your clipboard."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Paste at Checkout",
+        "text": `Enter the coupon code into the Promo Code box during checkout on the official ${store.name} website to save.`
+      }
+    ]
+  };
+
   return (
     <>
       <script
@@ -291,6 +324,10 @@ export default async function StorePage(props: StorePageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
       <StoreClient
         initialStore={store}

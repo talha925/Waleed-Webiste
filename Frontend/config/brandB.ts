@@ -12,6 +12,7 @@ const brandB: BrandConfig = {
     siteName: 'Blogzenix',
     siteTagline: 'Unlocking Insights, One Story at a Time',
     logoPath: '/image/blogzenix-logo.png',
+    logoClassName: 'w-40 h-40 transition-transform duration-300',
     faviconPath: '/blogzenix-favicon.png',
 
     // ─── Domain ──────────────────────────────────────────────
@@ -66,8 +67,13 @@ const brandB: BrandConfig = {
     imageDomain: process.env.BLOGZENIX_IMAGE_DOMAIN || 'blogzenix-images.s3.us-east-1.amazonaws.com',
     cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
 
-    // ─── Layout ──────────────────────────────────────────────
+    // ─── Layout & Design Strategy ─────────────────────────────
     homepageLayout: 'default',
+    themeMode: 'light',
+    heroStyle: 'classic',
+    cardStyle: 'ticket',
+    heroPaddingClass: 'pt-8 pb-36 sm:pt-12 sm:pb-48',
+    mainMarginClass: '-mt-32 sm:-mt-40',
 
     // ─── Footer ──────────────────────────────────────────────
     copyrightText: '© 2026 Blogzenix — Unlocking Insights, One Story at a Time.',

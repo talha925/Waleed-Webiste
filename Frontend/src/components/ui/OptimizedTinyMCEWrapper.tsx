@@ -30,10 +30,19 @@ const createEditorConfig = (
     skin: 'oxide',
     content_css: 'default',
     
-    // Performance optimizations
+    // Performance & Raw HTML optimizations
     convert_urls: false,
     relative_urls: false,
     remove_script_host: false,
+    valid_elements: '*[*]',
+    extended_valid_elements: 'style[type|id|class],article[*],section[*],details[*],summary[*],div[*],span[*],img[*],a[*],h1[*],h2[*],h3[*],h4[*],h5[*],h6[*],p[*],ul[*],ol[*],li[*],button[*]',
+    custom_elements: 'style,article,section,details,summary',
+    valid_children: '+body[style],+article[style],+div[style],+body[details],+article[details],+section[details]',
+    allow_html_in_named_anchor: true,
+    verify_html: false,
+    entity_encoding: 'raw' as const,
+    cleanup: false,
+    cleanup_on_startup: false,
     
     // Accessibility improvements
     a11y_advanced_options: true,
@@ -98,25 +107,22 @@ const createEditorConfig = (
         'searchreplace', 'visualblocks', 'code', 'fullscreen',
         'insertdatetime', 'media', 'table', 'help', 'wordcount'
       ],
-      toolbar: 'undo redo | formatselect | bold italic | ' +
+      toolbar: 'undo redo | blocks | bold italic underline | ' +
         'alignleft aligncenter alignright alignjustify | ' +
         'bullist numlist outdent indent | link image | code preview'
     };
   }
 
-  // Advanced mode with full features
+  // Advanced mode with standard free plugins
   return {
     ...baseConfig,
     plugins: [
-      // Core editing features
       'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 
       'media', 'searchreplace', 'table', 'visualblocks', 'wordcount', 'code', 'fullscreen',
-      'insertdatetime', 'preview', 'help',
-      // Enhanced features
-      'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed'
+      'insertdatetime', 'preview', 'help'
     ],
     toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | ' +
-      'link image media table | align lineheight | checklist numlist bullist indent outdent | ' +
+      'link image media table | align lineheight | numlist bullist indent outdent | ' +
       'emoticons charmap | removeformat | code fullscreen help'
   };
 };

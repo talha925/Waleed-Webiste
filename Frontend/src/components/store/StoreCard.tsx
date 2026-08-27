@@ -52,7 +52,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, priority = false }) => {
   const hasTrackingUrl = store.trackingUrl;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col justify-between items-center shadow-sm hover:shadow-md transition-all">
+    <div className="bg-card border border-border rounded-xl p-6 flex flex-col justify-between items-center shadow-sm hover:shadow-md transition-all">
       <div className="h-28 flex items-center justify-center mb-4">
         <SafeImage
           src={store.image?.url || '/placeholder-store.png'}
@@ -67,16 +67,16 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, priority = false }) => {
         />
       </div>
 
-      <h3 className="text-lg font-medium text-gray-800 text-center mb-4">
+      <h3 className="text-lg font-bold text-foreground text-center mb-4">
         {store.name}
       </h3>
 
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-2.5 w-full">
         {/* GET DEAL Button */}
         {hasCoupons && hasTrackingUrl && (
           <button
             onClick={handleGetDeal}
-            className="bg-gradient-to-r from-black to-blue-800 hover:from-blue-800 hover:to-black text-white text-sm font-semibold py-2 px-6 rounded-full shadow-md transition-all duration-200 transform hover:scale-105"
+            className="bg-brand-primary hover:brightness-110 text-white text-sm font-bold py-2.5 px-6 rounded-full shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95 uppercase tracking-wider"
           >
             GET DEAL
           </button>
@@ -85,7 +85,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, priority = false }) => {
         {/* View Button */}
         <Link
           href={`/store/${store.slug}`}
-          className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2 px-6 rounded-full shadow-md transition text-center"
+          className="bg-brand-accent hover:brightness-110 text-white text-sm font-bold py-2.5 px-6 rounded-full shadow-md transition-all duration-200 text-center transform hover:scale-105 active:scale-95 uppercase tracking-wider"
         >
           View All Coupons
         </Link>

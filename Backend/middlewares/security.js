@@ -28,6 +28,17 @@ const rateLimiter = (options = {}) => {
  */
 const sanitizeData = mongoSanitize();
 
+const RICH_TEXT_FIELDS = new Set([
+    'longDescription',
+    'shortDescription',
+    'content',
+    'description',
+    'body',
+    'customHtml',
+    'html',
+    'rawContent'
+]);
+
 /**
  * Data sanitization against XSS using sanitize-html
  */
@@ -36,10 +47,27 @@ const preventXSS = (req, res, next) => {
         if (!obj) return;
         for (let key in obj) {
             if (typeof obj[key] === 'string') {
-                obj[key] = sanitizeHtml(obj[key], {
-                    allowedTags: [],
-                    allowedAttributes: {}
-                });
+                if (RICH_TEXT_FIELDS.has(key)) {
+                    // For rich blog content, preserve full HTML formatting, custom styles, carousels, and embeds
+                    obj[key] = sanitizeHtml(obj[key], {
+                        allowedTags: false,
+                        allowedAttributes: false,
+                        allowVulnerableTags: true
+                    });
+                } else {
+                    // For standard scalar fields (title, name, email, etc.), strip tags but preserve real characters (avoid &amp;, &#39;)
+                    const sanitized = sanitizeHtml(obj[key], {
+                        allowedTags: [],
+                        allowedAttributes: {}
+                    });
+                    obj[key] = sanitized
+                        .replace(/&amp;/gi, '&')
+                        .replace(/&quot;/gi, '"')
+                        .replace(/&#39;/g, "'")
+                        .replace(/&#x27;/g, "'")
+                        .replace(/&lt;/gi, '<')
+                        .replace(/&gt;/gi, '>');
+                }
             } else if (typeof obj[key] === 'object' && obj[key] !== null) {
                 sanitize(obj[key]);
             }

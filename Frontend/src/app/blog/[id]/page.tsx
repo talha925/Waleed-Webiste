@@ -2,7 +2,7 @@
 
 import { Metadata } from 'next';
 import SafeImage from '@/components/ui/SafeImage';
-import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
+import parse, { attributesToProps, DOMNode, Element, domToReact } from 'html-react-parser';
 import config from '@/lib/config';
 import { decode } from 'html-entities';
 import TableOfContents from '@/components/blog/TableOfContents';
@@ -53,25 +53,175 @@ function decodeRecursively(text: string): string {
 
 import { getBrandConfig } from '@config/server-config';
 import { fetchBlogDetailServer, fetchRecentBlogsServer } from '@/lib/serverData';
+import { sanitizeBrandText, cleanTypography } from '@/lib/utils/formatting';
 
-// --- Main Page Component ---
-function customParser(html: string) {
-  // First, fully clean the double (or triple) encoded HTML string
-  const decodedHtml = decodeRecursively(html);
+// Helper to extract text from AST nodes
+function getTextFromNode(node: any): string {
+  if (!node) return '';
+  if (node.type === 'text') {
+    return node.data || '';
+  }
+  if (node.children && Array.isArray(node.children)) {
+    return node.children.map(getTextFromNode).join('');
+  }
+  return '';
+}
 
-  return parse(decodedHtml, {
+// --- Semantic Blog Content Formatter & Parser ---
+function formatAndParseBlogContent(rawContent: string, brandName: string, store?: { name?: string; url?: string }) {
+  if (!rawContent) return null;
+
+  // 1. Clean recursive encoding and typography artifacts
+  const content = sanitizeBrandText(decodeRecursively(rawContent), brandName);
+
+  // 2. Check if content already contains block HTML tags
+  const hasHtmlTags = /<\/?(p|div|h[1-6]|ul|ol|li|table|blockquote|section|article|style)\b/i.test(content);
+
+  let formattedHtml = content;
+
+  if (!hasHtmlTags) {
+    // Only for plain text / legacy markdown blogs without HTML tags:
+    const rawLines = content
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map(l => l.trim());
+
+    const processedBlocks: string[] = [];
+    let currentList: string[] = [];
+    let isNumberedList = false;
+
+    const flushList = () => {
+      if (currentList.length > 0) {
+        if (isNumberedList) {
+          processedBlocks.push(
+            `<ol class="list-decimal pl-6 space-y-2.5 my-6 text-foreground/90 font-medium text-base md:text-lg">${currentList.map(item => `<li>${item}</li>`).join('')}</ol>`
+          );
+        } else {
+          processedBlocks.push(
+            `<ul class="list-disc pl-6 space-y-2 my-6 text-foreground/90 text-base md:text-lg">${currentList.map(item => `<li>${item}</li>`).join('')}</ul>`
+          );
+        }
+        currentList = [];
+        isNumberedList = false;
+      }
+    };
+
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      if (!line) {
+        flushList();
+        continue;
+      }
+
+      if (line.startsWith('```')) {
+        flushList();
+        continue;
+      }
+
+      const isCtaLine = /^(SHOP\s|BUY\s|GET\s|EXPLORE\s|VISIT\s|.*RECOMMENDS\s)/i.test(line) && line.length < 90;
+      if (isCtaLine) {
+        flushList();
+        const targetUrl = store?.url || '#';
+        const cleanedTitle = cleanTypography(line);
+        let buttonText = /^SHOP\s/i.test(line) ? `Shop ${store?.name || 'Now'}` : 'Shop Now';
+        processedBlocks.push(`
+          <div class="my-8 p-6 sm:p-7 rounded-2xl border border-border/80 bg-gradient-to-r from-card via-background-secondary/70 to-card shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 not-prose">
+            <div class="space-y-2 text-center md:text-left flex-1 min-w-0">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-brand-accent/15 text-brand-accent border border-brand-accent/30 whitespace-nowrap shadow-sm">
+                <span>★</span>
+                <span>Verified Recommendation</span>
+              </div>
+              <h4 class="text-xl sm:text-2xl font-black text-foreground pt-1 leading-snug tracking-tight">${cleanedTitle}</h4>
+              <p class="text-xs sm:text-sm text-foreground-secondary font-medium">Exclusive deals & verified discounts available for our readers</p>
+            </div>
+            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer nofollow" class="blog-cta-btn px-8 py-3.5 rounded-full !no-underline uppercase tracking-wider text-xs sm:text-sm font-black shrink-0 cursor-pointer gap-2">
+              <span>${buttonText}</span>
+              <span class="text-base font-black">→</span>
+            </a>
+          </div>
+        `);
+        continue;
+      }
+
+      // Check for Numbered List items
+      const numberedMatch = line.match(/^(\d+)\.\s+(.*)/);
+      if (numberedMatch) {
+        if (!isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = true;
+        currentList.push(`<strong>${numberedMatch[2]}</strong>`);
+        continue;
+      }
+
+      // Check for Bullet points
+      const bulletMatch = line.match(/^[-*•]\s+(.*)/);
+      if (bulletMatch) {
+        if (isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = false;
+        currentList.push(bulletMatch[1]);
+        continue;
+      }
+
+      // Check for Short feature list item
+      const nextLine = rawLines[i + 1];
+      const isShortItem = line.length < 50 && !line.endsWith('.') && !line.endsWith(':') && !line.endsWith('?') &&
+        ((nextLine && nextLine.length < 50 && !nextLine.endsWith('.') && !nextLine.endsWith('?')) || currentList.length > 0);
+
+      if (isShortItem && !line.startsWith('##') && !line.startsWith('###')) {
+        if (isNumberedList && currentList.length > 0) flushList();
+        isNumberedList = false;
+        currentList.push(line);
+        continue;
+      }
+
+      flushList();
+
+      if (line.startsWith('## ') || line.startsWith('### ')) {
+        const headingText = line.replace(/^#{2,3}\s+/, '');
+        const headingId = headingText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        processedBlocks.push(`<h2 id="${headingId}" class="text-2xl md:text-3xl font-black text-foreground mt-10 mb-4 tracking-tight scroll-mt-24">${headingText}</h2>`);
+        continue;
+      }
+
+      const isHeadingPattern = (
+        line.endsWith('?') ||
+        /^(Best|Why|What|How|Frequently Asked Questions|Conclusion|Summary|Real Owner Experiences|Future Trends|Top Rated|Final Thoughts|Key Takeaways|The Verdict)\b/i.test(line)
+      ) && line.length < 80 && !line.endsWith('.');
+
+      if (isHeadingPattern) {
+        const headingId = line.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        processedBlocks.push(`<h2 id="${headingId}" class="text-2xl md:text-3xl font-black text-foreground mt-10 mb-4 tracking-tight scroll-mt-24">${line}</h2>`);
+        continue;
+      }
+
+      processedBlocks.push(`<p class="mb-6 text-base md:text-lg leading-relaxed text-foreground/90 font-normal">${line}</p>`);
+    }
+
+    flushList();
+    formattedHtml = processedBlocks.join('\n');
+  }
+
+  return parse(formattedHtml, {
     replace: (domNode) => {
       const node = domNode as Element;
-      // Fix for invalid nesting like <p><ul>...</ul></p>
-      if (node.name === 'p') {
-        const containsBlockElement = node.children.some(
-          (child) =>
-            child.type === 'tag' &&
-            ['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'div', 'blockquote'].includes((child as Element).name)
+      if (!node || !node.name) return;
+
+      // Ensure <style> tags render their CSS rules directly in React
+      if (node.name === 'style') {
+        const cssContent = getTextFromNode(node);
+        return <style dangerouslySetInnerHTML={{ __html: cssContent }} />;
+      }
+
+      // Auto-assign IDs to headings for Table of Contents if not present, while preserving all existing styles/attributes
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(node.name)) {
+        const text = getTextFromNode(node);
+        const id = node.attribs?.id || text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const props = attributesToProps(node.attribs || {});
+        const Tag = node.name as any;
+        return (
+          <Tag {...props} id={id}>
+            {domToReact(node.children as DOMNode[])}
+          </Tag>
         );
-        if (containsBlockElement) {
-          return <>{domToReact(node.children as DOMNode[], { replace: () => null })}</>;
-        }
       }
     },
   });
@@ -82,11 +232,14 @@ type Params = Promise<{ id: string }>;
 // Generate metadata - no changes needed here
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
   const params = await props.params;
-  const { data: blog } = await fetchBlogDetailServer(params.id);
+  const [{ data: blog }, brand] = await Promise.all([
+    fetchBlogDetailServer(params.id),
+    getBrandConfig()
+  ]);
   if (!blog) return { title: 'Blog Not Found' };
   return {
-    title: blog.meta?.title || blog.title,
-    description: blog.meta?.description || blog.excerpt || 'Blog post description',
+    title: sanitizeBrandText(blog.meta?.title || blog.title, brand.siteName),
+    description: sanitizeBrandText(blog.meta?.description || blog.excerpt || 'Blog post description', brand.siteName),
   };
 }
 
@@ -132,7 +285,7 @@ export default async function BlogDetailPage(props: { params: Params }) {
               <h1 className={`text-4xl font-bold text-primary mb-4`}>
                 Blog Not Found
               </h1>
-              <p className="text-gray-600 mb-8 leading-relaxed">
+              <p className="text-foreground-secondary mb-8 leading-relaxed">
                 The blog post you're looking for doesn't exist or has been moved. Let's get you back on track!
               </p>
 
@@ -162,7 +315,7 @@ export default async function BlogDetailPage(props: { params: Params }) {
       <div className="relative z-10 container mx-auto px-4 py-8 pb-24">
         {/* Breadcrumb Navigation */}
         <nav className="mb-6 text-sm" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-2 text-gray-500">
+          <ol className="flex items-center space-x-2 text-foreground-secondary">
             <li>
               <a href="/" className="hover:text-primary transition-colors">Home</a>
             </li>
@@ -183,7 +336,7 @@ export default async function BlogDetailPage(props: { params: Params }) {
             )}
             <li className="flex items-center">
               <span className="mx-2">/</span>
-              <span className="text-gray-900 font-medium line-clamp-1">{blog.title}</span>
+              <span className="text-foreground font-medium line-clamp-1">{cleanTypography(blog.title)}</span>
             </li>
           </ol>
         </nav>
@@ -219,10 +372,12 @@ export default async function BlogDetailPage(props: { params: Params }) {
               <div className="">
 
 
-                {/* Title */}
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-gray-900 leading-tight">
-                  {blog.title}
-                </h1>
+                {/* Title (Only render if content doesn't already have an h1 tag) */}
+                {!/<h1\b/i.test(blog.longDescription || '') && (
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 text-foreground leading-tight">
+                    {sanitizeBrandText(blog.title, brand.siteName)}
+                  </h1>
+                )}
 
 
 
@@ -230,15 +385,15 @@ export default async function BlogDetailPage(props: { params: Params }) {
 
                 {/* Blog Content */}
                 {blog.longDescription ? (
-                  <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate w-full max-w-none">
-                    {customParser(blog.longDescription)}
+                  <article className="blog-content prose prose-lg md:prose-xl lg:prose-xl prose-slate dark:prose-invert w-full max-w-none">
+                    {formatAndParseBlogContent(blog.longDescription, brand.siteName, blog.store)}
                   </article>
                 ) : (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
                       <span className="text-gray-400 text-2xl">📝</span>
                     </div>
-                    <p className="text-gray-500 italic">No content available for this post.</p>
+                    <p className="text-foreground-secondary italic">No content available for this post.</p>
                   </div>
                 )}
 

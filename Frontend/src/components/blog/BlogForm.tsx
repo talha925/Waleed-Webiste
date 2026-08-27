@@ -64,6 +64,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
   const [title, setTitle] = useState(initialValues?.title || '');
   const [shortDescription, setShortDescription] = useState(initialValues?.shortDescription || '');
   const [longDescription, setLongDescription] = useState(initialValues?.longDescription || '');
+  const [editorMode, setEditorMode] = useState<'visual' | 'html'>('visual');
   const [categoryId, setCategoryId] = useState(initialValues?.categoryId || '');
   const [storeId, setStoreId] = useState(initialValues?.storeId || '');
   const [storeUrl, setStoreUrl] = useState(initialValues?.storeUrl || '');
@@ -485,25 +486,39 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
     }
   }, []);
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Check if user is authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isMounted && !isLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, isMounted]);
+
+  if (!isMounted || isLoading || !isAuthenticated) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+          {initialValues?._id ? 'Edit Blog Post' : 'Create a New Blog Post'}
+        </h1>
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="text-xl text-gray-500">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-        Create a New Blog Post
+        {initialValues?._id ? 'Edit Blog Post' : 'Create a New Blog Post'}
       </h1>
 
-      {isLoading || !isAuthenticated ? (
-        <div className="flex justify-center items-center h-[60vh]">
-          <div className="text-xl">Loading...</div>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Required Fields Section */}
           <div className="bg-blue-50 p-4 rounded-lg">
             <h2 className="text-xl font-semibold text-blue-800 mb-4">Required Fields</h2>
@@ -531,16 +546,66 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
               error={errors.shortDescription}
             />
 
-            <OptimizedRichTextEditor
-              id="longDescription"
-              value={longDescription}
-              onChange={(content) => setLongDescription(content)}
-              label="Long Description"
-              error={errors.longDescription}
-              placeholder="Write your detailed blog content here..."
-              required
-              mode="advanced"
-            />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-foreground">
+                  Long Description <span className="text-red-500">*</span>
+                </label>
+                <div className="inline-flex rounded-lg p-1 bg-background-secondary border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('visual')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                      editorMode === 'visual'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-foreground-secondary hover:text-foreground'
+                    }`}
+                  >
+                    📝 Visual Editor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditorMode('html')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                      editorMode === 'html'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-foreground-secondary hover:text-foreground'
+                    }`}
+                  >
+                    💻 Raw HTML / Code Mode
+                  </button>
+                </div>
+              </div>
+
+              {editorMode === 'visual' ? (
+                <OptimizedRichTextEditor
+                  id="longDescription"
+                  value={longDescription}
+                  onChange={(content) => setLongDescription(content)}
+                  error={errors.longDescription}
+                  placeholder="Write your detailed blog content here..."
+                  required
+                  mode="advanced"
+                />
+              ) : (
+                <div className="space-y-2">
+                  <textarea
+                    id="longDescription"
+                    value={longDescription}
+                    onChange={(e) => setLongDescription(e.target.value)}
+                    rows={18}
+                    className="w-full p-4 font-mono text-sm bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-foreground resize-y leading-relaxed"
+                    placeholder="Paste your complete HTML code here (including <style>, <article>, custom classes, etc.)..."
+                  />
+                  <p className="text-xs text-foreground-secondary">
+                    💡 <strong>Raw HTML Mode:</strong> Allows pasting complete custom HTML with embedded <code className="text-primary font-bold">&lt;style&gt;</code>, carousels, custom buttons, and layouts without any visual editor modification.
+                  </p>
+                </div>
+              )}
+              {errors.longDescription && (
+                <p className="mt-1 text-xs text-red-500 font-medium">{errors.longDescription}</p>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
               <CategorySelector
@@ -754,7 +819,6 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
             </div>
           )}
         </form>
-      )}
     </div>
   );
 };

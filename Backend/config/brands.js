@@ -16,32 +16,50 @@ const BRAND_MAP = [
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || null,
     },
     {
         match: '127.0.0.1',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || null,
     },
     {
         match: 'blogzenix.com',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || null,
     },
     {
         match: 'waleed-webiste-backend.vercel.app',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
         bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || null,
     },
     {
         match: 'coupon-app-backend.vercel.app',
         brandId: 'pennyscroll',
         mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
         bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.PENNYSCROLL_CDN_DOMAIN || null,
     },
-    // { match: 'brandC.com', brandId: 'brandC', mongoUri: process.env.MONGO_URI_BRAND_C || null },
+    {
+        match: 'specreveal.com',
+        brandId: 'specreveal',
+        mongoUri: process.env.SPECREVEAL_MONGO_URI || process.env.REVIEWCHRONICLE_MONGO_URI || process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.SPECREVEAL_S3_BUCKET || process.env.REVIEWCHRONICLE_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || null,
+    },
+    {
+        match: 'trendfiltered.com',
+        brandId: 'trendfiltered',
+        mongoUri: process.env.TRENDFILTERED_MONGO_URI || process.env.TRUSTLENSE_MONGO_URI || process.env.BLOGZENIX_MONGO_URI || null,
+        bucketName: process.env.TRENDFILTERED_S3_BUCKET || process.env.TRUSTLENSE_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.TRENDFILTERED_CDN_DOMAIN || null,
+    },
     // ↑ Add new brands here
 
     // Fallback — must always be last
@@ -50,6 +68,7 @@ const BRAND_MAP = [
         brandId: 'pennyscroll',
         mongoUri: process.env.PENNYSCROLL_MONGO_URI || null,
         bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.PENNYSCROLL_CDN_DOMAIN || null,
     },
 ];
 

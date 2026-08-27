@@ -37,6 +37,15 @@ class WebSocketServer {
         try {
             this.redisSubscriber = redisConfig.getClient().duplicate();
             this.redisPublisher = redisConfig.getClient().duplicate();
+
+            // 🔥 CRITICAL: Attach error handlers immediately to prevent uncaughtException on ECONNRESET
+            this.redisSubscriber.on('error', (err) => {
+                console.warn('⚠️ Redis Subscriber connection issue:', err.message);
+            });
+            this.redisPublisher.on('error', (err) => {
+                console.warn('⚠️ Redis Publisher connection issue:', err.message);
+            });
+
             await this.redisSubscriber.connect();
             await this.redisPublisher.connect();
 
@@ -152,10 +161,18 @@ class WebSocketServer {
     }
 
     async shutdown() {
-        if (this.wss) this.wss.close();
-        if (this.server) this.server.close();
-        if (this.redisSubscriber) await this.redisSubscriber.disconnect();
-        if (this.redisPublisher) await this.redisPublisher.disconnect();
+        try {
+            if (this.wss) this.wss.close();
+            if (this.server) this.server.close();
+            if (this.redisSubscriber && this.redisSubscriber.isOpen) {
+                await this.redisSubscriber.disconnect().catch(() => {});
+            }
+            if (this.redisPublisher && this.redisPublisher.isOpen) {
+                await this.redisPublisher.disconnect().catch(() => {});
+            }
+        } catch (err) {
+            console.warn('⚠️ Non-fatal error during WS shutdown:', err.message);
+        }
     }
 }
 

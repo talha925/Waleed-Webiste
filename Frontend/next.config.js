@@ -26,6 +26,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: '*.cloudfront.net',
+      },
+      {
+        protocol: 'https',
         hostname: '*.s3.us-east-1.amazonaws.com',
       },
       {

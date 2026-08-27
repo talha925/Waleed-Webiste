@@ -52,8 +52,8 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
   // Error notifications can be handled elsewhere if needed
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="max-w-md w-full bg-card shadow-lg rounded-lg p-6">
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
             <svg

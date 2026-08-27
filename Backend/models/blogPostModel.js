@@ -139,12 +139,11 @@ blogPostSchema.index({ lastUpdated: -1 }); // Recently updated posts
 // --- Helpers & Pre-save Hooks ---
 
 function safeHtml(input) {
+  if (!input || typeof input !== 'string') return input;
   return sanitizeHtml(input, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h2', 'h3']),
-    allowedAttributes: {
-      ...sanitizeHtml.defaults.allowedAttributes,
-      img: ['src', 'alt', 'width', 'height'],
-    }
+    allowedTags: false,
+    allowedAttributes: false,
+    allowVulnerableTags: true
   });
 }
 

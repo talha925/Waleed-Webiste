@@ -8,50 +8,19 @@ const pendingRevalidations = new Map();
 const DEBOUNCE_MS = 500; // 0.5 seconds delay to aggregate bursts
 
 /**
- * Call frontend revalidation endpoint to refresh Next.js cache
+ * Call frontend revalidation endpoint to refresh Next.js cache immediately
  * @param {String} type - Type of revalidation (store, coupon, blog)
  * @param {String} identifier - Slug or ID
  * @param {String} brandId - (Optional) Brand identifier to find specific secret/URL
  * @param {Object} metadata - Additional metadata for revalidation
  */
 const callFrontendRevalidation = async (type, identifier, brandId = null, metadata = {}) => {
-    const key = `${type}:${identifier}:${brandId || 'global'}`;
-
-    // If there's already a pending revalidation for this target, just update the metadata
-    if (pendingRevalidations.has(key)) {
-        const existing = pendingRevalidations.get(key);
-        existing.metadata = { ...existing.metadata, ...metadata };
-        console.log(`⏱️ Aggregating revalidation for ${key}...`);
-        return existing.promise;
+    try {
+        return await executeRevalidation(type, identifier, brandId, metadata);
+    } catch (err) {
+        console.warn(`⚠️ [Revalidation] Non-fatal error triggering revalidation for ${type}:${identifier}:`, err.message);
+        return { success: false, error: err.message };
     }
-
-    // Create a new deferred promise
-    let resolveFn, rejectFn;
-    const promise = new Promise((resolve, reject) => {
-        resolveFn = resolve;
-        rejectFn = reject;
-    });
-
-    const task = {
-        type,
-        identifier,
-        brandId,
-        metadata,
-        promise,
-        timeout: setTimeout(async () => {
-            try {
-                const result = await executeRevalidation(type, identifier, brandId, task.metadata);
-                pendingRevalidations.delete(key);
-                resolveFn(result);
-            } catch (err) {
-                pendingRevalidations.delete(key);
-                rejectFn(err);
-            }
-        }, DEBOUNCE_MS)
-    };
-
-    pendingRevalidations.set(key, task);
-    return promise;
 };
 
 /**

@@ -10,7 +10,7 @@ const getBlogCategories = async (host: string = '') => {
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch(`${apiBaseUrl}/api/blogCategories`, {
       method: 'GET',

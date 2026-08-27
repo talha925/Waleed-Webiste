@@ -8,30 +8,15 @@ exports.generateSlug = (title) => slugify(title, {
   remove: /[*+~.()'"!:@]/g
 });
 
-// Sanitize HTML content to prevent XSS and unwanted tags/attrs
-exports.sanitizeContent = (content) => sanitizeHtml(content, {
-  allowedTags: [
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
-    'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
-    'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre', 'img'
-  ],
-  allowedAttributes: {
-    ...sanitizeHtml.defaults.allowedAttributes,
-    img: ['src', 'alt', 'width', 'height', 'loading'],
-    a: ['href', 'target', 'rel']
-  },
-  allowedSchemes: ['http', 'https', 'data'],
-  transformTags: {
-    'a': (tagName, attribs) => ({
-      tagName,
-      attribs: {
-        ...attribs,
-        target: '_blank',
-        rel: 'noopener noreferrer'
-      }
-    })
-  }
-});
+// Sanitize HTML content to prevent malicious XSS scripts while preserving rich styling, carousels, and embeds
+exports.sanitizeContent = (content) => {
+  if (!content || typeof content !== 'string') return content;
+  return sanitizeHtml(content, {
+    allowedTags: false,
+    allowedAttributes: false,
+    allowVulnerableTags: true
+  });
+};
 
 // Calculate reading time (in minutes) from plain text (200 words per min)
 exports.calculateReadingTime = (content) => {

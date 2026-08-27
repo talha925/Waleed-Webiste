@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/SafeImage';
 import SidebarCard from './SidebarCard';
+import { cleanTypography } from '@/lib/utils/formatting';
 
 interface Blog {
   _id: string;
@@ -121,11 +122,11 @@ export default function RecentBlogs({ currentBlogId, limit = 5, initialBlogs = [
                   )}
                   <div className="flex-1 min-w-0">
                     <h4 className={`text-sm font-semibold text-foreground group-hover:text-primary line-clamp-2 mb-0.5 transition-colors`}>
-                      {blog.title}
+                      {cleanTypography(blog.title)}
                     </h4>
                     {blog.shortDescription && (
                       <p className="text-xs text-foreground-secondary line-clamp-2 mb-1">
-                        {blog.shortDescription}
+                        {cleanTypography(blog.shortDescription)}
                       </p>
                     )}
 

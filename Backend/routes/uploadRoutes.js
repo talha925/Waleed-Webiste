@@ -73,7 +73,10 @@ router.post('/', upload.single('image'), async (req, res) => {
       }
     }
 
-    const imageUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+    const cdnDomain = req.brand?.cdnDomain;
+    const imageUrl = cdnDomain
+      ? `https://${cdnDomain}/${fileKey}`
+      : `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
     console.log('Image URL:', imageUrl);
 
     res.status(200).json({

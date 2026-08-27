@@ -13,7 +13,7 @@ interface StoreGridProps {
 const StoreGrid: React.FC<StoreGridProps> = ({ stores, loading = false, error = null }) => {
   if (loading) {
     return (
-      <div className="text-center mt-20 text-xl font-semibold text-gray-600 animate-pulse">
+      <div className="text-center mt-20 text-xl font-semibold text-foreground-secondary animate-pulse">
         Loading stores...
       </div>
     );
@@ -21,7 +21,7 @@ const StoreGrid: React.FC<StoreGridProps> = ({ stores, loading = false, error = 
 
   if (error) {
     return (
-      <div className="text-center mt-20 text-xl font-semibold text-red-600">
+      <div className="text-center mt-20 text-xl font-semibold text-destructive">
         Error: {error}
       </div>
     );

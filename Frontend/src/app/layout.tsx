@@ -18,7 +18,7 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
-  preload: true,
+  fallback: ['system-ui', 'sans-serif'],
 })
 
 // Dynamic metadata per brand
@@ -110,7 +110,7 @@ export default async function RootLayout({
   `;
 
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable} data-scroll-behavior="smooth">
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${brand.isDarkMode ? 'dark' : ''}`} data-theme={brand.isDarkMode ? 'dark' : 'light'} data-scroll-behavior="smooth">
       <head>
         {/* Inject brand theme colors as CSS custom properties */}
         <style
@@ -123,6 +123,12 @@ export default async function RootLayout({
                 --brand-accent: ${brand.accentHSL};
                 --brand-accent-2: ${brand.accent2HSL || brand.accentHSL};
                 --brand-theme-color: ${brand.themeColor};
+                ${brand.backgroundHSL ? `--background: ${brand.backgroundHSL};` : ''}
+                ${brand.backgroundSecondaryHSL ? `--background-secondary: ${brand.backgroundSecondaryHSL};` : ''}
+                ${brand.backgroundElevatedHSL ? `--background-elevated: ${brand.backgroundElevatedHSL}; --card: ${brand.backgroundElevatedHSL}; --popover: ${brand.backgroundElevatedHSL};` : ''}
+                ${brand.foregroundHSL ? `--foreground: ${brand.foregroundHSL}; --card-foreground: ${brand.foregroundHSL}; --popover-foreground: ${brand.foregroundHSL};` : ''}
+                ${brand.foregroundSecondaryHSL ? `--foreground-secondary: ${brand.foregroundSecondaryHSL};` : ''}
+                ${brand.borderHSL ? `--border: ${brand.borderHSL};` : ''}
               }
             `,
           }}

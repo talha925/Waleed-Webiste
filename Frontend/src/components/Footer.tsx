@@ -9,10 +9,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-background-secondary border-t border-border/30 py-16 w-full relative overflow-hidden">
-      {/* Decorative background elements - multi-color subtle glows */}
-      <div className="absolute inset-0 bg-gradient-to-r from-brand-primary/5 via-brand-secondary/5 to-brand-accent/5 opacity-30"></div>
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-primary/10 rounded-full blur-[100px] animate-pulse"></div>
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-brand-accent/10 rounded-full blur-[100px] animate-pulse"></div>
+      {/* Decorative background elements - static subtle glow */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">

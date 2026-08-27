@@ -24,13 +24,15 @@ class AuthService implements IAuthService {
   private sessionExpiringListeners: ((timeRemaining: number) => void)[] = [];
   private tokenRefreshListeners: ((token: AuthToken) => void)[] = [];
   private httpClient: HttpClient;
+  private isRefreshing: boolean = false;
+  private refreshPromise: Promise<AuthToken> | null = null;
 
   private constructor() {
     this.httpClient = new HttpClient();
     this.sessionConfig = {
-      timeoutDuration: 30 * 60 * 1000, // 30 minutes
-      warningThreshold: 5 * 60 * 1000,  // 5 minutes
-      autoRefreshThreshold: 10 * 60 * 1000 // 10 minutes
+      timeoutDuration: 7 * 24 * 60 * 60 * 1000, // 7 days (matches backend JWT expiration)
+      warningThreshold: 5 * 60 * 1000,          // 5 minutes
+      autoRefreshThreshold: 60 * 60 * 1000      // 1 hour before expiry
     };
 
     this.authState = {
@@ -66,15 +68,18 @@ class AuthService implements IAuthService {
         return;
       }
 
+      const storedToken = this.getStoredToken();
+
       this.authState.isLoading = true;
       this.notifyAuthStateChange();
 
-      // Simple token structure for initial hydration
-      // The full user will be fetched by the background process or on next API call
+      // Preserve stored refreshToken if available
       this.authState.token = {
         accessToken: token,
-        refreshToken: '', // Will be updated on first refresh
-        expiresAt: Date.now() + this.sessionConfig.timeoutDuration,
+        refreshToken: storedToken?.refreshToken || '',
+        expiresAt: storedToken?.expiresAt && storedToken.expiresAt > Date.now()
+          ? storedToken.expiresAt
+          : Date.now() + this.sessionConfig.timeoutDuration,
         tokenType: 'Bearer'
       };
       this.authState.isAuthenticated = true;
@@ -155,23 +160,28 @@ class AuthService implements IAuthService {
       this.authState.sessionTimeRemaining = timeRemaining;
 
       if (timeRemaining <= 0) {
-        this.handleSessionExpired();
+        if (!this.isRefreshing && !this.refreshPromise) {
+          this.handleSessionExpired();
+        }
       } else if (timeRemaining <= this.sessionConfig.warningThreshold) {
         this.notifySessionExpiring(timeRemaining);
       } else if (timeRemaining <= this.sessionConfig.autoRefreshThreshold) {
-        this.autoRefreshToken();
+        if (!this.isRefreshing && !this.refreshPromise) {
+          this.autoRefreshToken();
+        }
       }
 
       this.notifyAuthStateChange();
-    }, 1000);
+    }, 5000); // Check every 5s instead of aggressive 1s loop
   }
 
   private async autoRefreshToken(): Promise<void> {
+    if (this.isRefreshing || this.refreshPromise) return;
     try {
       const newToken = await this.refreshToken();
       this.notifyTokenRefresh(newToken);
     } catch (error) {
-      console.error('Auto token refresh failed:', error);
+      console.warn('[AuthService] Auto token refresh deferred (session remains active):', error);
     }
   }
 
@@ -200,8 +210,9 @@ class AuthService implements IAuthService {
       const response = await this.httpClient.post('/api/auth/login', credentials);
       
       const user: User = response.user;
+      const accessToken = response.token || response.accessToken;
       const token: AuthToken = {
-        accessToken: response.token,
+        accessToken,
         refreshToken: response.refreshToken,
         expiresAt: Date.now() + this.sessionConfig.timeoutDuration,
         tokenType: 'Bearer'
@@ -256,32 +267,71 @@ class AuthService implements IAuthService {
   }
 
   async refreshToken(): Promise<AuthToken> {
-    const currentToken = this.authState.token;
+    // If a refresh is already in progress, reuse the existing promise!
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    const currentToken = this.authState.token || this.getStoredToken();
     if (!currentToken?.refreshToken) {
+      console.warn('[AuthService] No refresh token available in storage.');
+      if (this.isSessionValid()) {
+        return currentToken as AuthToken;
+      }
       throw new Error('No refresh token available');
     }
 
-    try {
-      const response = await this.httpClient.post('/api/auth/refresh', {
-        refreshToken: currentToken.refreshToken
-      });
+    this.isRefreshing = true;
+    this.refreshPromise = (async () => {
+      try {
+        const response = await this.httpClient.post('/api/auth/refresh', {
+          refreshToken: currentToken.refreshToken
+        });
 
-      const newToken: AuthToken = {
-        accessToken: response.token,
-        refreshToken: response.refreshToken || currentToken.refreshToken,
-        expiresAt: Date.now() + this.sessionConfig.timeoutDuration,
-        tokenType: 'Bearer'
-      };
+        const accessToken = response.token || response.accessToken;
+        if (!accessToken) {
+          throw new Error('Invalid token response from server');
+        }
 
-      this.authState.token = newToken;
-      this.setStoredToken(newToken);
-      this.notifyAuthStateChange();
+        const expiresDuration = response.expiresIn 
+          ? response.expiresIn * 1000 
+          : this.sessionConfig.timeoutDuration;
 
-      return newToken;
-    } catch (error) {
-      await this.logout();
-      throw error;
-    }
+        const newToken: AuthToken = {
+          accessToken,
+          refreshToken: response.refreshToken || currentToken.refreshToken,
+          expiresAt: Date.now() + expiresDuration,
+          tokenType: 'Bearer'
+        };
+
+        this.authState.token = newToken;
+        this.authState.isAuthenticated = true;
+        this.setStoredToken(newToken);
+        this.notifyAuthStateChange();
+
+        return newToken;
+      } catch (error: any) {
+        // Only log out on definitive 401/403 invalid token errors, NOT transient network/DB timeout errors!
+        const isDefinitiveAuthError = error?.status === 401 && (
+          error?.message?.includes('Invalid') || 
+          error?.message?.includes('expired') || 
+          error?.message?.includes('no longer exists')
+        );
+
+        if (isDefinitiveAuthError) {
+          console.warn('[AuthService] Refresh token permanently rejected by server, logging out...');
+          await this.logout();
+        } else {
+          console.warn('[AuthService] Token refresh temporarily deferred (maintaining session):', error?.message || error);
+        }
+        throw error;
+      } finally {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 
   async validateToken(token: string): Promise<boolean> {

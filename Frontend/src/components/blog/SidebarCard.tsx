@@ -10,7 +10,7 @@ interface SidebarCardProps {
 export default function SidebarCard({ title, icon, children, className = '' }: SidebarCardProps) {
     return (
         <aside className={`sticky top-24 h-fit ${className}`}>
-            <div className="bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl p-6">
+            <div className="bg-card/90 backdrop-blur-xl border border-border rounded-2xl shadow-xl p-6">
                 <div className="flex items-center mb-4">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center mr-3">
                         <span className="text-white text-sm font-bold">{icon}</span>

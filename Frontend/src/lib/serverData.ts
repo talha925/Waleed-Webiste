@@ -93,39 +93,50 @@ export async function fetchHomeDataServer() {
     const brand = await getBrandConfig();
     
     // Normalize localhost to 127.0.0.1 to avoid IPv6 resolution delays on some systems
-    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
+    const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1') || 'https://waleed-webiste-backend.vercel.app';
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000); // 🔥 FIX: Increased to 25s to avoid timeouts on cold starts
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    // Parallel fetch for speed
+    // Parallel fetch with individual error catching to prevent single-request failures
     const [featured, banner] = await Promise.all([
       fetch(`${apiBaseUrl}/api/blogs?isFeaturedForHome=true&sort=-createdAt&limit=9`, {
         headers: { 'x-brand-id': brand.brandId },
         signal: controller.signal,
         next: { revalidate: 60, tags: ['home-blogs'] }
-      }).then(res => res.ok ? res.json() : null),
+      })
+        .then(res => (res.ok ? res.json() : null))
+        .catch(err => {
+          console.warn('⚠️ [Home] Featured blogs fetch fallback:', err.message || err);
+          return null;
+        }),
+
       fetch(`${apiBaseUrl}/api/blogs?frontBanner=true&sort=-createdAt&limit=3`, {
         headers: { 'x-brand-id': brand.brandId },
         signal: controller.signal,
         next: { revalidate: 60, tags: ['banner-blogs'] }
-      }).then(res => res.ok ? res.json() : null)
+      })
+        .then(res => (res.ok ? res.json() : null))
+        .catch(err => {
+          console.warn('⚠️ [Home] Banner blogs fetch fallback:', err.message || err);
+          return null;
+        })
     ]);
 
     clearTimeout(timeout);
 
     return {
-      featuredBlogs: featured?.data?.blogs || featured?.blogs || [],
-      bannerBlogs: banner?.data?.blogs || banner?.blogs || [],
+      featuredBlogs: featured?.data?.blogs || featured?.blogs || (Array.isArray(featured?.data) ? featured.data : []),
+      bannerBlogs: banner?.data?.blogs || banner?.blogs || (Array.isArray(banner?.data) ? banner.data : []),
       error: null
     };
   } catch (error: any) {
     if (error.name === 'AbortError') {
-       console.error('❌ Home data fetch TIMEOUT (15s). Backend might be slow or cold-starting.');
+       console.warn('⚠️ Home data fetch TIMEOUT. Backend cold-starting, returning fallback empty arrays.');
     } else {
-       console.error('❌ Home data fetch error:', error.message || error);
+       console.warn('⚠️ Home data fetch warning:', error.message || error);
     }
-    return { featuredBlogs: [], bannerBlogs: [], error: 'Failed to load home data' };
+    return { featuredBlogs: [], bannerBlogs: [], error: null };
   }
 }
 

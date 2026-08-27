@@ -162,7 +162,8 @@ const brandDetection = require('./middlewares/brandDetection');
 app.use(brandDetection);
 
 app.use('/api', security.rateLimit());
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(security.sanitizeData);
 app.use(security.preventXSS);
 app.use(security.preventParamPollution(['category', 'language', 'isTopStore']));
@@ -238,15 +239,33 @@ if (!process.env.VERCEL) {
 
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    const isTransientNetworkError = (err) => {
+        if (!err) return false;
+        const transientCodes = ['ECONNRESET', 'EPIPE', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT', 'EAI_AGAIN'];
+        return (
+            transientCodes.includes(err.code) ||
+            err.message?.includes('ECONNRESET') ||
+            err.message?.includes('ClientClosedError') ||
+            err.message?.includes('The client is closed') ||
+            err.message?.includes('Connection timeout')
+        );
+    };
 
     process.on('uncaughtException', (err) => {
+        if (isTransientNetworkError(err)) {
+            console.warn('⚠️ Recovered from transient network error (uncaughtException):', err.message || err);
+            return; // Don't crash server for dropped connection
+        }
         console.error('💥 UNCAUGHT EXCEPTION:', err);
         gracefulShutdown('uncaughtException');
     });
 
     process.on('unhandledRejection', (err) => {
+        if (isTransientNetworkError(err)) {
+            console.warn('⚠️ Recovered from transient network error (unhandledRejection):', err?.message || err);
+            return; // Don't crash server
+        }
         console.error('💥 UNHANDLED REJECTION:', err);
-        gracefulShutdown('unhandledRejection');
     });
 }
 

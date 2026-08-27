@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { themeClasses } from '@/lib/theme/utils';
+import { useBrand } from '@/context/BrandContext';
 import { ArrowRight, Sparkles, Hash } from 'lucide-react';
 
 interface Category {
@@ -14,6 +14,9 @@ interface Category {
 }
 
 export function CategoriesClient({ initialCategories = [] }: { initialCategories?: Category[] }) {
+  const brand = useBrand();
+  const isDark = brand.isDarkMode;
+
   // Mapping icons to dynamic categories
   const iconMap: Record<string, string> = {
     'health-and-beauty': '✨',
@@ -42,19 +45,19 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
       ];
 
   return (
-    <div className={`min-h-screen ${themeClasses.backgrounds.primary} py-20 px-4 sm:px-6 lg:px-8`}>
+    <div className="min-h-screen bg-background py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
-        <div className="text-center mb-20 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-600 text-[10px] font-black uppercase tracking-widest mb-4">
+        <div className="text-center mb-16 sm:mb-20 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-[10px] font-black uppercase tracking-widest mb-4">
             <Sparkles className="w-3 h-3" />
             Explore Topics
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight">
-            Browse by <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">Category</span>
+          <h1 className="text-4xl sm:text-6xl font-black text-foreground tracking-tight">
+            Browse by <span className="text-brand-primary">Category</span>
           </h1>
-          <p className="text-slate-500 text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-            Discover articles, tips, and insights across our most popular subjects.
+          <p className="text-foreground-secondary text-lg max-w-2xl mx-auto font-medium leading-relaxed">
+            Discover articles, tips, and insights across our most popular categories.
           </p>
         </div>
 
@@ -66,26 +69,36 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
               href={`/blog/category/${category.slug}`}
               className="group block"
             >
-              <div className="relative h-full p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl shadow-slate-200/40 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-2 group-hover:border-orange-500/20 overflow-hidden">
+              <div className={`relative h-full p-8 rounded-[2.5rem] transition-all duration-500 hover:-translate-y-2 overflow-hidden border ${
+                isDark
+                  ? 'bg-background-elevated/80 border-white/10 shadow-2xl hover:border-brand-primary/50 hover:shadow-[0_10px_30px_rgba(255,30,39,0.1)]'
+                  : 'bg-card border-border/60 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-brand-primary/10 hover:border-brand-primary/30'
+              }`}>
                 {/* Background Decoration */}
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-slate-50 rounded-full transition-transform duration-500 group-hover:scale-150" />
+                <div className={`absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full transition-transform duration-500 group-hover:scale-150 ${
+                  isDark ? 'bg-white/[0.02]' : 'bg-slate-50'
+                }`} />
 
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-8">
-                    <div className="w-16 h-16 rounded-3xl bg-slate-50 flex items-center justify-center text-3xl group-hover:bg-orange-500 group-hover:scale-110 transition-all duration-500">
+                    <div className={`w-16 h-16 rounded-3xl flex items-center justify-center text-3xl group-hover:bg-brand-primary group-hover:text-white group-hover:scale-110 transition-all duration-500 ${
+                      isDark ? 'bg-white/[0.05] border border-white/10' : 'bg-background-secondary'
+                    }`}>
                       {category.icon}
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-50 text-slate-400 group-hover:bg-white transition-colors duration-500">
+                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-colors duration-500 ${
+                      isDark ? 'bg-white/[0.05] text-foreground-secondary group-hover:bg-brand-primary/20 group-hover:text-white' : 'bg-background-secondary text-foreground-secondary group-hover:bg-card'
+                    }`}>
                       <Hash className="w-3 h-3" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">{category.count}</span>
                     </div>
                   </div>
 
                   <div className="mt-auto">
-                    <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-orange-600 transition-colors">
+                    <h3 className="text-2xl font-black text-foreground mb-3 group-hover:text-brand-primary transition-colors">
                       {category.name}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm font-bold text-slate-400 group-hover:text-orange-500 transition-all duration-300">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground-secondary group-hover:text-brand-primary transition-all duration-300">
                       Explore Articles
                       <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-2" />
                     </div>
@@ -97,11 +110,11 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-24 text-center">
-          <div className="inline-block p-1 rounded-2xl bg-slate-100 border border-slate-200">
+        <div className="mt-20 sm:mt-24 text-center">
+          <div className="inline-block p-1 rounded-2xl bg-card border border-border/60">
             <Link
               href="/blog"
-              className="px-8 py-4 bg-white rounded-xl text-sm font-black text-slate-900 shadow-sm hover:shadow-md transition-all flex items-center gap-3"
+              className="px-8 py-4 bg-background-elevated rounded-xl text-sm font-black text-foreground shadow-sm hover:shadow-md hover:text-brand-primary transition-all flex items-center gap-3"
             >
               View All Recent Blogs
               <ArrowRight className="w-4 h-4" />

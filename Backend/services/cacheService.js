@@ -608,26 +608,38 @@ class CacheService {
     }, 2000); // 2-second debounce window
   }
 
-  // ✅ ENHANCED: Professional Invalidation with guaranteed patterns
+  // ✅ ENHANCED: Immediate & Guaranteed Cache Invalidation
   async invalidateBlogCaches(brandId = null) {
     if (!this.isAvailable()) return false;
+    
+    // Clear local L1 cache immediately
+    l1Cache.flushAll();
     
     // If brandId is null, use wildcard to catch all brands (safety fallback)
     const prefix = brandId ? `${brandId}:` : '*:';
     
     try {
-      // Broad patterns ensure lists, details, and paginated results are ALL cleared
+      // Broad patterns ensure lists, details, and paginated results are ALL cleared immediately
       const patterns = [
         `${prefix}coupon_backend:blogs:*`,
         `${prefix}coupon_backend:blog:*`,
         `${prefix}coupon_backend:blog_categories:*`,
         `${prefix}coupon_backend:frontBannerBlogs*`,
         `${prefix}coupon_backend:related_posts*`,
-        `${prefix}coupon_backend:homepage*`
+        `${prefix}coupon_backend:homepage*`,
+        `*coupon_backend:blogs:*`,
+        `*coupon_backend:blog:*`,
+        `*coupon_backend:related_posts:*`,
+        `coupon_backend:blogs:*`,
+        `coupon_backend:blog:*`
       ];
 
-      this.scheduleInvalidation(patterns);
-      return true;
+      let totalDeleted = 0;
+      for (const pattern of patterns) {
+        totalDeleted += await this.delPattern(pattern);
+      }
+      console.log(`✅ Immediate blog cache invalidation complete: ${totalDeleted} keys deleted (Brand: ${brandId})`);
+      return totalDeleted;
     } catch (err) {
       console.error('❌ invalidateBlogCaches Error:', err);
       return false;
@@ -637,6 +649,8 @@ class CacheService {
 
   // ✅ COMPREHENSIVE CACHE INVALIDATION WITH ALL REQUIRED PATTERNS
   async invalidateStoreCaches(storeId = null, storeSlug = null, brandId = null) {
+    if (!this.isAvailable()) return false;
+    l1Cache.flushAll();
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
@@ -655,8 +669,11 @@ class CacheService {
         );
       }
 
-      this.scheduleInvalidation(patterns);
-      return true;
+      let totalDeleted = 0;
+      for (const pattern of patterns) {
+        totalDeleted += await this.delPattern(pattern);
+      }
+      return totalDeleted;
     } catch (error) {
       console.error('❌ Store cache invalidation error:', error);
       throw error;
@@ -665,6 +682,8 @@ class CacheService {
 
   // ✅ ENHANCED HOMEPAGE CACHE INVALIDATION
   async invalidateHomepageCaches(brandId = null) {
+    if (!this.isAvailable()) return 0;
+    l1Cache.flushAll();
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
@@ -674,8 +693,11 @@ class CacheService {
         `${prefix}coupon_backend:stores*`
       ];
 
-      this.scheduleInvalidation(patterns);
-      return 1;
+      let totalDeleted = 0;
+      for (const pattern of patterns) {
+        totalDeleted += await this.delPattern(pattern);
+      }
+      return totalDeleted;
     } catch (error) {
       console.error('❌ Homepage cache invalidation error:', error);
       throw error;
@@ -684,6 +706,8 @@ class CacheService {
 
   // ✅ ENHANCED CATEGORY CACHE INVALIDATION
   async invalidateCategoryCaches(brandId = null) {
+    if (!this.isAvailable()) return false;
+    l1Cache.flushAll();
     const prefix = brandId ? `${brandId}:` : '';
     try {
       const patterns = [
@@ -693,7 +717,10 @@ class CacheService {
         `${prefix}coupon_backend:homepage*`
       ];
 
-      this.scheduleInvalidation(patterns);
+      let totalDeleted = 0;
+      for (const pattern of patterns) {
+        totalDeleted += await this.delPattern(pattern);
+      }
       return true;
     } catch (error) {
       console.error('❌ Category cache invalidation error:', error);

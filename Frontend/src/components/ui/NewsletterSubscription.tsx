@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { themeClasses } from '@/lib/theme/utils';
+import { useBrand } from '@/context/BrandContext';
 
 export default function NewsletterSubscription() {
+  const brand = useBrand();
+  const isSpecReveal = brand?.brandId === 'specreveal';
+
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -20,8 +24,7 @@ export default function NewsletterSubscription() {
     setStatus('loading');
 
     try {
-      // Here you would typically send the email to your API
-      // For now, we'll just simulate a successful subscription
+      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       setStatus('success');
@@ -63,10 +66,14 @@ export default function NewsletterSubscription() {
           </div>
           <button
             type="submit"
-            className={themeClasses.buttons.orange}
+            className={
+              isSpecReveal
+                ? "border-2 border-brand-primary/40 text-brand-primary hover:bg-brand-primary hover:text-white font-bold px-8 py-3.5 rounded-full shadow-md uppercase tracking-wider text-xs transition-all duration-300 disabled:opacity-50 cursor-pointer"
+                : "bg-brand-accent text-[#0F3D5E] border-2 border-[#0F3D5E] font-black px-8 py-3.5 rounded-full shadow-[3px_3px_0_0_#0F3D5E] hover:shadow-[1px_1px_0_0_#0F3D5E] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[3px] active:translate-y-[3px] uppercase tracking-wider text-xs transition-all duration-200 disabled:opacity-50 cursor-pointer"
+            }
             disabled={status === 'loading'}
           >
-            {status === 'loading' ? 'Joining...' : 'Subscribe'}
+            {status === 'loading' ? 'Joining...' : 'SUBSCRIBE'}
           </button>
         </form>
       )}

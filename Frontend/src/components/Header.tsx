@@ -69,7 +69,11 @@ export default function Header() {
                     width={200}
                     height={200}
                     priority
-                    className="w-40 h-40 transition-transform duration-300"
+                    className={
+                      brand.brandId === 'specreveal'
+                        ? "h-12 md:h-14 w-auto rounded-full object-contain shadow-lg border border-white/20 transition-transform duration-300"
+                        : "w-40 h-40 transition-transform duration-300"
+                    }
                   />
                 </div>
               </Link>

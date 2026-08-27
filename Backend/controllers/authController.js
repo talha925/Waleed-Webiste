@@ -349,7 +349,8 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
         res.status(200).json({
             success: true,
             accessToken,
-            refreshToken, // Keep same refresh token or rotate (keeping same for simplicity)
+            token: accessToken, // 👈 compatibility with all frontend clients
+            refreshToken, // Keep same refresh token or rotate
             expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SEC) || 7 * 24 * 60 * 60
         });
 

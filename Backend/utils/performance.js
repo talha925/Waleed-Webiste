@@ -15,14 +15,18 @@ const _timers = new Set();
 const isEnabled = () => process.env.NODE_ENV !== 'production' || process.env.PERF_LOG === 'true';
 
 const perf = {
-  /** Start a named timer (console.time) */
+  /** Start a named timer (console.time) safely */
   start(label) {
-    if (isEnabled()) console.time(label);
+    if (!isEnabled() || _timers.has(label)) return;
+    _timers.add(label);
+    try { console.time(label); } catch (e) {}
   },
 
-  /** End a named timer (console.timeEnd) */
+  /** End a named timer (console.timeEnd) safely */
   end(label) {
-    if (isEnabled()) console.timeEnd(label);
+    if (!isEnabled() || !_timers.has(label)) return;
+    _timers.delete(label);
+    try { console.timeEnd(label); } catch (e) {}
   },
 
   /** Run an async block and automatically time it */

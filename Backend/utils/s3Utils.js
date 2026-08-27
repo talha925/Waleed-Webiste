@@ -44,10 +44,10 @@ const extractKeyfromUrl = (imageUrl) => {
 const deleteImageFromS3 = async (imageUrl, brandId = 'blogzenix') => {
     if (!imageUrl) return;
 
-    // Don't try to delete if it's not our S3 bucket format
-    const isS3Url = imageUrl.includes('.amazonaws.com');
-    if (!isS3Url) {
-        console.log('[s3Utils] Skipping deletion for non-S3 URL:', imageUrl);
+    // Don't try to delete if it's not our S3/CloudFront URL format
+    const isS3OrCdnUrl = imageUrl.includes('.amazonaws.com') || imageUrl.includes('.cloudfront.net');
+    if (!isS3OrCdnUrl) {
+        console.log('[s3Utils] Skipping deletion for non-S3/non-CDN URL:', imageUrl);
         return;
     }
 

@@ -22,6 +22,8 @@ export interface BrandConfig {
     siteTagline: string;
     /** Path to logo image relative to /public */
     logoPath: string;
+    /** Optional custom Tailwind class for header logo sizing/styling per brand */
+    logoClassName?: string;
     /** Path to favicon relative to /public */
     faviconPath: string;
 
@@ -58,6 +60,8 @@ export interface BrandConfig {
     gtagConversion?: GtagConversion;
 
     // ─── Theme / Colors ──────────────────────────────────────
+    /** Optional flag to enable dark mode class on html element for dark-first brands */
+    isDarkMode?: boolean;
     /** Primary theme color in hex (used for meta theme-color) */
     themeColor: string;
     /** Primary color in HSL values (e.g. "217 91% 60%"), injected as CSS variable */
@@ -68,6 +72,18 @@ export interface BrandConfig {
     accentHSL: string;
     /** Secondary accent color in HSL values */
     accent2HSL?: string;
+    /** Custom background color HSL for brand */
+    backgroundHSL?: string;
+    /** Custom secondary background color HSL for brand */
+    backgroundSecondaryHSL?: string;
+    /** Custom elevated background color HSL for brand cards/header */
+    backgroundElevatedHSL?: string;
+    /** Custom foreground text color HSL for brand */
+    foregroundHSL?: string;
+    /** Custom secondary text color HSL for brand */
+    foregroundSecondaryHSL?: string;
+    /** Custom border color HSL for brand */
+    borderHSL?: string;
 
     // ─── API ─────────────────────────────────────────────────
     /** Backend API base URL */
@@ -83,9 +99,19 @@ export interface BrandConfig {
     /** CloudFront CDN domain host for serving S3 images (e.g. "d123.cloudfront.net") */
     cdnDomain?: string;
 
-    // ─── Layout ──────────────────────────────────────────────
+    // ─── Layout & Design Strategy ─────────────────────────────
     /** Homepage layout variant (e.g. "default", "compact", "magazine") */
     homepageLayout: string;
+    /** Visual theme mode ('light' | 'dark') */
+    themeMode?: 'light' | 'dark';
+    /** Store hero banner variant strategy ('classic' | 'cyber' | 'minimal') */
+    heroStyle?: 'classic' | 'cyber' | 'minimal';
+    /** Coupon card visual variant strategy ('ticket' | 'neon-glass' | 'compact') */
+    cardStyle?: 'ticket' | 'neon-glass' | 'compact';
+    /** Custom hero container padding class override */
+    heroPaddingClass?: string;
+    /** Custom main content margin top class override */
+    mainMarginClass?: string;
 
     // ─── Footer ──────────────────────────────────────────────
     /** Copyright text shown in footer */

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Blog } from '@/lib/types/blog';
 import { themeClasses } from '@/lib/theme/utils';
 import { BannerCache } from '@/lib/cache/bannerCache';
+import { useBrand } from '@/context/BrandContext';
 
 interface HeroBannerProps {
   className?: string;
@@ -13,6 +14,8 @@ interface HeroBannerProps {
 }
 
 export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBannerProps) {
+  const brand = useBrand();
+  const isSpecReveal = brand?.brandId === 'specreveal';
   const [bannerBlogs, setBannerBlogs] = useState<Blog[]>(initialBlogs);
   const [loading, setLoading] = useState(initialBlogs.length === 0);
   const [isFirstLoad, setIsFirstLoad] = useState(initialBlogs.length === 0);
@@ -20,9 +23,8 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
 
-  // Initialize with cached data to prevent skeleton flicker
+  // Initialize with fresh data from server or fetch on demand
   useEffect(() => {
-    // 💡 Performance Optimization: If server already gave us blogs, don't fetch on mount
     if (initialBlogs && initialBlogs.length > 0) {
       setBannerBlogs(initialBlogs);
       setLoading(false);
@@ -30,38 +32,8 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
       return;
     }
 
-    const cacheKey = 'heroBannerData_v11';
-    const cached = localStorage.getItem(cacheKey);
-
-    if (cached) {
-      try {
-        const { data, timestamp } = JSON.parse(cached);
-        const cacheAge = Date.now() - timestamp;
-        const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
-
-        // Always load cached data immediately for instant display
-        if (data?.length > 0) {
-          setBannerBlogs(data);
-          setLoading(false);
-          setIsFirstLoad(false);
-
-          // If cache is expired, trigger a background refresh
-          if (isExpired) {
-            fetchBannerBlogs();
-          }
-        } else {
-          // No cached data, need to fetch
-          fetchBannerBlogs();
-        }
-      } catch (error) {
-        console.error('Error parsing cached data:', error);
-        localStorage.removeItem(cacheKey);
-        fetchBannerBlogs();
-      }
-    } else {
-      // No cache, fetch fresh data
-      fetchBannerBlogs();
-    }
+    // If server didn't provide initial blogs, fetch fresh from API
+    fetchBannerBlogs(true);
   }, [initialBlogs]);
 
   // Cache invalidation function for urgent updates
@@ -304,6 +276,123 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   const currentBlog = bannerBlogs[currentSlide];
   const imageUrl = currentBlog.image?.url || '';
 
+  /* ================================================================
+   * SPEC REVEAL: Compact Cinematic Dark Banner
+   * ================================================================ */
+  if (isSpecReveal) {
+    return (
+      <div className={`relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] overflow-hidden rounded-3xl mt-4 mb-8 shadow-2xl group ${className}`}>
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          {imageUrl ? (
+            <SafeImage
+              src={imageUrl}
+              alt={currentBlog.image?.alt || currentBlog.title}
+              fill
+              className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+              priority
+              fetchPriority="high"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+          )}
+          {/* Dark Cinematic Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30" />
+          {/* Mobile Bottom Gradient */}
+          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent md:hidden" />
+        </div>
+
+        {/* Content */}
+        <div className="absolute inset-0 flex items-end md:items-center pb-16 md:pb-0">
+          <div className="px-6 md:px-12 lg:px-16 max-w-3xl z-10 space-y-4">
+            {/* Category Badge */}
+            {currentBlog.category?.name && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white bg-brand-primary/90 border border-white/20 shadow-md">
+                {currentBlog.category.name}
+              </span>
+            )}
+
+            {/* Title */}
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight drop-shadow-lg line-clamp-2">
+              {currentBlog.title}
+            </h1>
+
+            {/* Description */}
+            {currentBlog.shortDescription && (
+              <p className="text-sm md:text-base text-gray-300 leading-relaxed line-clamp-2 max-w-xl">
+                {currentBlog.shortDescription.length <= 80
+                  ? currentBlog.shortDescription
+                  : currentBlog.shortDescription.substring(0, 77) + '...'}
+              </p>
+            )}
+
+            {/* CTA Button — Outline Style */}
+            <Link
+              href={`/blog/${currentBlog.slug || currentBlog._id}`}
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl border-2 border-brand-primary/50 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 group/btn uppercase tracking-wider text-xs shadow-md"
+            >
+              <span>Read Article</span>
+              <svg
+                className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+
+        {/* Navigation Arrows */}
+        {bannerBlogs.length > 1 && (
+          <div className="hidden md:block">
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white w-10 h-10 rounded-xl cursor-pointer z-10 flex items-center justify-center transition-all duration-300 border border-white/15 hover:border-white/30"
+              aria-label="Previous blog"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white w-10 h-10 rounded-xl cursor-pointer z-10 flex items-center justify-center transition-all duration-300 border border-white/15 hover:border-white/30"
+              aria-label="Next blog"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Slide Indicators */}
+        {bannerBlogs.length > 1 && (
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
+            {bannerBlogs.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`transition-all duration-500 rounded-full ${index === currentSlide
+                  ? 'w-8 h-2 bg-brand-primary shadow-md'
+                  : 'w-2 h-2 bg-white/30 hover:bg-white/50'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ================================================================
+   * BLOGZENIX: 100% Original Banner (Untouched)
+   * ================================================================ */
   return (
     <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl group ${className}`}>
       {/* Background Image / Fallback */}

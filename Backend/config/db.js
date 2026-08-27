@@ -7,12 +7,12 @@ const tenantConnections = {};
 let centralConnection = null;
 
 const mongoOptions = {
-  maxPoolSize: 3,                  // Keep small for serverless/local
+  maxPoolSize: 15,                 // 🚀 FIX: Increased from 3 to prevent socket starvation under concurrent requests
   minPoolSize: 1,                  // Keep at least 1 connection alive
-  serverSelectionTimeoutMS: 30000, // 🚀 FIX: Increased from 10s. MongoDB Atlas needs more time on slow networks
-  socketTimeoutMS: 45000,          // 🚀 FIX: Increased from 20s to prevent premature socket drops
-  connectTimeoutMS: 30000,         // 🚀 FIX: Increased from 10s
-  heartbeatFrequencyMS: 10000,     // Reverted to default 10s for reliable failure detection
+  serverSelectionTimeoutMS: 30000, // 🚀 FIX: Increased to 30s for MongoDB Atlas reliability
+  socketTimeoutMS: 45000,          // 🚀 FIX: Increased to 45s to prevent premature socket drops
+  connectTimeoutMS: 30000,         // 🚀 FIX: 30s connection timeout
+  heartbeatFrequencyMS: 10000,     // 10s heartbeat for failure detection
   autoIndex: process.env.NODE_ENV === 'development',
   maxIdleTimeMS: 60000,            // Close idle connections after 60s
 };
@@ -76,7 +76,7 @@ const getTenantConnection = async (brandId, uri) => {
   }
 
   console.log(`🔌 Creating new DB connection for brand: ${brandId}`);
-  
+
   // 3. Create the connection promise
   connectionPromises[brandId] = (async () => {
     try {

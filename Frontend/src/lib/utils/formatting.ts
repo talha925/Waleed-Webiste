@@ -131,3 +131,60 @@ export const stripPPCParams = (url: string): string => {
 export const cleanTrackingUrl = (url: string): string => {
   return stripPPCParams(sanitizeUrl(url));
 };
+
+/**
+ * Cleans ugly backticks, HTML entities, and formatting artifacts from text strings
+ * e.g. "you`re" -> "you're", "don&#x27;t" -> "don't", "```" removal
+ */
+export const cleanTypography = (text: string | null | undefined): string => {
+  if (!text || typeof text !== 'string') return '';
+  let str = text;
+
+  // Recursively decode common HTML entities in case of double/triple encoding
+  for (let i = 0; i < 3; i++) {
+    if (!/&(?:amp|#39|#x27|quot|lt|gt|#8216|#8217|#8220|#8221|lsquo|rsquo|ldquo|rdquo|apos);/i.test(str)) {
+      break;
+    }
+    str = str
+      .replace(/&amp;/gi, '&')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&apos;/gi, "'")
+      .replace(/&lsquo;/gi, "'")
+      .replace(/&rsquo;/gi, "'")
+      .replace(/&#8216;/g, "'")
+      .replace(/&#8217;/g, "'")
+      .replace(/&ldquo;/gi, '"')
+      .replace(/&rdquo;/gi, '"')
+      .replace(/&#8220;/g, '"')
+      .replace(/&#8221;/g, '"')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>');
+  }
+
+  return str
+    // Replace backtick used as apostrophe
+    .replace(/(\w)`(\w)/g, "$1'$2")
+    .replace(/`([a-zA-Z])/g, "'$1")
+    // Remove stray markdown code fences
+    .replace(/```[a-zA-Z]*\n?/g, '')
+    .replace(/```/g, '');
+};
+
+/**
+ * Dynamic Multi-Brand Text Sanitizer:
+ * Replaces any legacy/hardcoded brand names in DB text (BlogZenix, Penny Scroll, Review Chronicle, Spec Reveal, Trust Lense, Trend Filtered)
+ * with the currently active brand's display name and cleans typography encoding artifacts.
+ */
+export const sanitizeBrandText = (text: string | null | undefined, currentBrandName: string): string => {
+  if (!text || typeof text !== 'string') return '';
+  const cleaned = cleanTypography(text);
+  return cleaned
+    .replace(/BlogZenix/gi, currentBrandName)
+    .replace(/Penny\s*Scroll/gi, currentBrandName)
+    .replace(/Review\s*Chronicle/gi, currentBrandName)
+    .replace(/Spec\s*Reveal/gi, currentBrandName)
+    .replace(/Trust\s*Lense/gi, currentBrandName)
+    .replace(/Trend\s*Filtered/gi, currentBrandName);
+};
