@@ -33,7 +33,16 @@ export async function POST(request: NextRequest) {
     const bearerSecret = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
     const providedSecret = secret || bearerSecret;
 
-    if (!providedSecret || providedSecret !== process.env.REVALIDATION_SECRET) {
+    const validSecrets = [
+      process.env.REVALIDATION_SECRET,
+      process.env.NEXT_REVALIDATE_SECRET,
+      process.env.BLOGZENIX_REVALIDATE_SECRET,
+      process.env.SPECREVEAL_REVALIDATE_SECRET,
+      process.env.TRENDFILTERED_REVALIDATE_SECRET,
+      process.env.PENNYSCROLL_REVALIDATION_SECRET,
+    ].filter(Boolean) as string[];
+
+    if (!providedSecret || !validSecrets.includes(providedSecret)) {
       console.warn(`[Revalidation] Unauthorized attempt. Type: ${type}, ID: ${path || tag || blogId}`);
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 });
     }

@@ -137,7 +137,12 @@ const nextConfig = {
       },
       {
         source: '/stores',
-        destination: '/',
+        destination: '/store',
+        permanent: true,
+      },
+      {
+        source: '/blogs',
+        destination: '/blog',
         permanent: true,
       },
     ];

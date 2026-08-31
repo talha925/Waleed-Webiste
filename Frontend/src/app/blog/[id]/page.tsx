@@ -229,24 +229,70 @@ function formatAndParseBlogContent(rawContent: string, brandName: string, store?
 
 type Params = Promise<{ id: string }>;
 
-// Generate metadata - no changes needed here
+// Generate complete metadata with self-canonical and robots for SEO
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
   const params = await props.params;
   const [{ data: blog }, brand] = await Promise.all([
     fetchBlogDetailServer(params.id),
     getBrandConfig()
   ]);
-  if (!blog) return { title: 'Blog Not Found' };
+
+  if (!blog) {
+    return {
+      title: `Blog Not Found | ${brand.siteName}`,
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const title = sanitizeBrandText(blog.meta?.title || blog.title, brand.siteName);
+  const description = sanitizeBrandText(blog.meta?.description || blog.excerpt || 'Read the full article on ' + brand.siteName, brand.siteName);
+  const canonicalUrl = `${brand.siteUrl}/blog/${blog.slug || params.id}`;
+  const ogImageUrl = blog.image?.url || `${brand.siteUrl}${brand.ogImage}`;
+
   return {
-    title: sanitizeBrandText(blog.meta?.title || blog.title, brand.siteName),
-    description: sanitizeBrandText(blog.meta?.description || blog.excerpt || 'Blog post description', brand.siteName),
+    title,
+    description,
+    keywords: blog.meta?.keywords,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: 'article',
+      siteName: brand.siteName,
+      publishedTime: blog.createdAt,
+      images: [
+        {
+          url: ogImageUrl,
+          alt: blog.image?.alt || title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 
-
 import { redirect, notFound } from 'next/navigation';
-
-// ... other imports
 
 // --- Main Page Component ---
 export default async function BlogDetailPage(props: { params: Params }) {
@@ -261,54 +307,83 @@ export default async function BlogDetailPage(props: { params: Params }) {
   }
 
   if (!blog) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        </div>
-
-        <div className="relative z-10 container mx-auto px-4 py-8">
-          {/* Blog not found */}
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <div className="text-center max-w-md mx-auto">
-              {/* Decorative elements */}
-              <div className="relative mb-8">
-                <div className={`w-32 h-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-6`}>
-                  <div className={`w-20 h-20 bg-primary rounded-full flex items-center justify-center`}>
-                    <span className="text-white text-3xl font-bold">!</span>
-                  </div>
-                </div>
-                <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary/20 rounded-full opacity-60 animate-pulse"></div>
-                <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-accent/20 rounded-full opacity-40 animate-pulse delay-300"></div>
-              </div>
-
-              <h1 className={`text-4xl font-bold text-primary mb-4`}>
-                Blog Not Found
-              </h1>
-              <p className="text-foreground-secondary mb-8 leading-relaxed">
-                The blog post you're looking for doesn't exist or has been moved. Let's get you back on track!
-              </p>
-
-              <a
-                href="/blog"
-                className={`inline-flex items-center px-8 py-4 ${themeClasses.buttons.orange} transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl`}
-              >
-                <span className="mr-2">📚</span>
-                Browse All Blogs
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    // Return authentic HTTP 404 status code for search engines and crawlers
+    notFound();
   }
-
 
   const brand = await getBrandConfig();
   const fullUrl = `${brand.siteUrl}/blog/${blog.slug || params.id}`;
+  const authorName = (typeof blog.author === 'object' ? blog.author?.name : blog.author) || `${brand.siteName} Editorial Team`;
+
+  // Article / BlogPosting Structured Data for Google Rich Snippets
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: cleanTypography(blog.title),
+    description: sanitizeBrandText(blog.meta?.description || blog.excerpt || '', brand.siteName),
+    image: blog.image?.url || `${brand.siteUrl}${brand.ogImage}`,
+    datePublished: blog.createdAt || new Date().toISOString(),
+    dateModified: blog.lastUpdated || blog.createdAt || new Date().toISOString(),
+    author: {
+      '@type': 'Person',
+      name: authorName,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: brand.siteName,
+      url: brand.siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${brand.siteUrl}${brand.logoPath}`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': fullUrl,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: brand.siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Blog',
+        item: `${brand.siteUrl}/blog`,
+      },
+      ...(blog.category ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: blog.category.name,
+        item: `${brand.siteUrl}/blog/category/${blog.category.slug}`,
+      }] : []),
+      {
+        '@type': 'ListItem',
+        position: blog.category ? 4 : 3,
+        name: cleanTypography(blog.title),
+        item: fullUrl,
+      },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Reading Progress Indicator */}
       <ReadingProgress />
 

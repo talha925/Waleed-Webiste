@@ -50,9 +50,6 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
     },
     metadataBase: new URL(brand.siteUrl),
-    alternates: {
-      canonical: '/',
-    },
     openGraph: {
       title: brand.metaTitle,
       description: brand.metaDescription,

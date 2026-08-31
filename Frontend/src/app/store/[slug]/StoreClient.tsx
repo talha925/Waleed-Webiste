@@ -47,22 +47,25 @@ interface StoreClientProps {
 }
 
 // --- Confetti Animation Helper ---
-const triggerConfetti = async (x: number, y: number) => {
-  const originX = x / window.innerWidth;
-  const originY = y / window.innerHeight;
+const triggerConfetti = (x: number, y: number) => {
+  if (typeof window === 'undefined') return;
+  requestAnimationFrame(async () => {
+    try {
+      const originX = x / window.innerWidth;
+      const originY = y / window.innerHeight;
+      const confetti = (await import('canvas-confetti')).default;
 
-  const confetti = (await import('canvas-confetti')).default;
-
-  confetti({
-    particleCount: 80,
-    spread: 70,
-    origin: { x: originX, y: originY },
-    colors: ['#2563eb', '#9333ea', '#f59e0b', '#ec4899', '#10b981'],
-    ticks: 200,
-    gravity: 1.2,
-    scalar: 0.9,
-    shapes: ['circle', 'square'],
-    zIndex: 9999
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { x: originX, y: originY },
+        colors: ['#2563eb', '#9333ea', '#f59e0b', '#ec4899', '#10b981'],
+        ticks: 150,
+        gravity: 1.2,
+        scalar: 0.9,
+        zIndex: 9999
+      });
+    } catch (_) {}
   });
 };
 
@@ -579,48 +582,59 @@ export default function StoreClient({ initialStore, serverError }: StoreClientPr
   const handleGetDeal = useCallback((coupon: Coupon, e: React.MouseEvent) => {
     if (!initialStore) return;
 
-    setAreCouponsUnlocked(true);
-    setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
-
-    // 🚀 Trigger Google Ads Conversion Event
-    if (typeof window !== 'undefined' && window.gtag && brand.gtagConversion) {
-      window.gtag('event', 'conversion', {
-        'send_to': brand.gtagConversion.sendTo,
-        'value': brand.gtagConversion.value,
-        'currency': brand.gtagConversion.currency
-      });
-    }
-
-    // 🚀 Track click in Backend Database
-    if (brand.apiBaseUrl && coupon._id) {
-      fetch(`${brand.apiBaseUrl}/api/coupons/${coupon._id}/track`, { method: 'POST' }).catch(err => console.error('Tracking error:', err));
-    }
-
+    // Instant UI feedback for sub-100ms INP
     if (coupon.code) {
-      navigator.clipboard.writeText(coupon.code)
-        .then(() => {
-          triggerConfetti(e.clientX, e.clientY);
-          toast.success('Code copied to clipboard!');
-        })
-        .catch((err) => {
-          console.error('Failed to copy code:', err);
-          toast.error('Failed to copy. Please copy the code manually.');
-        });
       setSelectedCode(coupon.code);
       setShowModal(true);
-
-      if (initialStore.trackingUrl && !hasRedirected.current) {
-        const storeUrl = cleanTrackingUrl(decodeHTML(initialStore.trackingUrl));
-        window.open(storeUrl, '_blank', 'noopener,noreferrer');
-        setTimeout(() => {
-          hasRedirected.current = true;
-        }, 7000);
-      }
-    } else {
-      if (initialStore.trackingUrl) window.open(cleanTrackingUrl(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
-      toast.success('Deal activated! Redirecting...');
     }
-  }, [initialStore]);
+
+    React.startTransition(() => {
+      setAreCouponsUnlocked(true);
+      setRevealedCoupons(prev => ({ ...prev, [coupon._id]: true }));
+    });
+
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+
+    // Run clipboard, animations, and network tracking asynchronously
+    setTimeout(() => {
+      // 🚀 Trigger Google Ads Conversion Event
+      if (typeof window !== 'undefined' && (window as any).gtag && brand.gtagConversion) {
+        (window as any).gtag('event', 'conversion', {
+          'send_to': brand.gtagConversion.sendTo,
+          'value': brand.gtagConversion.value,
+          'currency': brand.gtagConversion.currency
+        });
+      }
+
+      // 🚀 Track click in Backend Database
+      if (brand.apiBaseUrl && coupon._id) {
+        fetch(`${brand.apiBaseUrl}/api/coupons/${coupon._id}/track`, { method: 'POST' }).catch(() => {});
+      }
+
+      if (coupon.code) {
+        navigator.clipboard.writeText(coupon.code)
+          .then(() => {
+            triggerConfetti(clientX, clientY);
+            toast.success('Code copied to clipboard!');
+          })
+          .catch(() => {
+            toast.error('Failed to copy. Please copy the code manually.');
+          });
+
+        if (initialStore.trackingUrl && !hasRedirected.current) {
+          const storeUrl = cleanTrackingUrl(decodeHTML(initialStore.trackingUrl));
+          window.open(storeUrl, '_blank', 'noopener,noreferrer');
+          setTimeout(() => {
+            hasRedirected.current = true;
+          }, 7000);
+        }
+      } else {
+        if (initialStore.trackingUrl) window.open(cleanTrackingUrl(decodeHTML(initialStore.trackingUrl)), '_blank', 'noopener,noreferrer');
+        toast.success('Deal activated! Redirecting...');
+      }
+    }, 0);
+  }, [initialStore, brand]);
 
   const handleCloseModal = useCallback(() => { setShowModal(false); setSelectedCode(null); }, []);
 

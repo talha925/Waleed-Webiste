@@ -16,6 +16,16 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: {
       canonical: `${brand.siteUrl}/blog`,
     },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 

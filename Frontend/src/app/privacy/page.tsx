@@ -7,6 +7,25 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Privacy Policy - ${brand.siteName}`,
     description: `Privacy Policy for ${brand.siteName} - Learn how we collect, use, and protect your personal information.`,
     keywords: `privacy policy, data protection, personal information, cookies, ${brand.siteName}`,
+    alternates: {
+      canonical: `${brand.siteUrl}/privacy`,
+    },
+    openGraph: {
+      title: `Privacy Policy - ${brand.siteName}`,
+      description: `Privacy Policy for ${brand.siteName} - Learn how we protect your information.`,
+      url: `${brand.siteUrl}/privacy`,
+      siteName: brand.siteName,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 

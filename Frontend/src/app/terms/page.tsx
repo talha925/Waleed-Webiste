@@ -7,6 +7,25 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Terms & Conditions - ${brand.siteName}`,
     description: `Terms and Conditions for ${brand.siteName}. Please read these terms carefully before using our website.`,
     keywords: `terms, conditions, ${brand.siteName}, legal, website terms, usage policy`,
+    alternates: {
+      canonical: `${brand.siteUrl}/terms`,
+    },
+    openGraph: {
+      title: `Terms & Conditions - ${brand.siteName}`,
+      description: `Terms and Conditions for ${brand.siteName}.`,
+      url: `${brand.siteUrl}/terms`,
+      siteName: brand.siteName,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 

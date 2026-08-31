@@ -7,8 +7,8 @@ import { Metadata } from 'next';
 import { notFound, redirect, RedirectType } from 'next/navigation';
 import { sanitizeBrandText } from '@/lib/utils/formatting';
 
-// Enable dynamic rendering since brand identification depends on host headers
-export const dynamic = 'force-dynamic';
+// ISR: Edge cache store pages for 60s with on-demand revalidation
+export const revalidate = 60;
 
 interface StorePageProps {
   params: Promise<{ slug: string }>;

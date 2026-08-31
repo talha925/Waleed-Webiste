@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import BlogList from '@/components/blog/BlogList';
 import { getBrandConfig } from '@config/server-config';
 import { fetchBlogCategoriesServer, fetchBlogsByCategoryServer } from '@/lib/serverData';
@@ -30,6 +30,10 @@ export async function generateMetadata(props: CategoryPageProps): Promise<Metada
     return {
       title: `Category Not Found | ${brand.siteName}`,
       description: 'The requested blog category could not be found.',
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 
@@ -121,7 +125,7 @@ export default async function CategoryPage(props: CategoryPageProps) {
   const category = categories.find((cat: any) => cat.slug === params.slug);
 
   if (!category) {
-    redirect('/blog');
+    notFound();
   }
 
   // API endpoint for client-side pagination

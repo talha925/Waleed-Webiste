@@ -64,6 +64,8 @@ const executeRevalidation = async (type, identifier, brandId, metadata) => {
             if (!isDev && (frontendUrls.length === 0 || frontendUrls.every(u => u.includes('localhost')))) {
                 if (brandId === 'blogzenix') frontendUrls.push('https://www.blogzenix.com');
                 if (brandId === 'pennyscroll') frontendUrls.push('https://pennyscroll.com');
+                if (brandId === 'specreveal') frontendUrls.push('https://www.specreveal.com');
+                if (brandId === 'trendfiltered') frontendUrls.push('https://www.trendfiltered.com');
             }
 
             if (frontendUrls.length === 0) {

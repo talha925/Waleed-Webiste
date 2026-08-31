@@ -4,13 +4,20 @@ import { fetchStoresServer } from '@/lib/serverData';
 import { StoresClient } from './StoresClient';
 import type { Metadata } from 'next';
 
-// Generate metadata for SEO
+import { getBrandConfig } from '@config/server-config';
+
+// Private page - blocked from search engines
 export const metadata: Metadata = {
-  title: 'All Stores - Find Your Favorite Brands',
-  description: 'Browse all available stores and discover amazing deals from your favorite brands. Find coupons, discounts, and exclusive offers.',
-  openGraph: {
-    title: 'All Stores - Find Your Favorite Brands',
-    description: 'Browse all available stores and discover amazing deals from your favorite brands.',
+  title: 'Admin - Store Directory View',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
   },
 };
 

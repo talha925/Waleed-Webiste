@@ -11,16 +11,30 @@ import { fetchHomeDataServer } from "@/lib/serverData";
 // Force dynamic rendering since brand detection depends on the hostname header
 export const dynamic = 'force-dynamic';
 
-// Dynamic metadata per brand
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig();
   return {
-    title: `Featured Blogs | ${brand.siteName}`,
+    title: brand.metaTitle || `Featured Blogs | ${brand.siteName}`,
     description: brand.metaDescription,
+    alternates: {
+      canonical: brand.siteUrl,
+    },
     openGraph: {
-      title: `Featured Blogs | ${brand.siteName}`,
+      title: brand.metaTitle || `Featured Blogs | ${brand.siteName}`,
       description: brand.metaDescription,
+      url: brand.siteUrl,
+      siteName: brand.siteName,
       images: [brand.ogImage || '/image/travel_cat.png'],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
   };
 }

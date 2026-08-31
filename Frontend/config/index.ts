@@ -34,7 +34,22 @@ const DOMAIN_MAP: Array<{ match: string; config: BrandConfig }> = [
  * This is safe to import on both client and server sides.
  */
 export function getBrandConfigByHost(host: string): BrandConfig {
-    // Priority 1: Environment Variable Override (for Local Dev)
+    const hostname = host.split(':')[0].toLowerCase().trim(); // Remove port, lowercase, trim
+
+    // Priority 1: Domain / Subdomain Matching (Works for multi-domain deployments)
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        for (const entry of DOMAIN_MAP) {
+            if (hostname === entry.match || hostname.endsWith(`.${entry.match}`)) {
+                return entry.config;
+            }
+            // Logic for Vercel preview/branch domains (e.g. specreveal-frontend.vercel.app)
+            if (hostname.includes(entry.config.brandId) && hostname.includes('vercel.app')) {
+                return entry.config;
+            }
+        }
+    }
+
+    // Priority 2: Environment Variable Override (for Local Dev or dedicated single-brand projects)
     if (process.env.NEXT_PUBLIC_APP_BRAND_ID) {
         for (const entry of DOMAIN_MAP) {
             if (entry.config.brandId === process.env.NEXT_PUBLIC_APP_BRAND_ID) {
@@ -43,20 +58,10 @@ export function getBrandConfigByHost(host: string): BrandConfig {
         }
     }
 
-    // Priority 2: Domain Matching
-    const hostname = host.split(':')[0].toLowerCase(); // Remove port and lowercase
-    for (const entry of DOMAIN_MAP) {
-        if (hostname === entry.match || hostname.endsWith(`.${entry.match}`)) {
-            return entry.config;
-        }
-        // Logic for Vercel preview/branch domains (e.g. blogzenix-frontend.vercel.app)
-        if (hostname.includes(entry.config.brandId) && hostname.includes('vercel.app')) {
-            return entry.config;
-        }
+    // Fallback: If no match found, fallback to default brand
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+        console.warn(`[Brand Config] No matching configuration found for host: "${host}". Falling back to default.`);
     }
-
-    // Fallback to first brand
-    console.warn(`[Brand Config] No matching configuration found for host: "${host}". Falling back to default.`);
     return DOMAIN_MAP[0].config;
 }
 

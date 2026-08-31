@@ -8,6 +8,25 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `About Us - ${brand.siteName}`,
     description: `Learn about ${brand.siteName}, your trusted source for savings, deals, and shopping guides. Discover our mission to help you make informed purchasing decisions.`,
     keywords: `about ${brand.siteName}, savings blog, deal finder, shopping guides, money saving tips`,
+    alternates: {
+      canonical: `${brand.siteUrl}/about`,
+    },
+    openGraph: {
+      title: `About Us - ${brand.siteName}`,
+      description: `Learn about ${brand.siteName}, your trusted source for savings, deals, and shopping guides.`,
+      url: `${brand.siteUrl}/about`,
+      siteName: brand.siteName,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 

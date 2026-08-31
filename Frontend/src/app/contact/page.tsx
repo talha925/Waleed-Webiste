@@ -8,6 +8,25 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `Contact Us - ${brand.siteName}`,
     description: `Get in touch with ${brand.siteName}. We would love to hear from you for suggestions, collaborations, or general inquiries.`,
     keywords: `contact, ${brand.siteName}, email, support, inquiries, collaboration`,
+    alternates: {
+      canonical: `${brand.siteUrl}/contact`,
+    },
+    openGraph: {
+      title: `Contact Us - ${brand.siteName}`,
+      description: `Get in touch with ${brand.siteName}. We would love to hear from you.`,
+      url: `${brand.siteUrl}/contact`,
+      siteName: brand.siteName,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
   };
 }
 
