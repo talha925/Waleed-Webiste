@@ -32,9 +32,15 @@ const getCentralConnection = async () => {
     return centralConnectionPromise;
   }
 
-  const uri = process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI;
+  const uri = 
+    process.env.MONGO_URI ||
+    process.env.SPECREVEAL_MONGO_URI ||
+    process.env.BLOGZENIX_MONGO_URI || 
+    process.env.TRENDFILTERED_MONGO_URI || 
+    process.env.PENNYSCROLL_MONGO_URI;
+
   if (!uri) {
-    throw new Error('❌ MONGO_URI or BLOGZENIX_MONGO_URI is missing. Central connection cannot be established.');
+    throw new Error('❌ No Mongo URI found (MONGO_URI / SPECREVEAL_MONGO_URI / BLOGZENIX_MONGO_URI). Central connection cannot be established.');
   }
 
   console.log('🔌 Connecting to Central Database...');

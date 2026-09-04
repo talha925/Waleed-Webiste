@@ -7,10 +7,7 @@
  * Each app needs these to function properly
  */
 const REQUIRED_ENV_VARS = [
-    'JWT_SECRET',
-    'REDIS_URL',
-    'AWS_ACCESS_KEY_ID',
-    'AWS_SECRET_ACCESS_KEY'
+    'JWT_SECRET'
 ];
 
 /**

@@ -11,7 +11,7 @@
  * It only decorates the request object with brand info.
  */
 
-const { getBrandByHost } = require('../config/brands');
+const { getBrandByHost, getBrandById } = require('../config/brands');
 const { getTenantConnection, getCentralConnection } = require('../config/db');
 const { getTenantModels, getCentralModels } = require('../models/TenantModels');
 
@@ -37,13 +37,12 @@ async function brandDetection(req, res, next) {
             initializationDone = true; // Never wait again after first resolution
         }
 
-        // 1. Resolve Brand from Header or Host FIRST (Needed for DB detection)
+        // 1. Resolve Brand from Header or Host FIRST (Generic Multi-Tenant)
         const brandIdFromHeader = req.headers['x-brand-id'];
         let brand;
 
         if (brandIdFromHeader) {
-            const { BRAND_MAP } = require('../config/brands');
-            brand = BRAND_MAP.find(b => b.brandId === brandIdFromHeader) || getBrandByHost('');
+            brand = getBrandById(brandIdFromHeader);
         } else {
             const host =
                 req.headers['x-forwarded-host'] ||
@@ -56,14 +55,7 @@ async function brandDetection(req, res, next) {
         req.brand = brand;
 
         // 2. Resolve Tenant Database Connection
-        let uri = brand.mongoUri;
-        
-        // Root Fallback: If specific brand URI is missing, check major environment variables
-        if (!uri) {
-            uri = process.env.MONGO_URI || 
-                  process.env.BLOGZENIX_MONGO_URI || 
-                  process.env.PENNYSCROLL_MONGO_URI;
-        }
+        let uri = brand.mongoUri || process.env.MONGO_URI;
 
         if (!uri) {
             const host = req.headers['host'] || 'unknown';
