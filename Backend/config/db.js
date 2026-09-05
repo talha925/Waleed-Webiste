@@ -33,9 +33,10 @@ const getCentralConnection = async () => {
   }
 
   const uri = 
+    process.env.CENTRAL_MONGO_URI ||
+    process.env.BLOGZENIX_MONGO_URI || 
     process.env.MONGO_URI ||
     process.env.SPECREVEAL_MONGO_URI ||
-    process.env.BLOGZENIX_MONGO_URI || 
     process.env.TRENDFILTERED_MONGO_URI || 
     process.env.PENNYSCROLL_MONGO_URI;
 
