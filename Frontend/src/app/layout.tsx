@@ -131,7 +131,9 @@ export default async function RootLayout({
           }}
         />
         <meta name="theme-color" content={brand.themeColor} />
-        <meta name="google-site-verification" content="BPO_05-y3girQJnOzN4k3xo6r07DPlcH1OFydF3S9eY" />
+        {brand.googleSiteVerification && (
+          <meta name="google-site-verification" content={brand.googleSiteVerification} />
+        )}
         {brand.adSenseAccount && (
           <meta name="google-adsense-account" content={brand.adSenseAccount} />
         )}
@@ -141,8 +143,12 @@ export default async function RootLayout({
 
         {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}
         {/* Image domain / CDN - needed immediately for LCP image */}
-        <link rel="preconnect" href={`https://${brand.cdnDomain || brand.imageDomain}`} crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href={`https://${brand.cdnDomain || brand.imageDomain}`} />
+        {(brand.cdnDomain || brand.imageDomain) && (
+          <>
+            <link rel="preconnect" href={`https://${brand.cdnDomain || brand.imageDomain}`} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={`https://${brand.cdnDomain || brand.imageDomain}`} />
+          </>
+        )}
         {/* GTM: DNS prefetch only (not full preconnect) - scripts load lazily */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
@@ -165,18 +171,22 @@ export default async function RootLayout({
               <SpeedInsights />
               <Analytics />
 
-              {/* 🚀 FIXED: Use afterInteractive so analytics correctly tracks early pageviews and clicks */}
-              <script
-                src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
-                async
-              ></script>
+              {/* Google Analytics: Only load when a valid brand GA ID is configured */}
+              {brand.gaId && (
+                <>
+                  <script
+                    src={`https://www.googletagmanager.com/gtag/js?id=${brand.gaId}`}
+                    async
+                  ></script>
+                  <script id="google-analytics" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }}></script>
+                </>
+              )}
               {brand.googleAdsId && (
                 <script
                   src={`https://www.googletagmanager.com/gtag/js?id=${brand.googleAdsId}`}
                   async
                 ></script>
               )}
-              <script id="google-analytics" dangerouslySetInnerHTML={{ __html: gtagInnerHtml }}></script>
             </div>
           </ErrorBoundary>
         </Providers>

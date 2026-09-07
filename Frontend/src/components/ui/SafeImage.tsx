@@ -96,7 +96,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
 
   const cleanSrc = getCleanSrc(currentSrc);
 
-  if (!cleanSrc && !fill) return null;
+  if (!cleanSrc) return null;
 
   return (
     <Image

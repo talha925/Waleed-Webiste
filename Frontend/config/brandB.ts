@@ -41,6 +41,7 @@ const brandB: BrandConfig = {
     gaId: process.env.NEXT_PUBLIC_GA_ID_BRAND_B || 'G-RLGDEQM2Z9',
     googleAdsId: 'AW-17998192949',
     adSenseAccount: 'ca-pub-5501806014590426',
+    googleSiteVerification: 'BPO_05-y3girQJnOzN4k3xo6r07DPlcH1OFydF3S9eY',
     impactSiteVerification: '787d0258-0f9d-406f-b2b2-ec884ca8b45f',
     gtagConversion: {
         sendTo: 'AW-17998192949/KletCK3N5pMcELXCmoZD',

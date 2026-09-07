@@ -41,7 +41,8 @@ const brandC: BrandConfig = {
   twitterImage: '/image/specreveal-logo.png',
 
   // ─── Analytics & Tracking ────────────────────────────────
-  gaId: process.env.NEXT_PUBLIC_GA_ID_BRAND_C || '',
+  gaId: 'G-F97NME8DVE',
+  googleSiteVerification: 'G5r3y4PDbWGqvd0x643AuVcEsahb28YBX4Y7gpfiqrc',
 
   // ─── Theme / Colors ──────────────────────────────────────
   isDarkMode: true,
@@ -66,6 +67,7 @@ const brandC: BrandConfig = {
   // ─── Database & Storage ──────────────────────────────────
   mongoDBName: process.env.MONGO_DB_NAME_BRAND_C || undefined,
   bucketName: process.env.AWS_BUCKET_NAME_BRAND_C || 'specreveal-images',
+  imageDomain: process.env.SPECREVEAL_IMAGE_DOMAIN || 'specreveal-images.s3.us-east-1.amazonaws.com',
   cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || 'd2wb25wu8gphm4.cloudfront.net',
 
   // ─── Layout & Design Strategy ─────────────────────────────

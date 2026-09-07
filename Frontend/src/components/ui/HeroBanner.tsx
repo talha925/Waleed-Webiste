@@ -183,6 +183,12 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
     }
   }, [bannerBlogs.length]);
 
+  useEffect(() => {
+    if (currentSlide >= bannerBlogs.length && bannerBlogs.length > 0) {
+      setCurrentSlide(0);
+    }
+  }, [bannerBlogs.length, currentSlide]);
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % bannerBlogs.length);
   };
@@ -273,7 +279,9 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
     );
   }
 
-  const currentBlog = bannerBlogs[currentSlide];
+  const activeSlide = bannerBlogs[currentSlide] ? currentSlide : 0;
+  const currentBlog = bannerBlogs[activeSlide];
+  if (!currentBlog) return null;
   const imageUrl = currentBlog.image?.url || '';
 
   /* ================================================================
