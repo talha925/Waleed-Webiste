@@ -13,10 +13,10 @@ const upload = multer({ storage });
 
 // S3 client setup
 const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION || 'us-east-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIAX2DZEDEZ4VSFZMUU',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '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',
   },
 });
 
@@ -46,7 +46,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     console.log(`[Upload] Processing request... Folder: [${folder}], Key: [${fileKey}]`);
 
-    const bucketName = req.brand?.bucketName || process.env.AWS_BUCKET_NAME;
+    const bucketName = req.brand?.bucketName || (req.brand?.brandId === 'specreveal' ? 'specreveal-images' : (process.env.AWS_BUCKET_NAME || 'blogzenix-images'));
 
     const uploadParams = {
       Bucket: bucketName,
@@ -73,7 +73,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       }
     }
 
-    const cdnDomain = req.brand?.cdnDomain;
+    const cdnDomain = req.brand?.cdnDomain || (req.brand?.brandId === 'specreveal' ? 'd2wb25wu8gphm4.cloudfront.net' : null);
     const imageUrl = cdnDomain
       ? `https://${cdnDomain}/${fileKey}`
       : `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;

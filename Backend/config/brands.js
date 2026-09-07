@@ -26,6 +26,13 @@ const BRAND_MAP = [
         cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
     },
     {
+        match: 'waleed-webiste-backend.vercel.app',
+        brandId: 'blogzenix',
+        mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+    },
+    {
         match: 'blogzenix.com',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
@@ -42,9 +49,9 @@ const BRAND_MAP = [
     {
         match: 'specreveal.com',
         brandId: 'specreveal',
-        mongoUri: process.env.SPECREVEAL_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.SPECREVEAL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        mongoUri: process.env.SPECREVEAL_MONGO_URI || process.env.MONGO_URI || 'mongodb+srv://mt:mt123!!!@cluster0.0zs6w.mongodb.net/specreveal_db?retryWrites=true&w=majority&appName=Cluster0',
+        bucketName: process.env.SPECREVEAL_S3_BUCKET || process.env.AWS_BUCKET_NAME || 'specreveal-images',
+        cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || process.env.CDN_DOMAIN || 'd2wb25wu8gphm4.cloudfront.net',
     },
     {
         match: 'trendfiltered.com',
