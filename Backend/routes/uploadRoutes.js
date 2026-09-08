@@ -46,7 +46,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     console.log(`[Upload] Processing request... Folder: [${folder}], Key: [${fileKey}]`);
 
-    const bucketName = req.brand?.bucketName || (req.brand?.brandId === 'specreveal' ? 'specreveal-images' : (process.env.AWS_BUCKET_NAME || 'blogzenix-images'));
+    const bucketName = req.brand?.bucketName || (req.brand?.brandId === 'specreveal' ? 'specreveal-images' : 'blogzenix-images');
 
     const uploadParams = {
       Bucket: bucketName,
@@ -73,7 +73,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       }
     }
 
-    const cdnDomain = req.brand?.cdnDomain || (req.brand?.brandId === 'specreveal' ? 'd2wb25wu8gphm4.cloudfront.net' : null);
+    const cdnDomain = req.brand?.cdnDomain;
     const imageUrl = cdnDomain
       ? `https://${cdnDomain}/${fileKey}`
       : `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;

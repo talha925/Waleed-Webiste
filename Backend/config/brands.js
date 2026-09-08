@@ -15,50 +15,50 @@ const BRAND_MAP = [
         match: 'localhost',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || 'blogzenix-images',
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
     },
     {
         match: '127.0.0.1',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || 'blogzenix-images',
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
     },
     {
         match: 'waleed-webiste-backend.vercel.app',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || 'blogzenix-images',
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
     },
     {
         match: 'blogzenix.com',
         brandId: 'blogzenix',
         mongoUri: process.env.BLOGZENIX_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.BLOGZENIX_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.BLOGZENIX_S3_BUCKET || 'blogzenix-images',
+        cdnDomain: process.env.BLOGZENIX_CDN_DOMAIN || 'd3lt8ces76vqi0.cloudfront.net',
     },
     {
         match: 'pennyscroll.com',
         brandId: 'pennyscroll',
         mongoUri: process.env.PENNYSCROLL_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.PENNYSCROLL_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.PENNYSCROLL_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.PENNYSCROLL_S3_BUCKET || 'coupon-app-image',
+        cdnDomain: process.env.PENNYSCROLL_CDN_DOMAIN || 'd2o27hd92ee531.cloudfront.net',
     },
     {
         match: 'specreveal.com',
         brandId: 'specreveal',
         mongoUri: process.env.SPECREVEAL_MONGO_URI || process.env.MONGO_URI || 'mongodb+srv://mt:mt123!!!@cluster0.0zs6w.mongodb.net/specreveal_db?retryWrites=true&w=majority&appName=Cluster0',
-        bucketName: process.env.SPECREVEAL_S3_BUCKET || process.env.AWS_BUCKET_NAME || 'specreveal-images',
-        cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || process.env.CDN_DOMAIN || 'd2wb25wu8gphm4.cloudfront.net',
+        bucketName: process.env.SPECREVEAL_S3_BUCKET || 'specreveal-images',
+        cdnDomain: process.env.SPECREVEAL_CDN_DOMAIN || 'd2wb25wu8gphm4.cloudfront.net',
     },
     {
         match: 'trendfiltered.com',
         brandId: 'trendfiltered',
         mongoUri: process.env.TRENDFILTERED_MONGO_URI || process.env.MONGO_URI || null,
-        bucketName: process.env.TRENDFILTERED_S3_BUCKET || process.env.AWS_BUCKET_NAME,
-        cdnDomain: process.env.TRENDFILTERED_CDN_DOMAIN || process.env.CDN_DOMAIN || null,
+        bucketName: process.env.TRENDFILTERED_S3_BUCKET || 'trendfiltered-images',
+        cdnDomain: process.env.TRENDFILTERED_CDN_DOMAIN || 'd2kvfu9pxs1nnf.cloudfront.net',
     },
 ];
 
@@ -74,11 +74,25 @@ function createBrandConfig(brandId) {
     const cleanId = (brandId || 'default').toLowerCase().trim();
     const prefix = cleanId.toUpperCase().replace(/[^A-Z0-9]/g, '_');
 
+    const brandBuckets = {
+        specreveal: 'specreveal-images',
+        blogzenix: 'blogzenix-images',
+        pennyscroll: 'coupon-app-image',
+        trendfiltered: 'trendfiltered-images',
+    };
+
+    const brandCdns = {
+        specreveal: 'd2wb25wu8gphm4.cloudfront.net',
+        blogzenix: 'd3lt8ces76vqi0.cloudfront.net',
+        pennyscroll: 'd2o27hd92ee531.cloudfront.net',
+        trendfiltered: 'd2kvfu9pxs1nnf.cloudfront.net',
+    };
+
     return {
         brandId: cleanId,
         mongoUri: process.env[`${prefix}_MONGO_URI`] || process.env.MONGO_URI || null,
-        bucketName: process.env[`${prefix}_S3_BUCKET`] || process.env.AWS_BUCKET_NAME || process.env.S3_BUCKET || null,
-        cdnDomain: process.env[`${prefix}_CDN_DOMAIN`] || process.env.CDN_DOMAIN || null,
+        bucketName: process.env[`${prefix}_S3_BUCKET`] || brandBuckets[cleanId] || null,
+        cdnDomain: process.env[`${prefix}_CDN_DOMAIN`] || brandCdns[cleanId] || null,
     };
 }
 
