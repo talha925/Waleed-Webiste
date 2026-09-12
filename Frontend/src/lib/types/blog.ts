@@ -73,4 +73,5 @@ export interface BlogFormData {
 
 export interface BlogValidationErrors {
   [key: string]: string;
+
 }
