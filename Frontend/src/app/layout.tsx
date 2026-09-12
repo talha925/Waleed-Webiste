@@ -140,6 +140,9 @@ export default async function RootLayout({
         {brand.impactSiteVerification && (
           <meta name="impact-site-verification" content={brand.impactSiteVerification} />
         )}
+                {brand.admitadVerification && (
+          <meta name="admitad-verification" content={brand.admitadVerification} />
+        )}
 
         {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}
         {/* Image domain / CDN - needed immediately for LCP image */}

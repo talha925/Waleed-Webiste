@@ -7,6 +7,8 @@ import { Blog } from '@/lib/types/blog';
 import { themeClasses } from '@/lib/theme/utils';
 import { BannerCache } from '@/lib/cache/bannerCache';
 import { useBrand } from '@/context/BrandContext';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { decodeHTML } from '@/lib/utils/formatting';
 
 interface HeroBannerProps {
   className?: string;
@@ -197,9 +199,13 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
     setCurrentSlide((prev) => (prev - 1 + bannerBlogs.length) % bannerBlogs.length);
   };
 
+  const bannerContainerClass = isSpecReveal
+    ? `relative h-[280px] sm:h-[320px] md:h-[350px] lg:h-[370px] overflow-hidden rounded-2xl sm:rounded-3xl mt-2 sm:mt-4 mb-6 sm:mb-8 shadow-xl border border-slate-200/70 ${className}`
+    : `relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`;
+
   if (loading && isFirstLoad) {
     return (
-      <div className={`relative h-[450px] md:h-80 lg:h-96 ${className} overflow-hidden mt-8 mb-12 rounded-3xl shadow-2xl`}>
+      <div className={bannerContainerClass}>
         {/* Enhanced Shimmer Background */}
         <div className="absolute inset-0 bg-background-secondary animate-pulse" />
 
@@ -236,7 +242,7 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   if (error) {
     console.error('[HeroBanner] Error state:', error);
     return (
-      <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
+      <div className={bannerContainerClass}>
         <div className={`absolute inset-0 bg-background-secondary`} />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center px-6 md:px-12 max-w-5xl">
@@ -260,7 +266,7 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
 
   if (bannerBlogs.length === 0) {
     return (
-      <div className={`relative h-[450px] md:h-80 lg:h-96 overflow-hidden rounded-3xl mt-8 mb-12 shadow-2xl ${className}`}>
+      <div className={bannerContainerClass}>
         <div className={`absolute inset-0 ${themeClasses.backgrounds.secondary}`} />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center px-6 md:px-12 max-w-5xl">
@@ -285,109 +291,115 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   const imageUrl = currentBlog.image?.url || '';
 
   /* ================================================================
-   * SPEC REVEAL: Compact Cinematic Dark Banner
+   * SPEC REVEAL: Sleek Compact Modern Editorial Magazine Hero (~360px)
    * ================================================================ */
   if (isSpecReveal) {
+    const blogUrl = `/blog/${currentBlog.slug || currentBlog._id}`;
+
     return (
-      <div className={`relative h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] overflow-hidden rounded-3xl mt-4 mb-8 shadow-2xl group ${className}`}>
-        {/* Background Image */}
-        <div className="absolute inset-0">
+      <div className={`relative h-[280px] sm:h-[320px] md:h-[350px] lg:h-[370px] overflow-hidden rounded-2xl sm:rounded-3xl mt-2 sm:mt-4 mb-6 sm:mb-8 shadow-xl border border-slate-200/70 bg-slate-900 group cursor-pointer ${className}`}>
+        {/* Full Banner Clickable Link Overlay */}
+        <Link
+          href={blogUrl}
+          className="absolute inset-0 z-10"
+          aria-label={decodeHTML(currentBlog.title)}
+        />
+
+        {/* Crisp, 100% Vibrant Background Image — Fully Visible */}
+        <div className="absolute inset-0 z-0">
           {imageUrl ? (
             <SafeImage
               src={imageUrl}
               alt={currentBlog.image?.alt || currentBlog.title}
               fill
-              className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               priority
               fetchPriority="high"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950" />
           )}
-          {/* Dark Cinematic Overlays */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/50 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30" />
-          {/* Mobile Bottom Gradient */}
-          <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent md:hidden" />
+          {/* Smooth bottom-up natural gradient: bottom 50% dark for crystal-clear readability, top 50% totally clear */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
         </div>
 
-        {/* Content */}
-        <div className="absolute inset-0 flex items-end md:items-center pb-16 md:pb-0">
-          <div className="px-6 md:px-12 lg:px-16 max-w-3xl z-10 space-y-4">
+        {/* Editorial Content Overlay — Direct on banner, clean & simple */}
+        <div className="absolute inset-0 z-10 flex items-end justify-start p-4 sm:p-6 md:p-8 pointer-events-none">
+          <div className="w-full max-w-2xl space-y-2 sm:space-y-3">
             {/* Category Badge */}
             {currentBlog.category?.name && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white bg-brand-primary/90 border border-white/20 shadow-md">
-                {currentBlog.category.name}
-              </span>
+              <div>
+                <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-white bg-brand-primary shadow-md">
+                  {decodeHTML(currentBlog.category.name)}
+                </span>
+              </div>
             )}
 
-            {/* Title */}
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight drop-shadow-lg line-clamp-2">
-              {currentBlog.title}
+            {/* Headline */}
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight tracking-tight drop-shadow-md group-hover:text-rose-200 transition-colors line-clamp-2">
+              {decodeHTML(currentBlog.title)}
             </h1>
 
-            {/* Description */}
+            {/* Excerpt */}
             {currentBlog.shortDescription && (
-              <p className="text-sm md:text-base text-gray-300 leading-relaxed line-clamp-2 max-w-xl">
-                {currentBlog.shortDescription.length <= 80
-                  ? currentBlog.shortDescription
-                  : currentBlog.shortDescription.substring(0, 77) + '...'}
+              <p className="hidden sm:line-clamp-2 text-xs sm:text-sm text-white/90 leading-relaxed font-normal drop-shadow max-w-xl">
+                {decodeHTML(currentBlog.shortDescription)}
               </p>
             )}
 
-            {/* CTA Button — Outline Style */}
-            <Link
-              href={`/blog/${currentBlog.slug || currentBlog._id}`}
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl border-2 border-brand-primary/50 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 group/btn uppercase tracking-wider text-xs shadow-md"
-            >
-              <span>Read Article</span>
-              <svg
-                className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
+            {/* CTA Button */}
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-2 px-5 py-2 sm:py-2.5 rounded-xl bg-brand-primary text-white font-bold group-hover:bg-brand-primary/90 shadow-lg group-hover:shadow-xl transition-all text-xs uppercase tracking-wider">
+                <span>Read Story</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows — Sleek circular buttons that appear on hover (z-20 so clicks change slides) */}
         {bannerBlogs.length > 1 && (
-          <div className="hidden md:block">
+          <div className="hidden md:block absolute inset-0 z-20 pointer-events-none">
             <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white w-10 h-10 rounded-xl cursor-pointer z-10 flex items-center justify-center transition-all duration-300 border border-white/15 hover:border-white/30"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                prevSlide();
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200 shadow-lg border border-slate-200/70 hover:scale-110 opacity-0 group-hover:opacity-100 pointer-events-auto"
               aria-label="Previous blog"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-5 h-5 text-slate-900" />
             </button>
             <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white w-10 h-10 rounded-xl cursor-pointer z-10 flex items-center justify-center transition-all duration-300 border border-white/15 hover:border-white/30"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                nextSlide();
+              }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200 shadow-lg border border-slate-200/70 hover:scale-110 opacity-0 group-hover:opacity-100 pointer-events-auto"
               aria-label="Next blog"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRight className="w-5 h-5 text-slate-900" />
             </button>
           </div>
         )}
 
-        {/* Slide Indicators */}
+        {/* Slide Indicators Pill (z-20 so clicks change slides) */}
         {bannerBlogs.length > 1 && (
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
+          <div className="absolute top-4 right-4 flex items-center space-x-1.5 z-20 pointer-events-auto bg-white/90 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-sm border border-slate-200/70">
             {bannerBlogs.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`transition-all duration-500 rounded-full ${index === currentSlide
-                  ? 'w-8 h-2 bg-brand-primary shadow-md'
-                  : 'w-2 h-2 bg-white/30 hover:bg-white/50'
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentSlide(index);
+                }}
+                className={`transition-all duration-300 rounded-full ${index === activeSlide
+                  ? 'w-5 h-1.5 bg-brand-primary shadow-xs'
+                  : 'w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />

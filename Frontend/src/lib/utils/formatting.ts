@@ -49,20 +49,27 @@ export const processTags = (tagsString: string): string[] => {
 /**
  * Decodes HTML entities in a string
  */
-export const decodeHTML = (input: string): string => {
+export const decodeHTML = (input?: string | null): string => {
+  if (!input) return '';
+  if (!input.includes('&')) return input;
+
   if (typeof window !== 'undefined') {
-    const doc = new DOMParser().parseFromString(input, "text/html");
-    return doc.documentElement.textContent || input;
+    try {
+      const doc = new DOMParser().parseFromString(input, 'text/html');
+      return doc.documentElement.textContent || input;
+    } catch {
+      // Fallback to regex
+    }
   }
-  // Fallback for server-side rendering
+  // Safe fallback for server-side rendering
   return input
-    .replace(/&amp;/g, '&')
-    .replace(/&#x2F;/g, '/')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#39;/g, "'");
+    .replace(/&amp;/gi, '&')
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#39;/gi, "'");
 };
 
 /**

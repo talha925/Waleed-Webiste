@@ -4,20 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { LogOut, Search, X } from "lucide-react";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
-import { useApp } from "@/context/AppContext";
 import { useBrand } from "@/context/BrandContext";
 import { usePathname } from "next/navigation";
 
-
 import SearchBar from "@/components/ui/SearchBar";
 import { useState, useEffect } from "react";
-import { themeClasses } from "@/lib/theme/utils";
 import NotificationToast from "@/components/ui/NotificationToast";
 import HeaderMobileMenu from "@/components/HeaderMobileMenu";
-
-interface HeaderProps {
-  categories?: any[];
-}
 
 export default function Header() {
   const { user, isAuthenticated, logout, isLoading } = useUnifiedAuth();
@@ -66,12 +59,13 @@ export default function Header() {
                   <Image
                     src={brand.logoPath}
                     alt={`${brand.siteName} Logo`}
-                    width={200}
-                    height={200}
+                    width={brand.brandId === 'specreveal' ? 155 : 160}
+                    height={brand.brandId === 'specreveal' ? 30 : 160}
                     priority
+                    unoptimized={true}
                     className={
                       brand.brandId === 'specreveal'
-                        ? "h-12 md:h-14 w-auto rounded-full object-contain shadow-lg border border-white/20 transition-transform duration-300"
+                        ? (brand.logoClassName || "h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-300")
                         : "w-40 h-40 transition-transform duration-300"
                     }
                   />

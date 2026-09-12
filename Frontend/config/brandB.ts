@@ -43,6 +43,7 @@ const brandB: BrandConfig = {
     adSenseAccount: 'ca-pub-5501806014590426',
     googleSiteVerification: 'BPO_05-y3girQJnOzN4k3xo6r07DPlcH1OFydF3S9eY',
     impactSiteVerification: '787d0258-0f9d-406f-b2b2-ec884ca8b45f',
+    admitadVerification: '148f2795-d29c-4bb9-8351-b38851dcf0ff',
     gtagConversion: {
         sendTo: 'AW-17998192949/KletCK3N5pMcELXCmoZD',
         value: 1.0,

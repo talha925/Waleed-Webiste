@@ -58,6 +58,8 @@ export interface BrandConfig {
     googleSiteVerification?: string;
     /** Impact site verification value */
     impactSiteVerification?: string;
+    /** Mitgo verification token */
+    admitadVerification?: string;
     /** Google Ads conversion tag config */
     gtagConversion?: GtagConversion;
 

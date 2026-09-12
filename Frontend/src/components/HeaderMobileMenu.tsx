@@ -42,9 +42,10 @@ export default function HeaderMobileMenu({
                                 <Image
                                     src={brand.logoPath}
                                     alt={`${brand.siteName} Logo`}
-                                    width={80}
-                                    height={80}
+                                    width={160}
+                                    height={40}
                                     priority
+                                    unoptimized={true}
                                     className={brand.logoClassName || "w-20 h-20"}
                                 />
                             </div>

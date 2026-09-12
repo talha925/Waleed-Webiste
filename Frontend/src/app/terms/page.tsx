@@ -5,8 +5,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig();
   return {
     title: `Terms & Conditions - ${brand.siteName}`,
-    description: `Terms and Conditions for ${brand.siteName}. Please read these terms carefully before using our website.`,
-    keywords: `terms, conditions, ${brand.siteName}, legal, website terms, usage policy`,
+    description: `Terms and Conditions for ${brand.siteName}. Understand our usage policies, content copyrights, and legal disclaimers.`,
+    keywords: `terms of service, terms and conditions, legal agreement, ${brand.siteName}`,
     alternates: {
       canonical: `${brand.siteUrl}/terms`,
     },
@@ -31,226 +31,238 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TermsPage() {
   const brand = await getBrandConfig();
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const termsNav = [
+    { id: 'acceptance', title: '1. Acceptance of Terms' },
+    { id: 'intellectual-property', title: '2. Intellectual Property' },
+    { id: 'user-conduct', title: '3. User Conduct & Use' },
+    { id: 'disclaimers', title: '4. Accuracy & Disclaimers' },
+    { id: 'external-links', title: '5. External Links & Affiliates' },
+    { id: 'liability', title: '6. Limitation of Liability' },
+    { id: 'modifications', title: '7. Revisions to Terms' },
+    { id: 'governing-law', title: '8. Governing Law' },
+    { id: 'contact', title: '9. Legal Contact' },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full opacity-30"></div>
-        <div className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-r from-purple-200 to-pink-200 rounded-full opacity-30"></div>
-        <div className="absolute bottom-40 left-20 w-24 h-24 bg-gradient-to-r from-indigo-200 to-blue-200 rounded-full opacity-30"></div>
-        <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full opacity-20"></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-16 relative z-10">
-        {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl mx-auto mb-6 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ─── Header ──────────────────────────────────────────────── */}
+      <section className="border-b border-border/60 bg-gradient-to-b from-background via-background to-background-secondary/30 pt-16 pb-16 md:pt-20 md:pb-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
+            Terms of Service
           </div>
-          <h1 className={`text-4xl md:text-5xl font-black text-slate-900 mb-4`}>
-            Terms & <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-brand-accent">Conditions</span>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground mb-6">
+            Terms &amp; Conditions
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg leading-relaxed">
-            Welcome to {brand.siteName}. By using our website, you agree to the following terms and conditions.
+
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-6">
+            Please read these terms carefully before exploring <span className="font-semibold text-foreground">{brand.siteName}</span>. By accessing our site, you agree to comply with and be bound by the following guidelines.
           </p>
-        </div>
 
-        {/* Terms Content */}
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
-
-            {/* Terms Header */}
-            <div className="bg-gradient-to-r from-brand-primary to-brand-accent p-8 text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-              <h2 className="text-3xl font-black text-center relative z-10">Legal Terms & Conditions</h2>
-              <p className="text-center mt-2 text-white/80 text-lg font-medium relative z-10">Effective and binding agreement for {brand.siteName}</p>
-            </div>
-
-            <div className="p-8 md:p-10 space-y-8">
-              {/* Use of Our Website */}
-              <section className="border-l-4 border-blue-500 pl-6 bg-blue-50/50 rounded-r-xl p-6 hover:bg-blue-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">1</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Use of Our Website
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      By accessing and using {brand.siteName}, you accept and agree to be bound by the terms and provision of this agreement.
-                      You may use our website for lawful purposes only and in accordance with these terms.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Content Ownership */}
-              <section className="border-l-4 border-emerald-500 pl-6 bg-emerald-50/50 rounded-r-xl p-6 hover:bg-emerald-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">2</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Content Ownership
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      All content on {brand.siteName}, including text, images, and graphics, is owned by us or our content suppliers.
-                      You may not reproduce, distribute, or create derivative works without our written permission.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Accuracy of Information */}
-              <section className="border-l-4 border-amber-500 pl-6 bg-amber-50/50 rounded-r-xl p-6 hover:bg-amber-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">3</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Accuracy of Information
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      While we strive to provide accurate and up-to-date information, we make no warranties about the completeness,
-                      reliability, or accuracy of this information. Any action you take based on the information is at your own risk.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* External Links */}
-              <section className="border-l-4 border-purple-500 pl-6 bg-purple-50/50 rounded-r-xl p-6 hover:bg-purple-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">4</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      External Links
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      Our website may contain links to external sites. We are not responsible for the content or privacy practices
-                      of these external websites. Visiting these links is at your own discretion and risk.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Limitation of Liability */}
-              <section className="border-l-4 border-rose-500 pl-6 bg-rose-50/50 rounded-r-xl p-6 hover:bg-rose-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-rose-500 to-rose-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">5</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Limitation of Liability
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {brand.siteName} shall not be liable for any indirect, incidental, special, or consequential damages resulting
-                      from your use of our website or services, even if we have been advised of the possibility of such damages.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Changes to Terms */}
-              <section className="border-l-4 border-indigo-500 pl-6 bg-indigo-50/50 rounded-r-xl p-6 hover:bg-indigo-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">6</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Changes to Terms
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      We reserve the right to modify these terms at any time. Changes will be effective immediately upon posting.
-                      Your continued use of the website constitutes acceptance of the modified terms.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Contact Us */}
-              <section className="border-l-4 border-slate-500 pl-6 bg-slate-50/50 rounded-r-xl p-6 hover:bg-slate-50/80 transition-all duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl flex-shrink-0 mt-1 shadow-md">
-                    <span className="text-sm font-bold text-white">7</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      Contact Us
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      If you have any questions about these Terms and Conditions, please contact us at{' '}
-                      <a href={`mailto:${brand.contactEmail}`} className="text-blue-600 hover:text-blue-800 underline font-medium">
-                        {brand.contactEmail}
-                      </a>
-                    </p>
-                  </div>
-                </div>
-              </section>
-            </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-card border border-border/80 text-xs font-medium text-muted-foreground shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Effective Date: {currentDate}
           </div>
+        </div>
+      </section>
 
-          {/* Last Updated */}
-          <div className="text-center mt-10">
-            <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-full border border-blue-200">
-              <svg className="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-blue-700 font-medium">
-                Last Updated: {new Date().toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+      {/* ─── Content Body ─────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          {/* Sticky Table of Contents (Desktop) */}
+          <aside className="hidden lg:block lg:col-span-4 sticky top-28 space-y-6">
+            <div className="bg-card rounded-3xl p-6 border border-border/80 shadow-sm">
+              <div className="text-xs font-bold uppercase tracking-widest text-primary mb-4">
+                Sections
+              </div>
+              <nav className="space-y-1.5">
+                {termsNav.map((sec) => (
+                  <a
+                    key={sec.id}
+                    href={`#${sec.id}`}
+                    className="block px-3 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background-secondary transition-all duration-150"
+                  >
+                    {sec.title}
+                  </a>
+                ))}
+              </nav>
+            </div>
+
+            <div className="bg-background-secondary/60 rounded-3xl p-6 border border-border/80">
+              <h3 className="text-sm font-bold text-foreground mb-2">Need Legal Clarification?</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                Have questions regarding content permissions, syndication, or licensing?
               </p>
+              <a
+                href={`mailto:${brand.contactEmail}`}
+                className="inline-flex items-center text-xs font-bold text-primary hover:underline"
+              >
+                {brand.contactEmail} →
+              </a>
             </div>
-          </div>
-        </div>
+          </aside>
 
-        {/* Bottom CTA */}
-        <div className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-blue-50 via-white to-indigo-50 rounded-2xl p-8 border border-blue-200 shadow-lg">
-            <div className="flex items-center justify-center w-16 h-16 bg-purple-600 rounded-2xl mx-auto mb-6 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-4">Questions About Our Terms?</h3>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
-              If you have any questions or concerns about these terms and conditions,
-              our team is here to help you understand everything clearly.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center justify-center bg-gradient-to-r from-brand-primary to-brand-accent text-white font-black py-4 px-8 rounded-xl hover:opacity-90 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Contact Us
-              </a>
-              <a
-                href="/about"
-                className="inline-flex items-center justify-center bg-white text-gray-700 font-semibold py-4 px-8 rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 shadow-md hover:shadow-lg transform hover:-translate-y-1"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Learn More
-              </a>
-            </div>
-          </div>
+          {/* Legal Agreement Cards */}
+          <main className="lg:col-span-8 space-y-8">
+            {/* 1. Acceptance */}
+            <section id="acceptance" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                1. Acceptance of Terms
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  By accessing, browsing, or utilizing <span className="font-semibold text-foreground">{brand.siteName}</span>{' '}(available at {brand.siteUrl}), you enter into a legally binding agreement to adhere to these Terms &amp; Conditions and our Privacy Policy.
+                </p>
+                <p>
+                  If you disagree with any portion of these terms, you must immediately discontinue use of the website and services.
+                </p>
+              </div>
+            </section>
+
+            {/* 2. Intellectual Property */}
+            <section id="intellectual-property" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                2. Intellectual Property Rights
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  All content published on <span className="font-semibold text-foreground">{brand.siteName}</span>, including but not limited to written articles, reviews, graphics, logos, layouts, and code, is the intellectual property of {brand.siteName} and is protected under international copyright and trademark laws.
+                </p>
+                <div className="p-4 rounded-2xl bg-background-secondary border border-border/80 text-xs leading-relaxed">
+                  <strong className="text-foreground">Permitted Use:</strong> You may quote brief excerpts or share links for non-commercial educational or editorial purposes, provided clear attribution and a direct backlink to the original source on {brand.siteName} is maintained. Commercial reproduction or automated scraping without written authorization is strictly prohibited.
+                </div>
+              </div>
+            </section>
+
+            {/* 3. User Conduct */}
+            <section id="user-conduct" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                3. User Obligations &amp; Conduct
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>While interacting with our platform, you agree NOT to:</p>
+                <ul className="space-y-2.5 text-xs sm:text-sm">
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                    <span>Engage in automated scraping, data extraction, or denial-of-service attempts.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                    <span>Submit malicious payloads, spam comments, or defamatory statements.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></span>
+                    <span>Impersonate {brand.siteName} staff, authors, or other community members.</span>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            {/* 4. Accuracy & Disclaimers */}
+            <section id="disclaimers" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                4. Disclaimers &amp; Information Accuracy
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  The articles, guides, and specifications published on <span className="font-semibold text-foreground">{brand.siteName}</span> are provided for general informational and entertainment purposes only.
+                </p>
+                <p>
+                  While our editorial team endeavors to ensure absolute precision, technical specifications, prices, and availability are subject to manufacturer changes. We make no express or implied warranties regarding the completeness or current accuracy of any third-party product data.
+                </p>
+              </div>
+            </section>
+
+            {/* 5. External Links */}
+            <section id="external-links" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                5. External Links &amp; Affiliate Disclosure
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  Our publication may contain links to external retailer or manufacturer websites. We do not endorse or assume responsibility for the products, terms, or security of external websites.
+                </p>
+                <p>
+                  Some external links may be affiliate links, meaning {brand.siteName} may earn a small referral commission at zero additional cost to you. This compensation never influences our editorial verdicts or review ratings.
+                </p>
+              </div>
+            </section>
+
+            {/* 6. Limitation of Liability */}
+            <section id="liability" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                6. Limitation of Liability
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  To the maximum extent permitted by applicable law, <span className="font-semibold text-foreground">{brand.siteName}</span> and its contributors shall not be liable for any direct, indirect, consequential, or incidental damages resulting from your use of or reliance on any information provided on this platform.
+                </p>
+              </div>
+            </section>
+
+            {/* 7. Revisions */}
+            <section id="modifications" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                7. Revisions to Terms
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  We reserve the right to revise or update these Terms &amp; Conditions periodically to reflect technical, operational, or legal developments. Continued use of our portal following posted updates constitutes acceptance of the modified terms.
+                </p>
+              </div>
+            </section>
+
+            {/* 8. Governing Law */}
+            <section id="governing-law" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                8. Governing Law
+              </h2>
+              <div className="text-muted-foreground text-sm sm:text-base leading-relaxed space-y-4">
+                <p>
+                  These Terms shall be governed by and construed in accordance with applicable legal statutes, without giving effect to any principles of conflicts of law.
+                </p>
+              </div>
+            </section>
+
+            {/* 9. Contact */}
+            <section id="contact" className="bg-card rounded-3xl p-8 sm:p-10 border border-border/80 shadow-sm scroll-mt-28">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-4">
+                9. Legal Inquiries &amp; Notice
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6">
+                If you have questions regarding these Terms, licensing agreements, or syndication, please contact our legal desk:
+              </p>
+              <div className="p-6 rounded-2xl bg-background-secondary border border-border/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+                    Editorial &amp; Legal Desk
+                  </div>
+                  <a
+                    href={`mailto:${brand.contactEmail}`}
+                    className="text-base font-bold text-primary hover:underline"
+                  >
+                    {brand.contactEmail}
+                  </a>
+                </div>
+                <a
+                  href={`mailto:${brand.contactEmail}`}
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-all duration-150"
+                >
+                  Contact Legal
+                </a>
+              </div>
+            </section>
+          </main>
         </div>
       </div>
     </div>

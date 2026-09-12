@@ -49,7 +49,7 @@ export default async function Blogs() {
   return (
     <div className="w-full min-h-screen bg-background">
       {/* Banner Section */}
-      <section className="relative pt-2 px-4 md:px-6 lg:px-8">
+      <section className={`relative ${isSpecReveal ? "pt-4 sm:pt-6" : "pt-2"} px-4 md:px-6 lg:px-8`}>
         <div className="max-w-7xl mx-auto">
           <HeroBanner className="w-full" initialBlogs={bannerBlogs} />
         </div>
@@ -57,167 +57,158 @@ export default async function Blogs() {
 
       {/* Category Grid Section */}
       {isSpecReveal ? (
-        /* SPEC REVEAL: Dark Dim-Shaded Tech Vault Grid */
-        <section className="max-w-7xl mx-auto pt-8 md:pt-12 pb-0 px-4 md:px-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-6">
-            <div className="space-y-4 text-center md:text-left">
-              <h2 className={`text-3xl md:text-5xl font-extrabold tracking-tight ${themeClasses.text.primary}`}>
-                Explore Our Universe
+        /* SPEC REVEAL: Clean Modern Editorial Category Showcase */
+        <section className="max-w-7xl mx-auto pt-10 md:pt-16 pb-4 px-4 md:px-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12 gap-6">
+            <div className="space-y-3 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-bold uppercase tracking-widest">
+                <Sparkles className="w-3.5 h-3.5 text-brand-primary" />
+                <span>Curated Topics</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-foreground">
+                Explore Featured <span className="text-brand-primary">Categories</span>
               </h2>
-              <div className="h-1.5 w-24 bg-brand-primary rounded-full mx-auto md:mx-0" />
-              <p className={`${themeClasses.text.secondary} text-lg md:text-xl max-w-2xl italic`}>
-                Dive into expert insights across various categories
+              <p className="text-foreground-secondary text-base md:text-lg max-w-2xl font-normal">
+                Handcrafted guides, expert reviews, and in-depth teardowns across modern tech, living, and lifestyle.
               </p>
             </div>
             <Link
               href="/categories"
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl border-2 border-brand-primary/40 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 group whitespace-nowrap shadow-md"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl border-2 border-brand-primary/40 text-brand-primary font-bold hover:bg-brand-primary hover:text-white transition-all duration-300 group whitespace-nowrap shadow-md self-center md:self-auto"
             >
-              <span>View All Categories</span>
+              <span>Browse All Categories</span>
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {/* Hardware Vault */}
-            <Link href="/blog/category/home-and-tech" className="block w-full">
-              <div className="group relative h-[380px] md:h-[440px] overflow-hidden rounded-[2.5rem] isolate shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border border-white/10 hover:border-brand-primary/50 bg-slate-950">
-                <div className="absolute inset-0 z-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-7">
+            {/* 1. Tech & Smart Living */}
+            <Link href="/blog/category/home-and-tech" className="block group">
+              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
+                <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/tech_cat.png"
-                    alt="Home & Tech"
+                    alt="Tech & Smart Living"
                     fill
-                    className="object-cover opacity-45 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-55"
-                    sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 z-10" />
-                <div className="absolute top-6 inset-x-6 flex items-center justify-between z-30">
-                  <span className="px-3 py-1 rounded-full bg-slate-950/80 backdrop-blur-md text-brand-primary border border-brand-primary/40 text-[10px] font-black uppercase tracking-widest shadow-md">
-                    Hardware
-                  </span>
-                  <span className="text-[11px] font-mono font-semibold text-gray-400 uppercase tracking-widest">
-                    VAULT 01
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-brand-primary text-[11px] font-black uppercase tracking-widest shadow-md">
+                    Tech & Gadgets
                   </span>
                 </div>
-                <div className="absolute bottom-0 w-full p-6 md:p-7 z-30 flex flex-col justify-end">
-                  <h3 className="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-md">
-                    🚀 Tech & Innovation
-                  </h3>
-                  <p className="text-gray-300 text-xs md:text-sm leading-relaxed font-normal line-clamp-2 mb-4">
-                    Gadget teardowns, smart home benchmarks, and verified tech insights.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-black uppercase tracking-wider text-brand-primary group-hover:text-brand-primary/80 transition-colors">
-                    <span>Browse Tech Reviews</span>
-                    <span className="ml-1.5 transform group-hover:translate-x-1 transition-transform">→</span>
+                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+                  <div>
+                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
+                      Tech & Innovation
+                    </h3>
+                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
+                      Gadget teardowns, smart home benchmarks, and verified tech buying guides.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-brand-primary group-hover:text-brand-primary/80">
+                    <span>Explore Tech</span>
+                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </div>
               </div>
             </Link>
 
-            {/* Expedition Vault */}
-            <Link href="/blog/category/travel" className="block w-full">
-              <div className="group relative h-[380px] md:h-[440px] overflow-hidden rounded-[2.5rem] isolate shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border border-white/10 hover:border-blue-500/50 bg-slate-950">
-                <div className="absolute inset-0 z-0">
+            {/* 2. Travel & Escapes */}
+            <Link href="/blog/category/travel" className="block group">
+              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
+                <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/travel_cat.png"
                     alt="Travel Destinations"
                     fill
-                    className="object-cover opacity-45 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-55"
-                    sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 z-10" />
-                <div className="absolute top-6 inset-x-6 flex items-center justify-between z-30">
-                  <span className="px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
-                    Expedition
-                  </span>
-                  <span className="text-[11px] font-mono font-semibold text-gray-400 uppercase tracking-widest">
-                    VAULT 02
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-blue-600 text-[11px] font-black uppercase tracking-widest shadow-md">
+                    Destinations
                   </span>
                 </div>
-                <div className="absolute bottom-0 w-full p-6 md:p-7 z-30 flex flex-col justify-end">
-                  <h3 className="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-md">
-                    ✈️ Travel & Luggage
-                  </h3>
-                  <p className="text-gray-300 text-xs md:text-sm leading-relaxed font-normal line-clamp-2 mb-4">
-                    Tested carry-ons, flight accessories, and travel store coupon codes.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-black uppercase tracking-wider text-blue-400 group-hover:text-blue-300 transition-colors">
-                    <span>Explore Travel Gear</span>
-                    <span className="ml-1.5 transform group-hover:translate-x-1 transition-transform">→</span>
+                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+                  <div>
+                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
+                      Travel & Escapes
+                    </h3>
+                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
+                      Tested carry-ons, remote destinations, and flight gear reviews.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-blue-600 group-hover:text-blue-500">
+                    <span>Explore Travel</span>
+                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </div>
               </div>
             </Link>
 
-            {/* Vitality Vault */}
-            <Link href="/blog/category/health-and-beauty" className="block w-full">
-              <div className="group relative h-[380px] md:h-[440px] overflow-hidden rounded-[2.5rem] isolate shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border border-white/10 hover:border-emerald-500/50 bg-slate-950">
-                <div className="absolute inset-0 z-0">
+            {/* 3. Health & Wellness */}
+            <Link href="/blog/category/health-and-beauty" className="block group">
+              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
+                <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/health_cat.png"
                     alt="Health & Wellness"
                     fill
-                    className="object-cover opacity-45 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-55"
-                    sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 z-10" />
-                <div className="absolute top-6 inset-x-6 flex items-center justify-between z-30">
-                  <span className="px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-emerald-600 text-[11px] font-black uppercase tracking-widest shadow-md">
                     Vitality
                   </span>
-                  <span className="text-[11px] font-mono font-semibold text-gray-400 uppercase tracking-widest">
-                    VAULT 03
-                  </span>
                 </div>
-                <div className="absolute bottom-0 w-full p-6 md:p-7 z-30 flex flex-col justify-end">
-                  <h3 className="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-md">
-                    🌿 Health & Fitness
-                  </h3>
-                  <p className="text-gray-300 text-xs md:text-sm leading-relaxed font-normal line-clamp-2 mb-4">
-                    Wearables testing, supplement safety reviews, and wellness.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-black uppercase tracking-wider text-emerald-400 group-hover:text-emerald-300 transition-colors">
-                    <span>View Health Reviews</span>
-                    <span className="ml-1.5 transform group-hover:translate-x-1 transition-transform">→</span>
+                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+                  <div>
+                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
+                      Health & Fitness
+                    </h3>
+                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
+                      Wearables testing, workout recovery, and fitness benchmarks.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-emerald-600 group-hover:text-emerald-500">
+                    <span>Explore Health</span>
+                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </div>
               </div>
             </Link>
 
-            {/* Everyday Carry Vault */}
-            <Link href="/blog/category/lifestyle" className="block w-full">
-              <div className="group relative h-[380px] md:h-[440px] overflow-hidden rounded-[2.5rem] isolate shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer border border-white/10 hover:border-purple-500/50 bg-slate-950">
-                <div className="absolute inset-0 z-0">
+            {/* 4. Lifestyle & Essentials */}
+            <Link href="/blog/category/lifestyle" className="block group">
+              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
+                <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/lifestyle_cat.png"
                     alt="Lifestyle & Fashion"
                     fill
-                    className="object-cover opacity-45 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-55"
-                    sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, 25vw"
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 z-10" />
-                <div className="absolute top-6 inset-x-6 flex items-center justify-between z-30">
-                  <span className="px-3 py-1 rounded-full bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
-                    Everyday Carry
-                  </span>
-                  <span className="text-[11px] font-mono font-semibold text-gray-400 uppercase tracking-widest">
-                    VAULT 04
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-purple-600 text-[11px] font-black uppercase tracking-widest shadow-md">
+                    Everyday
                   </span>
                 </div>
-                <div className="absolute bottom-0 w-full p-6 md:p-7 z-30 flex flex-col justify-end">
-                  <h3 className="text-xl md:text-2xl font-black text-white mb-2 leading-tight drop-shadow-md">
-                    ✨ Lifestyle & Wear
-                  </h3>
-                  <p className="text-gray-300 text-xs md:text-sm leading-relaxed font-normal line-clamp-2 mb-4">
-                    Minimalist gear, apparel fit testing, and brand promo code drops.
-                  </p>
-                  <div className="inline-flex items-center text-xs font-black uppercase tracking-wider text-purple-400 group-hover:text-purple-300 transition-colors">
+                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+                  <div>
+                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
+                      Lifestyle & Wear
+                    </h3>
+                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
+                      Minimalist gear, apparel reviews, and curated everyday essentials.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:text-purple-500">
                     <span>Explore Lifestyle</span>
-                    <span className="ml-1.5 transform group-hover:translate-x-1 transition-transform">→</span>
+                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </div>
               </div>

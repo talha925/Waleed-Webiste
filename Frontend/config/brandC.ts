@@ -11,9 +11,9 @@ const brandC: BrandConfig = {
   brandId: 'specreveal',
   siteName: 'Spec Reveal',
   siteTagline: 'Insights, Guides & Trends That Matter',
-  logoPath: '/image/specreveal-logo.png',
-  logoClassName: 'h-12 md:h-14 w-auto rounded-full object-contain shadow-md',
-  faviconPath: '/image/specreveal-logo.png',
+  logoPath: '/image/specreveal-logo.svg',
+  logoClassName: 'h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-300',
+  faviconPath: '/image/specreveal-icon.svg',
 
   // ─── Domain ──────────────────────────────────────────────
   domain: 'specreveal.com',
@@ -37,8 +37,8 @@ const brandC: BrandConfig = {
     'trending topics',
     'honest reviews',
   ],
-  ogImage: '/image/specreveal-logo.png',
-  twitterImage: '/image/specreveal-logo.png',
+  ogImage: '/image/specreveal-logo.svg',
+  twitterImage: '/image/specreveal-logo.svg',
 
   // ─── Analytics & Tracking ────────────────────────────────
   gaId: 'G-F97NME8DVE',
@@ -47,7 +47,7 @@ const brandC: BrandConfig = {
   // ─── Theme / Colors ──────────────────────────────────────
   isDarkMode: true,
   themeColor: '#FF1E27', // Neon Crimson Red
-  primaryHSL: '358 100% 56%', // Neon Crimson Red
+  primaryHSL: '358 100% 56%', // Neon Crimson Red (#FF1E27)
   secondaryHSL: '222 16% 12%', // Dark Gunmetal Charcoal
   accentHSL: '220 15% 78%', // Metallic Platinum Silver
   accent2HSL: '358 100% 50%', // Vivid Crimson

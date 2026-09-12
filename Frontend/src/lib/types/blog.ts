@@ -39,6 +39,10 @@ export interface Blog {
     question: string;
     answer: string;
   }>;
+  engagement?: {
+    readingTime?: string;
+    views?: number;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
