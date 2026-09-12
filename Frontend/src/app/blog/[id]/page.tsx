@@ -55,6 +55,24 @@ import { getBrandConfig } from '@config/server-config';
 import { fetchBlogDetailServer, fetchRecentBlogsServer } from '@/lib/serverData';
 import { sanitizeBrandText, cleanTypography } from '@/lib/utils/formatting';
 
+/**
+ * Safely sanitizes and scopes CSS embedded inside blog content.
+ * Removes global document selectors (body, html, :root) that break page layouts,
+ * and scopes all remaining rules strictly within the .blog-content container.
+ */
+function sanitizeAndScopeBlogCss(css: string): string {
+  if (!css) return '';
+
+  // 1. Strip rules targeting global document elements (body, html, :root)
+  let cleaned = css.replace(/(?:^|[\{;}])\s*(?:html\s*,\s*body|body|html|:root)\s*\{[^}]*\}/gi, (match) => {
+    const leading = match.match(/^[\{;}]/);
+    return leading ? leading[0] : '';
+  });
+
+  // 2. Scope the CSS rules strictly to .blog-content
+  return `.blog-content {\n${cleaned.trim()}\n}`;
+}
+
 // Helper to extract text from AST nodes
 function getTextFromNode(node: any): string {
   if (!node) return '';
@@ -208,7 +226,8 @@ function formatAndParseBlogContent(rawContent: string, brandName: string, store?
       // Ensure <style> tags render their CSS rules directly in React
       if (node.name === 'style') {
         const cssContent = getTextFromNode(node);
-        return <style dangerouslySetInnerHTML={{ __html: cssContent }} />;
+        const scopedCss = sanitizeAndScopeBlogCss(cssContent);
+        return <style dangerouslySetInnerHTML={{ __html: scopedCss }} />;
       }
 
       // Auto-assign IDs to headings for Table of Contents if not present, while preserving all existing styles/attributes
