@@ -32,12 +32,31 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="text-lg font-black mb-6 text-foreground tracking-tight">Universe</h4>
+            <h4 className="text-lg font-black mb-6 text-foreground tracking-tight">
+              {brand.brandId === 'specreveal' ? 'Categories' : 'Universe'}
+            </h4>
             <ul className="space-y-4">
-              <li><a href="/blog/category/travel" className="text-foreground-secondary font-bold hover:text-brand-accent transition-all duration-300 hover:translate-x-1 inline-block">Travel</a></li>
-              <li><a href="/blog/category/health-and-beauty" className="text-foreground-secondary font-bold hover:text-brand-accent transition-all duration-300 hover:translate-x-1 inline-block">Health</a></li>
-              <li><a href="/blog/category/lifestyle" className="text-foreground-secondary font-bold hover:text-brand-accent transition-all duration-300 hover:translate-x-1 inline-block">Lifestyle</a></li>
-              <li><a href="/blog/category/home-and-tech" className="text-foreground-secondary font-bold hover:text-brand-accent transition-all duration-300 hover:translate-x-1 inline-block">Technology</a></li>
+              {(brand.categories || (brand.brandId === 'specreveal' ? [
+                { name: 'Health and Beauty', href: '/blog/category/health-and-beauty', slug: 'health-and-beauty' },
+                { name: 'Home and Tech', href: '/blog/category/home-and-tech', slug: 'home-and-tech' },
+                { name: 'Lifestyle', href: '/blog/category/lifestyle', slug: 'lifestyle' },
+                { name: 'Sports and Fitness', href: '/blog/category/sports-and-fitness', slug: 'sports-and-fitness' },
+                { name: 'Travel', href: '/blog/category/travel', slug: 'travel' },
+              ] : [
+                { name: 'Travel', href: '/blog/category/travel', slug: 'travel' },
+                { name: 'Health', href: '/blog/category/health-and-beauty', slug: 'health-and-beauty' },
+                { name: 'Lifestyle', href: '/blog/category/lifestyle', slug: 'lifestyle' },
+                { name: 'Technology', href: '/blog/category/home-and-tech', slug: 'home-and-tech' },
+              ])).map((cat) => (
+                <li key={cat.name}>
+                  <a
+                    href={cat.href || `/blog/category/${cat.slug}`}
+                    className="text-foreground-secondary font-bold hover:text-brand-accent transition-all duration-300 hover:translate-x-1 inline-block"
+                  >
+                    {cat.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

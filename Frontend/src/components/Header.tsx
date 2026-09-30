@@ -19,18 +19,26 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // 🏛️ Hardcoded Static Categories (Senior Dev Choice: Reliability & Speed)
-  const navItems = [
-    ['Home', '/'],
+  // 🏛️ 100% Static Brand Categories (Senior Dev Choice: Instant Speed, Zero CLS, High Reliability)
+  const defaultBlogzenixCategories: [string, string][] = [
     ['Health and Beauty', '/blog/category/health-and-beauty'],
     ['Home and Tech', '/blog/category/home-and-tech'],
     ['Lifestyle', '/blog/category/lifestyle'],
     ['Sports and Fitness', '/blog/category/sports-and-fitness'],
     ['Travel', '/blog/category/travel'],
-    ['Blogs', '/blog'],
   ];
 
-  const categoriesItems = navItems.slice(1, -1); // Extract only the categories for the middle group
+  const categoriesItems: [string, string][] = (brand.categories && brand.categories.length > 0
+    ? brand.categories
+        .filter((cat) => cat.name !== 'Products Reviews' && cat.slug !== 'products-reviews')
+        .map((cat) => [cat.name, cat.href || `/blog/category/${cat.slug}`] as [string, string])
+    : defaultBlogzenixCategories);
+
+  const navItems: [string, string][] = [
+    ['Home', '/'],
+    ...categoriesItems,
+    ['Blogs', '/blog'],
+  ];
 
   // Prevent hydration mismatch by only showing dynamic content after hydration
   useEffect(() => {

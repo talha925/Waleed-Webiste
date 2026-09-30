@@ -82,29 +82,29 @@ export default async function Blogs() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-7">
-            {/* 1. Tech & Smart Living */}
+            {/* 1. Home and Tech */}
             <Link href="/blog/category/home-and-tech" className="block group">
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/tech_cat.png"
-                    alt="Tech & Smart Living"
+                    alt="Home and Tech"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                   <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-brand-primary text-[11px] font-black uppercase tracking-widest shadow-md">
-                    Tech & Gadgets
+                    Home & Tech
                   </span>
                 </div>
                 <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
                   <div>
                     <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
-                      Tech & Innovation
+                      Home and Tech
                     </h3>
                     <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
-                      Gadget teardowns, smart home benchmarks, and verified tech buying guides.
+                      Smart home automation, gadget teardowns, and tech buying guides.
                     </p>
                   </div>
                   <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-brand-primary group-hover:text-brand-primary/80">
@@ -115,62 +115,29 @@ export default async function Blogs() {
               </div>
             </Link>
 
-            {/* 2. Travel & Escapes */}
-            <Link href="/blog/category/travel" className="block group">
-              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
-                <div className="relative h-56 overflow-hidden bg-slate-100">
-                  <Image
-                    src="/image/travel_cat.png"
-                    alt="Travel Destinations"
-                    fill
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-blue-600 text-[11px] font-black uppercase tracking-widest shadow-md">
-                    Destinations
-                  </span>
-                </div>
-                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
-                  <div>
-                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
-                      Travel & Escapes
-                    </h3>
-                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
-                      Tested carry-ons, remote destinations, and flight gear reviews.
-                    </p>
-                  </div>
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-blue-600 group-hover:text-blue-500">
-                    <span>Explore Travel</span>
-                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            {/* 3. Health & Wellness */}
+            {/* 2. Health and Beauty */}
             <Link href="/blog/category/health-and-beauty" className="block group">
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/health_cat.png"
-                    alt="Health & Wellness"
+                    alt="Health and Beauty"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                   <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-emerald-600 text-[11px] font-black uppercase tracking-widest shadow-md">
-                    Vitality
+                    Wellness
                   </span>
                 </div>
                 <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
                   <div>
                     <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
-                      Health & Fitness
+                      Health and Beauty
                     </h3>
                     <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
-                      Wearables testing, workout recovery, and fitness benchmarks.
+                      Skincare benchmarks, wellness routines, and healthy living insights.
                     </p>
                   </div>
                   <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-emerald-600 group-hover:text-emerald-500">
@@ -181,13 +148,13 @@ export default async function Blogs() {
               </div>
             </Link>
 
-            {/* 4. Lifestyle & Essentials */}
+            {/* 3. Lifestyle */}
             <Link href="/blog/category/lifestyle" className="block group">
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
                     src="/image/lifestyle_cat.png"
-                    alt="Lifestyle & Fashion"
+                    alt="Lifestyle"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -200,14 +167,47 @@ export default async function Blogs() {
                 <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
                   <div>
                     <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
-                      Lifestyle & Wear
+                      Lifestyle
                     </h3>
                     <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
-                      Minimalist gear, apparel reviews, and curated everyday essentials.
+                      Everyday productivity, personal habits, and curated modern living tips.
                     </p>
                   </div>
                   <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:text-purple-500">
                     <span>Explore Lifestyle</span>
+                    <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* 4. Products Reviews */}
+            <Link href="/blog/category/products-reviews" className="block group">
+              <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
+                <div className="relative h-56 overflow-hidden bg-slate-100">
+                  <Image
+                    src="/image/travel_cat.png"
+                    alt="Products Reviews"
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-blue-600 text-[11px] font-black uppercase tracking-widest shadow-md">
+                    Reviews & Verdicts
+                  </span>
+                </div>
+                <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+                  <div>
+                    <h3 className="text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300">
+                      Products Reviews
+                    </h3>
+                    <p className="text-foreground-secondary text-sm leading-relaxed mt-2 line-clamp-2">
+                      In-depth tests, hands-on verdicts, and honest recommendations.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs font-bold text-blue-600 group-hover:text-blue-500">
+                    <span>Explore Reviews</span>
                     <span className="transform group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </div>

@@ -78,6 +78,45 @@ const brandA: BrandConfig = {
 
   // ─── Contact ─────────────────────────────────────────────
   contactEmail: 'pennyscroll@gmail.com',
+
+  // ─── Categories & Navigation ──────────────────────────────
+  categories: [
+    {
+      name: 'Health and Beauty',
+      slug: 'health-and-beauty',
+      href: '/blog/category/health-and-beauty',
+      icon: '✨',
+      description: 'Health advice and beauty products.',
+    },
+    {
+      name: 'Home and Tech',
+      slug: 'home-and-tech',
+      href: '/blog/category/home-and-tech',
+      icon: '💻',
+      description: 'Technology and smart gadgets.',
+    },
+    {
+      name: 'Lifestyle',
+      slug: 'lifestyle',
+      href: '/blog/category/lifestyle',
+      icon: '🌿',
+      description: 'Everyday lifestyle inspiration.',
+    },
+    {
+      name: 'Sports and Fitness',
+      slug: 'sports-and-fitness',
+      href: '/blog/category/sports-and-fitness',
+      icon: '🏃',
+      description: 'Fitness gear and workout tips.',
+    },
+    {
+      name: 'Travel',
+      slug: 'travel',
+      href: '/blog/category/travel',
+      icon: '✈️',
+      description: 'Travel guides and destinations.',
+    },
+  ],
 };
 
 export default brandA;

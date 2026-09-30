@@ -71,6 +71,24 @@ const brandD: BrandConfig = {
 
   // ─── Contact ─────────────────────────────────────────────
   contactEmail: 'trendfiltered@gmail.com',
+
+  // ─── Categories & Navigation ──────────────────────────────
+  categories: [
+    {
+      name: 'Tech & Gadgets',
+      slug: 'home-and-tech',
+      href: '/blog/category/home-and-tech',
+      icon: '💻',
+      description: 'Tested tech and gear.',
+    },
+    {
+      name: 'Lifestyle',
+      slug: 'lifestyle',
+      href: '/blog/category/lifestyle',
+      icon: '🌿',
+      description: 'Lifestyle essentials.',
+    },
+  ],
 };
 
 export default brandD;

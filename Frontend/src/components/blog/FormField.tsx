@@ -29,8 +29,8 @@ const FormField: React.FC<FormFieldProps> = ({
   rows = 3,
   className = ''
 }) => {
-  const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text text-gray-900 bg-white placeholder-gray-500 ${
-    error ? 'border-red-500' : 'border-gray-300'
+  const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-text text-gray-900 bg-white placeholder-gray-500 outline-none transition-all ${
+    error ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
   } ${className}`;
 
   const renderInput = () => {
@@ -43,9 +43,7 @@ const FormField: React.FC<FormFieldProps> = ({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
-            error ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
-          }`}
+          className={baseInputClasses}
         />
       );
     }
@@ -58,9 +56,7 @@ const FormField: React.FC<FormFieldProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${
-          error ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300'
-        }`}
+        className={baseInputClasses}
       />
     );
   };

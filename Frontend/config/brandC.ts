@@ -83,6 +83,45 @@ const brandC: BrandConfig = {
 
   // ─── Contact ─────────────────────────────────────────────
   contactEmail: 'specreveal@gmail.com',
+
+  // ─── Categories & Navigation ──────────────────────────────
+  categories: [
+    {
+      name: 'Health and Beauty',
+      slug: 'health-and-beauty',
+      href: '/blog/category/health-and-beauty',
+      icon: '✨',
+      description: 'Skincare routines, wellness tips, and beauty recommendations.',
+    },
+    {
+      name: 'Home and Tech',
+      slug: 'home-and-tech',
+      href: '/blog/category/home-and-tech',
+      icon: '💻',
+      description: 'Smart living, gadget teardowns, and modern home improvements.',
+    },
+    {
+      name: 'Lifestyle',
+      slug: 'lifestyle',
+      href: '/blog/category/lifestyle',
+      icon: '🌿',
+      description: 'Everyday life, productivity hacks, and modern living advice.',
+    },
+    {
+      name: 'Sports and Fitness',
+      slug: 'sports-and-fitness',
+      href: '/blog/category/sports-and-fitness',
+      icon: '🏃',
+      description: 'Workout gear, training routines, and athletic performance.',
+    },
+    {
+      name: 'Travel',
+      slug: 'travel',
+      href: '/blog/category/travel',
+      icon: '✈️',
+      description: 'Tested destinations, travel essentials, and flight gear reviews.',
+    },
+  ],
 };
 
 export default brandC;

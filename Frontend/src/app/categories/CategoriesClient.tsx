@@ -27,8 +27,33 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
     'fashion': '👗',
     'food': '🍕',
     'gaming': '🎮',
-    'education': '📚'
+    'education': '📚',
+    'products-reviews': '⭐',
   };
+
+  const defaultCategories: Category[] = brand.categories && brand.categories.length > 0
+    ? brand.categories.map((c, idx) => ({
+        _id: String(idx + 1),
+        name: c.name,
+        slug: c.slug,
+        icon: c.icon || iconMap[c.slug] || '📁',
+        count: 'Explore Posts',
+      }))
+    : (brand.brandId === 'specreveal'
+      ? [
+          { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty', icon: '✨', count: 'Explore Posts' },
+          { _id: '2', name: 'Home and Tech', slug: 'home-and-tech', icon: '💻', count: 'Explore Posts' },
+          { _id: '3', name: 'Lifestyle', slug: 'lifestyle', icon: '🌿', count: 'Explore Posts' },
+          { _id: '4', name: 'Sports and Fitness', slug: 'sports-and-fitness', icon: '🏃', count: 'Explore Posts' },
+          { _id: '5', name: 'Travel', slug: 'travel', icon: '✈️', count: 'Explore Posts' },
+        ]
+      : [
+          { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty', icon: '✨', count: '12 Posts' },
+          { _id: '2', name: 'Home and Tech', slug: 'home-and-tech', icon: '💻', count: '8 Posts' },
+          { _id: '3', name: 'Lifestyle', slug: 'lifestyle', icon: '🌿', count: '15 Posts' },
+          { _id: '4', name: 'Sports and Fitness', slug: 'sports-and-fitness', icon: '🏃', count: '10 Posts' },
+          { _id: '5', name: 'Travel', slug: 'travel', icon: '✈️', count: '7 Posts' },
+        ]);
 
   const categories = initialCategories.length > 0 
     ? initialCategories.map(cat => ({
@@ -36,13 +61,7 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
         icon: cat.icon || iconMap[cat.slug] || '📁',
         count: cat.count || 'View Posts'
       }))
-    : [
-        { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty', icon: '✨', count: '12 Posts' },
-        { _id: '2', name: 'Home and Tech', slug: 'home-and-tech', icon: '💻', count: '8 Posts' },
-        { _id: '3', name: 'Lifestyle', slug: 'lifestyle', icon: '🌿', count: '15 Posts' },
-        { _id: '4', name: 'Sports and Fitness', slug: 'sports-and-fitness', icon: '🏃', count: '10 Posts' },
-        { _id: '5', name: 'Travel', slug: 'travel', icon: '✈️', count: '7 Posts' },
-      ];
+    : defaultCategories;
 
   return (
     <div className="min-h-screen bg-background py-16 sm:py-20 px-4 sm:px-6 lg:px-8">

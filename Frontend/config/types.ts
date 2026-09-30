@@ -12,6 +12,15 @@ export interface GtagConversion {
     currency: string;
 }
 
+export interface BrandCategory {
+    name: string;
+    slug: string;
+    href?: string;
+    icon?: string;
+    description?: string;
+    count?: string;
+}
+
 export interface BrandConfig {
     // ─── Identity ────────────────────────────────────────────
     /** Unique identifier for this brand (used in code logic, never displayed) */
@@ -124,4 +133,8 @@ export interface BrandConfig {
     // ─── Contact ─────────────────────────────────────────────
     /** Contact email address */
     contactEmail: string;
+
+    // ─── Categories & Navigation ──────────────────────────────
+    /** Primary categories for this brand */
+    categories?: BrandCategory[];
 }

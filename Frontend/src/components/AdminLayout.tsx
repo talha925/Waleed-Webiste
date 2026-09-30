@@ -47,7 +47,7 @@ async function handleLogout() {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const brand = useBrand();
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-gray-900">
       {/* Top Nav Bar */}
       <nav className="w-full bg-white shadow px-4 py-2 z-50 fixed top-0 left-0 h-14 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </aside>
       {/* Main Content (offset for sidebar and nav) */}
-      <main className="bg-gray-50 p-8 min-h-screen ml-64 pt-14">{children}</main>
+      <main className="bg-gray-50 p-8 min-h-screen ml-64 pt-14 text-gray-900">{children}</main>
     </div>
   );
 }

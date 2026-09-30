@@ -49,10 +49,17 @@ export async function GET() {
 
     if (response.ok) {
       const data = await response.json();
-      blogCategories = Array.isArray(data.data) ? data.data : (Array.isArray(data.categories) ? data.categories : []);
+      const list = data?.data?.categories || data?.categories || (Array.isArray(data?.data) ? data.data : []);
+      if (Array.isArray(list) && list.length > 0) {
+        blogCategories = list;
+      }
     }
   } catch (error) {
     console.error('Error fetching categories for sitemap:', error);
+  }
+
+  if (blogCategories.length === 0 && brand.categories && brand.categories.length > 0) {
+    blogCategories = brand.categories;
   }
 
   // Fetch dynamic blog posts

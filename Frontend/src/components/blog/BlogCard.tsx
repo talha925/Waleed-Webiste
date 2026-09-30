@@ -91,16 +91,7 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
               )}
 
               <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-                {blog.author?.name ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center text-[10px] font-bold">
-                      {blog.author.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-700">
-                      {blog.author.name}
-                    </span>
-                  </div>
-                ) : <div />}
+                <div />
 
                 <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-brand-primary group-hover:text-brand-primary/80 transition-colors">
                   <span>Read Feature</span>
@@ -161,11 +152,7 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
               </div>
 
               <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs">
-                {blog.author?.name ? (
-                  <span className="text-xs text-foreground-secondary font-medium">
-                    By {blog.author.name}
-                  </span>
-                ) : <span />}
+                <span />
 
                 <span className="font-extrabold text-brand-primary uppercase tracking-wider text-[11px] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   <span>Read Story</span>
@@ -181,9 +168,9 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
     /* SPEC REVEAL: Clean Standard Grid Card */
     return (
       <Link href={`/blog/${blog.slug || blog._id}`} className="group block h-full">
-        <div className="relative h-full flex flex-col bg-card border border-border/80 hover:border-brand-primary/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5">
+        <div className="relative h-full flex flex-col bg-card border border-border/80 hover:border-brand-primary/60 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1">
           {blog.image?.url && (
-            <div className="relative w-full h-52 sm:h-56 overflow-hidden bg-slate-100 flex-shrink-0">
+            <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-slate-100 flex-shrink-0">
               <SafeImage
                 src={blog.image.url}
                 alt={blog.image.alt || blog.title}
@@ -196,7 +183,7 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
               />
 
               {isFeatured && (
-                <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white bg-brand-primary shadow-md">
+                <span className="absolute top-2.5 left-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white bg-brand-primary shadow-md">
                   <Sparkles className="w-3 h-3 text-white" />
                   Featured
                 </span>
@@ -204,36 +191,30 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
             </div>
           )}
 
-          <div className="p-6 flex flex-col justify-between flex-grow space-y-3">
+          <div className="p-4 sm:p-5 flex flex-col justify-between flex-grow space-y-2">
             <div>
               {blog.category?.name && (
-                <span className="text-brand-primary font-bold uppercase tracking-wider text-[10px] block mb-2">
+                <span className="text-brand-primary font-bold uppercase tracking-wider text-[10px] block mb-1.5">
                   {decodeHTML(blog.category.name)}
                 </span>
               )}
 
-              <h3 className="text-lg md:text-xl font-black text-foreground group-hover:text-brand-primary transition-colors duration-300 line-clamp-2 leading-snug tracking-tight mb-2.5">
+              <h3 className="text-base md:text-lg font-black text-foreground group-hover:text-brand-primary transition-colors duration-300 line-clamp-2 leading-snug tracking-tight mb-2">
                 {sanitizeBrandText(blog.title, brand?.siteName || '')}
               </h3>
 
               {blog.shortDescription && (
-                <p className="text-sm text-foreground-secondary line-clamp-2 leading-relaxed font-normal mb-4">
+                <p className="text-xs sm:text-sm text-foreground-secondary line-clamp-2 leading-relaxed font-normal mb-3">
                   {sanitizeBrandText(blog.shortDescription, brand?.siteName || '')}
                 </p>
               )}
             </div>
 
-            <div className="pt-4 border-t border-border/60 flex items-center justify-between mt-auto">
-              {blog.author?.name ? (
-                <span className="text-xs font-semibold text-foreground-secondary">
-                  By {blog.author.name}
-                </span>
-              ) : (
-                <span className="text-xs font-semibold text-foreground-secondary">Article</span>
-              )}
+            <div className="pt-3 border-t border-border/60 flex items-center justify-between mt-auto">
+              <span />
               <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-brand-primary group-hover:text-brand-primary/80 transition-colors duration-300">
                 <span>Read Story</span>
-                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300" />
+                <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform duration-300" />
               </div>
             </div>
           </div>

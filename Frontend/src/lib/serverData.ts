@@ -53,9 +53,10 @@ export async function fetchCategoriesServer() {
 }
 
 export async function fetchBlogCategoriesServer() {
+  let brand: any = null;
   try {
     const { getBrandConfig } = await import('../../config/server-config');
-    const brand = await getBrandConfig();
+    brand = await getBrandConfig();
 
     const apiBaseUrl = brand.apiBaseUrl?.replace('localhost', '127.0.0.1');
 
@@ -73,15 +74,33 @@ export async function fetchBlogCategoriesServer() {
 
     clearTimeout(timeout);
 
-    if (!response.ok) return { data: [], error: `HTTP ${response.status}` };
-    const result = await response.json();
-    
-    // 💡 Handle the { categories: [], pagination: {} } structure from the service
-    const list = result.data?.categories || result.categories || result.data || [];
-    return { data: Array.isArray(list) ? list : [], error: null };
+    if (response.ok) {
+      const result = await response.json();
+      // 💡 Handle the { categories: [], pagination: {} } structure from the service
+      const list = result.data?.categories || result.categories || (Array.isArray(result.data) ? result.data : []);
+      if (Array.isArray(list) && list.length > 0) {
+        return { data: list, error: null };
+      }
+    }
   } catch (error) {
-    return { data: [], error: 'Failed to fetch blog categories' };
+    console.warn('⚠️ [Server] Failed to fetch blog categories from API, falling back to brand config');
   }
+
+  // Graceful fallback to static brand categories so pages never 404
+  if (brand?.categories && brand.categories.length > 0) {
+    return {
+      data: brand.categories.map((c: any, i: number) => ({
+        _id: c._id || `brand-cat-${i}`,
+        name: c.name,
+        slug: c.slug,
+        icon: c.icon,
+        count: 'Explore Posts'
+      })),
+      error: null
+    };
+  }
+
+  return { data: [], error: 'Failed to fetch blog categories' };
 }
 
 /**

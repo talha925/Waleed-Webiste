@@ -548,17 +548,17 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-semibold text-foreground">
+                <label className="block text-sm font-semibold text-gray-700">
                   Long Description <span className="text-red-500">*</span>
                 </label>
-                <div className="inline-flex rounded-lg p-1 bg-background-secondary border border-border">
+                <div className="inline-flex rounded-lg p-1 bg-gray-100 border border-gray-300">
                   <button
                     type="button"
                     onClick={() => setEditorMode('visual')}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                       editorMode === 'visual'
                         ? 'bg-primary text-white shadow-sm'
-                        : 'text-foreground-secondary hover:text-foreground'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     📝 Visual Editor
@@ -569,7 +569,7 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
                       editorMode === 'html'
                         ? 'bg-primary text-white shadow-sm'
-                        : 'text-foreground-secondary hover:text-foreground'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     💻 Raw HTML / Code Mode
@@ -594,10 +594,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                     value={longDescription}
                     onChange={(e) => setLongDescription(e.target.value)}
                     rows={18}
-                    className="w-full p-4 font-mono text-sm bg-background border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-foreground resize-y leading-relaxed"
+                    className="w-full p-4 font-mono text-sm bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 resize-y leading-relaxed"
                     placeholder="Paste your complete HTML code here (including <style>, <article>, custom classes, etc.)..."
                   />
-                  <p className="text-xs text-foreground-secondary">
+                  <p className="text-xs text-gray-500">
                     💡 <strong>Raw HTML Mode:</strong> Allows pasting complete custom HTML with embedded <code className="text-primary font-bold">&lt;style&gt;</code>, carousels, custom buttons, and layouts without any visual editor modification.
                   </p>
                 </div>
@@ -646,10 +646,10 @@ const BlogForm = ({ initialValues, onSubmit, submitLabel, loadingOverride }: Blo
                   name="status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer text-gray-900 bg-white"
                 >
                   {BLOG_STATUS_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
+                    <option key={option.value} value={option.value} className="text-gray-900">
                       {option.label}
                     </option>
                   ))}
