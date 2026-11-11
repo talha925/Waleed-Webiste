@@ -61,10 +61,10 @@ const brandD: BrandConfig = {
   // ─── Layout & Design Strategy ─────────────────────────────
   homepageLayout: 'default',
   themeMode: 'light',
-  heroStyle: 'classic',
-  cardStyle: 'ticket',
-  heroPaddingClass: 'pt-8 pb-36 sm:pt-12 sm:pb-48',
-  mainMarginClass: '-mt-32 sm:-mt-40',
+  heroStyle: 'cyber',
+  cardStyle: 'neon-glass',
+  heroPaddingClass: 'pt-8 pb-12 sm:pt-12 sm:pb-16',
+  mainMarginClass: 'pt-6 sm:pt-8 lg:pt-10',
 
   // ─── Footer ──────────────────────────────────────────────
   copyrightText: '© 2026 Trend Filtered — All rights reserved.',
@@ -75,18 +75,32 @@ const brandD: BrandConfig = {
   // ─── Categories & Navigation ──────────────────────────────
   categories: [
     {
-      name: 'Tech & Gadgets',
+      name: 'Home and Tech',
       slug: 'home-and-tech',
       href: '/blog/category/home-and-tech',
       icon: '💻',
-      description: 'Tested tech and gear.',
+      description: 'Smart living, gadget teardowns, and modern home improvements.',
+    },
+    {
+      name: 'Health and Beauty',
+      slug: 'health-and-beauty',
+      href: '/blog/category/health-and-beauty',
+      icon: '✨',
+      description: 'Skincare routines, wellness tips, and beauty recommendations.',
     },
     {
       name: 'Lifestyle',
       slug: 'lifestyle',
       href: '/blog/category/lifestyle',
       icon: '🌿',
-      description: 'Lifestyle essentials.',
+      description: 'Everyday life, productivity hacks, and modern living advice.',
+    },
+    {
+      name: 'Products Reviews',
+      slug: 'products-reviews',
+      href: '/blog/category/products-reviews',
+      icon: '⭐',
+      description: 'In-depth tests, hands-on verdicts, and honest recommendations.',
     },
   ],
 };

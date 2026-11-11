@@ -17,7 +17,7 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBannerProps) {
   const brand = useBrand();
-  const isSpecReveal = brand?.brandId === 'specreveal';
+  const isSpecReveal = brand?.brandId === 'specreveal' || brand?.brandId === 'trendfiltered' || brand?.heroStyle === 'cyber';
   const [bannerBlogs, setBannerBlogs] = useState<Blog[]>(initialBlogs);
   const [loading, setLoading] = useState(initialBlogs.length === 0);
   const [isFirstLoad, setIsFirstLoad] = useState(initialBlogs.length === 0);
@@ -29,6 +29,7 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   useEffect(() => {
     if (initialBlogs && initialBlogs.length > 0) {
       setBannerBlogs(initialBlogs);
+      setError(null);
       setLoading(false);
       setIsFirstLoad(false);
       return;
@@ -59,8 +60,6 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
   const fetchBannerBlogs = async (forceRefresh = false) => {
     const cacheKey = 'heroBannerData_v11'; // Incremented version to ensure fresh data
 
-    console.log('[HeroBanner] Starting fetch, forceRefresh:', forceRefresh);
-
     // Only check cache if not forcing refresh
     if (!forceRefresh) {
       const cached = localStorage.getItem(cacheKey);
@@ -71,11 +70,8 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
           const cacheAge = Date.now() - timestamp;
           const isExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
 
-          console.log('[HeroBanner] Cache found, age:', cacheAge, 'expired:', isExpired, 'data count:', data?.length);
-
           // If cache is fresh and has data, use it immediately
           if (!isExpired && data?.length > 0) {
-            console.log('[HeroBanner] Using cached data');
             setBannerBlogs(data);
             setLoading(false);
             return;
@@ -87,18 +83,14 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
     }
 
     try {
-      console.log('[HeroBanner] Fetching from API: /api/blogs?frontBanner=true&sort=-createdAt&limit=50');
       // Request a high limit and sort descending by date directly from the backend
       const response = await fetch('/api/blogs?frontBanner=true&sort=-createdAt&limit=3');
-
-      console.log('[HeroBanner] API Response status:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('[HeroBanner] API Response decoded:', result);
 
       let blogsArray = [];
       if (Array.isArray(result)) {
@@ -111,8 +103,6 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
         blogsArray = result.data;
       }
 
-      console.log(`[HeroBanner] Found ${blogsArray.length} blogs in response`);
-
       // Backend filtered, we just sort and take 3
       const filteredBlogs = Array.isArray(blogsArray) ? blogsArray
         .sort((a: any, b: any) => {
@@ -121,8 +111,6 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
           return dateB - dateA;
         })
         .slice(0, 3) : []; // Strictly 3 banners as per root requirements
-
-      console.log('[HeroBanner] Final banner blogs count:', filteredBlogs.length);
 
       setBannerBlogs(filteredBlogs);
       setError(null); // Clear any previous errors
@@ -133,15 +121,18 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
           data: filteredBlogs,
           timestamp: Date.now()
         }));
-        console.log('[HeroBanner] Cached new data');
       }
 
     } catch (error) {
-      console.error('[HeroBanner] Error fetching banner blogs:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load banner');
-      // Only clear loading if we don't have cached data to show
-      if (bannerBlogs.length === 0) {
-        setBannerBlogs([]);
+      console.warn('[HeroBanner] Error fetching banner blogs:', error);
+      if (initialBlogs && initialBlogs.length > 0) {
+        setBannerBlogs(initialBlogs);
+        setError(null);
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to load banner');
+        if (bannerBlogs.length === 0) {
+          setBannerBlogs([]);
+        }
       }
     } finally {
       setLoading(false);
@@ -239,8 +230,8 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
     );
   }
 
-  if (error) {
-    console.error('[HeroBanner] Error state:', error);
+  if (error && (!bannerBlogs || bannerBlogs.length === 0)) {
+    console.warn('[HeroBanner] Error state:', error);
     return (
       <div className={bannerContainerClass}>
         <div className={`absolute inset-0 bg-background-secondary`} />
@@ -318,7 +309,11 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950" />
+            <div className={`absolute inset-0 ${
+              brand?.brandId === 'trendfiltered'
+                ? 'bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950'
+                : 'bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950'
+            }`} />
           )}
           {/* Smooth bottom-up natural gradient: bottom 50% dark for crystal-clear readability, top 50% totally clear */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
@@ -337,7 +332,11 @@ export default function HeroBanner({ className = '', initialBlogs = [] }: HeroBa
             )}
 
             {/* Headline */}
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight tracking-tight drop-shadow-md group-hover:text-rose-200 transition-colors line-clamp-2">
+            <h1 className={`text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-white leading-tight tracking-tight drop-shadow-md transition-colors line-clamp-2 ${
+              brand?.brandId === 'trendfiltered'
+                ? 'group-hover:text-blue-200'
+                : 'group-hover:text-rose-200'
+            }`}>
               {decodeHTML(currentBlog.title)}
             </h1>
 

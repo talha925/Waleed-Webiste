@@ -39,7 +39,7 @@ export function CategoriesClient({ initialCategories = [] }: { initialCategories
         icon: c.icon || iconMap[c.slug] || '📁',
         count: 'Explore Posts',
       }))
-    : (brand.brandId === 'specreveal'
+    : (brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered'
       ? [
           { _id: '1', name: 'Health and Beauty', slug: 'health-and-beauty', icon: '✨', count: 'Explore Posts' },
           { _id: '2', name: 'Home and Tech', slug: 'home-and-tech', icon: '💻', count: 'Explore Posts' },

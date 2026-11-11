@@ -30,7 +30,7 @@ export default function Header() {
 
   const categoriesItems: [string, string][] = (brand.categories && brand.categories.length > 0
     ? brand.categories
-        .filter((cat) => cat.name !== 'Products Reviews' && cat.slug !== 'products-reviews')
+        .filter((cat) => brand.brandId === 'specreveal' ? (cat.name !== 'Products Reviews' && cat.slug !== 'products-reviews') : true)
         .map((cat) => [cat.name, cat.href || `/blog/category/${cat.slug}`] as [string, string])
     : defaultBlogzenixCategories);
 
@@ -67,14 +67,15 @@ export default function Header() {
                   <Image
                     src={brand.logoPath}
                     alt={`${brand.siteName} Logo`}
-                    width={brand.brandId === 'specreveal' ? 155 : 160}
-                    height={brand.brandId === 'specreveal' ? 30 : 160}
+                    width={brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered' ? 155 : 160}
+                    height={brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered' ? 40 : 160}
                     priority
                     unoptimized={true}
                     className={
-                      brand.brandId === 'specreveal'
-                        ? (brand.logoClassName || "h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-300")
-                        : "w-40 h-40 transition-transform duration-300"
+                      brand.logoClassName ||
+                      (brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered'
+                        ? "h-6 sm:h-7 md:h-8 w-auto object-contain transition-transform duration-300"
+                        : "w-40 h-40 transition-transform duration-300")
                     }
                   />
                 </div>

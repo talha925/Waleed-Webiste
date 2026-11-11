@@ -404,6 +404,7 @@ BlogPostSchema.index({ createdAt: -1 });
 BlogPostSchema.index({ publishDate: -1 });
 
 const ActivityLogSchema = require('./activityLogModel');
+const { AdVisitSchema } = require('./AdVisit');
 
 /**
  * Model Cache
@@ -441,6 +442,7 @@ function getTenantModels(connection) {
         Store: connection.model('Store', StoreSchema),
         Coupon: connection.model('Coupon', CouponSchema),
         Blog: connection.model('BlogPost', BlogPostSchema),
+        AdVisit: connection.model('AdVisit', AdVisitSchema),
     };
 
     modelCache.set(connId, models);

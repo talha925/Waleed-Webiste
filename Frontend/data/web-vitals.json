@@ -1,38 +1,29 @@
 [
   {
-    "metric": "FID",
-    "value": 1.699999999254942,
-    "rating": "good",
-    "id": "1777335693643-yw4kbi3vk",
-    "url": "http://localhost:3000/admin/performance-dashboard",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-    "timestamp": 1777335693677
+    "metric": "CLS",
+    "value": 0.4563503939468623,
+    "rating": "poor",
+    "id": "1794398132605-jdhpardc7",
+    "url": "http://localhost:3000/admin/blogs",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "timestamp": 1794398253507
   },
   {
-    "metric": "CLS",
-    "value": 0.416223928615659,
-    "rating": "poor",
-    "id": "1777335694432-mh8o4nvsk",
+    "metric": "FCP",
+    "value": 192,
+    "rating": "good",
+    "id": "1794398132610-27mjmn5el",
     "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-    "timestamp": 1777335694465
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "timestamp": 1794398253511
   },
   {
     "metric": "TTFB",
-    "value": 741.6000000014901,
+    "value": 104.5,
     "rating": "good",
-    "id": "1777335689493-6cvon49x2",
+    "id": "1794398132615-0rr5t4oao",
     "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-    "timestamp": 1777336754029
-  },
-  {
-    "metric": "FID",
-    "value": 1.699999999254942,
-    "rating": "good",
-    "id": "1777335693643-yw4kbi3vk",
-    "url": "http://localhost:3000/admin/blogs",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-    "timestamp": 1777336754081
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+    "timestamp": 1794398253515
   }
 ]

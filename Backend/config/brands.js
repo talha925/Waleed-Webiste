@@ -56,7 +56,7 @@ const BRAND_MAP = [
     {
         match: 'trendfiltered.com',
         brandId: 'trendfiltered',
-        mongoUri: process.env.TRENDFILTERED_MONGO_URI || process.env.MONGO_URI || null,
+        mongoUri: process.env.TRENDFILTERED_MONGO_URI || process.env.MONGO_URI || 'mongodb+srv://mt:mt123!!!@cluster0.0zs6w.mongodb.net/trendfiltered_db?retryWrites=true&w=majority&appName=Cluster0',
         bucketName: process.env.TRENDFILTERED_S3_BUCKET || 'trendfiltered-images',
         cdnDomain: process.env.TRENDFILTERED_CDN_DOMAIN || 'd2kvfu9pxs1nnf.cloudfront.net',
     },

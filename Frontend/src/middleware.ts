@@ -98,6 +98,7 @@ export async function middleware(req: NextRequest) {
 
   // Define public API routes (no auth required)
   const publicApiRoutes = [
+    '/api/ad-visit',
     '/api/proxy-stores',
     '/api/proxy-categories',
     '/api/blogs',

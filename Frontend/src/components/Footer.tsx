@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Categories */}
           <div>
             <h4 className="text-lg font-black mb-6 text-foreground tracking-tight">
-              {brand.brandId === 'specreveal' ? 'Categories' : 'Universe'}
+              {brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered' ? 'Categories' : 'Universe'}
             </h4>
             <ul className="space-y-4">
               {(brand.categories || (brand.brandId === 'specreveal' ? [

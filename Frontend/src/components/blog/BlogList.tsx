@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import BlogCard from './BlogCard';
@@ -57,7 +57,7 @@ const BlogList: React.FC<BlogListProps> = ({
   initialPosts = []
 }) => {
   const brand = useBrand();
-  const isNeonGlass = brand?.cardStyle === 'neon-glass' || brand?.brandId === 'specreveal';
+  const isNeonGlass = brand?.cardStyle === 'neon-glass' || brand?.brandId === 'specreveal' || brand?.brandId === 'trendfiltered';
 
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(initialPosts);
   const [loading, setLoading] = useState(initialPosts.length === 0);
@@ -66,6 +66,17 @@ const BlogList: React.FC<BlogListProps> = ({
   const [page, setPage] = useState(1);
   const BLOGS_PER_PAGE = 9;
   const [hasMore, setHasMore] = useState(initialPosts.length === BLOGS_PER_PAGE);
+
+  // Strict deduplication by _id / slug to guarantee zero duplicate keys or duplicate articles
+  const uniquePosts = useMemo(() => {
+    const seen = new Set<string>();
+    return blogPosts.filter((post) => {
+      const id = post._id || post.slug;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [blogPosts]);
 
   const fetchBlogPosts = useCallback(async (pageNum: number, isInitialLoad: boolean = false) => {
     try {
@@ -131,8 +142,11 @@ const BlogList: React.FC<BlogListProps> = ({
     if (initialPosts.length === 0) {
       setPage(1);
       fetchBlogPosts(1, true);
+    } else {
+      setBlogPosts(initialPosts);
+      setLoading(false);
     }
-  }, [fetchBlogPosts, initialPosts.length]);
+  }, [fetchBlogPosts, initialPosts]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -216,23 +230,23 @@ const BlogList: React.FC<BlogListProps> = ({
         </div>
       ) : (
         <>
-          {layout === 'bento' && blogPosts.length >= 3 ? (
+          {layout === 'bento' && uniquePosts.length >= 2 ? (
             <div className="space-y-8">
               {/* Bento Magazine Top Showcase */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
                 {/* Main Hero Spotlight Story (7 cols on lg) */}
                 <div className="lg:col-span-7">
                   <BlogCard
-                    blog={blogPosts[0]}
+                    blog={uniquePosts[0]}
                     variant="hero"
                     priority={true}
                   />
                 </div>
 
                 {/* Secondary Stories Stacked (5 cols on lg) */}
-                <div className="lg:col-span-5 flex flex-col gap-6 justify-between">
-                  {blogPosts.slice(1, 3).map((post, idx) => (
-                    <div key={post._id} className="flex-1">
+                <div className="lg:col-span-5 flex flex-col gap-6 justify-start">
+                  {uniquePosts.slice(1, 3).map((post, idx) => (
+                    <div key={post._id || post.slug || `post-${idx}`} className="w-full">
                       <BlogCard
                         blog={post}
                         variant="horizontal"
@@ -244,11 +258,11 @@ const BlogList: React.FC<BlogListProps> = ({
               </div>
 
               {/* Remaining Posts Grid (if any) */}
-              {blogPosts.length > 3 && (
+              {uniquePosts.length > 3 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
-                  {blogPosts.slice(3).map((post, idx) => (
+                  {uniquePosts.slice(3).map((post, idx) => (
                     <BlogCard
-                      key={post._id}
+                      key={post._id || post.slug || `post-${idx}`}
                       blog={post}
                       variant="grid"
                       priority={false}
@@ -257,11 +271,19 @@ const BlogList: React.FC<BlogListProps> = ({
                 </div>
               )}
             </div>
+          ) : layout === 'bento' && uniquePosts.length === 1 ? (
+            <div className="max-w-4xl mx-auto">
+              <BlogCard
+                blog={uniquePosts[0]}
+                variant="hero"
+                priority={true}
+              />
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts.map((post, idx) => (
+              {uniquePosts.map((post, idx) => (
                 <BlogCard
-                  key={post._id}
+                  key={post._id || post.slug || `post-${idx}`}
                   blog={post}
                   variant="grid"
                   priority={idx < 3}

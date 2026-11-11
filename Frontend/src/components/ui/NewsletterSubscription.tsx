@@ -6,7 +6,7 @@ import { useBrand } from '@/context/BrandContext';
 
 export default function NewsletterSubscription() {
   const brand = useBrand();
-  const isSpecReveal = brand?.brandId === 'specreveal';
+  const isSpecReveal = brand?.brandId === 'specreveal' || brand?.brandId === 'trendfiltered';
 
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');

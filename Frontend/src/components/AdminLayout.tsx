@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import RealtimeStatus from '@/components/common/RealtimeStatus';
 import { useBrand } from '@/context/BrandContext';
+import AuthService from '@/services/AuthService';
 
-const navLinks = [
+const baseNavLinks = [
   { href: '/admin/blogs/create', label: 'Create Blog' },
   { href: '/admin/blogs', label: 'All Blogs' },
   { href: '/admin/performance-dashboard', label: 'Performance Dashboard' },
@@ -46,6 +47,35 @@ async function handleLogout() {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const brand = useBrand();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    try {
+      const authState = AuthService.getInstance().getAuthState();
+      const storedUser = localStorage.getItem('user');
+      let role = authState?.user?.role;
+
+      if (!role && storedUser) {
+        const parsed = JSON.parse(storedUser);
+        role = parsed.role;
+      }
+
+      if (role === 'super-admin') {
+        setIsSuperAdmin(true);
+      }
+    } catch {
+      setIsSuperAdmin(false);
+    }
+  }, []);
+
+  const navLinks = [
+    { href: '/admin/blogs/create', label: 'Create Blog' },
+    { href: '/admin/blogs', label: 'All Blogs' },
+    ...(isSuperAdmin ? [{ href: '/admin/fraud-monitoring', label: 'Fraud Monitoring' }] : []),
+    { href: '/admin/performance-dashboard', label: 'Performance Dashboard' },
+    { href: '/admin/health', label: 'Health' },
+  ];
+
   return (
     <div className="min-h-screen text-gray-900">
       {/* Top Nav Bar */}

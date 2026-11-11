@@ -8,6 +8,7 @@ import ConditionalFooter from '@/components/ConditionalFooter'
 import { Providers } from '@/context/Providers'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import RealTimeUpdatesWrapper from '@/components/common/RealTimeUpdatesWrapper'
+import AdTracker from '@/components/AdTracker'
 import config from '@/lib/config'
 import { getBrandConfig } from '../../config/server-config'
 import React from 'react'
@@ -171,6 +172,10 @@ export default async function RootLayout({
               </React.Suspense>
               {/* Real-time updates notifications */}
               <RealTimeUpdatesWrapper />
+              {/* Website-Wide Ad Click Fraud Detection & Evidence Collection */}
+              <React.Suspense fallback={null}>
+                <AdTracker brandId={brand.brandId} />
+              </React.Suspense>
               <SpeedInsights />
               <Analytics />
 

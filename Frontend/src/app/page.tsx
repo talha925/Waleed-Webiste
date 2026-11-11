@@ -41,23 +41,43 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Blogs() {
   const brand = await getBrandConfig();
-  const isSpecReveal = brand.brandId === 'specreveal';
+  const isEditorialLayout = brand.brandId === 'specreveal' || brand.brandId === 'trendfiltered' || brand.heroStyle === 'cyber';
   
   // Fetch home data
   const { featuredBlogs, bannerBlogs } = await fetchHomeDataServer();
 
+  // Deduplication logic strictly for trendfiltered: ensures zero duplicate stories between hero banner and featured section
+  let displayFeaturedBlogs = featuredBlogs;
+  if (brand.brandId === 'trendfiltered') {
+    const seen = new Set<string>();
+    const uniqueFeatured = (featuredBlogs || []).filter((b: any) => {
+      const id = b._id || b.slug;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+
+    if (bannerBlogs && bannerBlogs.length > 0 && uniqueFeatured.length > 2) {
+      const bannerIds = new Set((bannerBlogs || []).map((b: any) => b._id || b.slug));
+      const nonBanner = uniqueFeatured.filter((b: any) => !bannerIds.has(b._id || b.slug));
+      displayFeaturedBlogs = nonBanner.length >= 2 ? nonBanner : uniqueFeatured;
+    } else {
+      displayFeaturedBlogs = uniqueFeatured;
+    }
+  }
+
   return (
     <div className="w-full min-h-screen bg-background">
       {/* Banner Section */}
-      <section className={`relative ${isSpecReveal ? "pt-4 sm:pt-6" : "pt-2"} px-4 md:px-6 lg:px-8`}>
+      <section className={`relative ${isEditorialLayout ? "pt-4 sm:pt-6" : "pt-2"} px-4 md:px-6 lg:px-8`}>
         <div className="max-w-7xl mx-auto">
           <HeroBanner className="w-full" initialBlogs={bannerBlogs} />
         </div>
       </section>
 
       {/* Category Grid Section */}
-      {isSpecReveal ? (
-        /* SPEC REVEAL: Clean Modern Editorial Category Showcase */
+      {isEditorialLayout ? (
+        /* EDITORIAL: Clean Modern Editorial Category Showcase */
         <section className="max-w-7xl mx-auto pt-10 md:pt-16 pb-4 px-4 md:px-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-12 gap-6">
             <div className="space-y-3 text-center md:text-left">
@@ -87,7 +107,7 @@ export default async function Blogs() {
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
-                    src="/image/tech_cat.png"
+                    src={brand.brandId === 'trendfiltered' ? '/image/trend_tech_cat.jpg' : '/image/tech_cat.png'}
                     alt="Home and Tech"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -120,7 +140,7 @@ export default async function Blogs() {
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
-                    src="/image/health_cat.png"
+                    src={brand.brandId === 'trendfiltered' ? '/image/trend_health_cat.jpg' : '/image/health_cat.png'}
                     alt="Health and Beauty"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -153,7 +173,7 @@ export default async function Blogs() {
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
-                    src="/image/lifestyle_cat.png"
+                    src={brand.brandId === 'trendfiltered' ? '/image/trend_lifestyle_cat.jpg' : '/image/lifestyle_cat.png'}
                     alt="Lifestyle"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -186,7 +206,7 @@ export default async function Blogs() {
               <div className="relative bg-card rounded-3xl overflow-hidden border border-border/80 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full">
                 <div className="relative h-56 overflow-hidden bg-slate-100">
                   <Image
-                    src="/image/travel_cat.png"
+                    src={brand.brandId === 'trendfiltered' ? '/image/trend_reviews_cat.jpg' : '/image/travel_cat.png'}
                     alt="Products Reviews"
                     fill
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -360,21 +380,27 @@ export default async function Blogs() {
       )}
 
       {/* Featured Blogs Section */}
-      {isSpecReveal ? (
-        /* SPEC REVEAL: Bento Magazine Featured Section */
+      {isEditorialLayout ? (
+        /* EDITORIAL: Bento Magazine Featured Section */
         <section className="py-16 md:py-24 relative overflow-hidden bg-background">
           <div className="max-w-7xl mx-auto px-4 md:px-12 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-6">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-black uppercase tracking-widest">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Curated Content</span>
+                  <span>{brand.brandId === 'trendfiltered' ? 'Top Filtered' : 'Curated Content'}</span>
                 </div>
                 <h2 className={`text-3xl md:text-5xl font-black tracking-tight ${themeClasses.text.primary}`}>
-                  Handpicked <span className="text-brand-primary">Stories</span>
+                  {brand.brandId === 'trendfiltered' ? (
+                    <>Filtered <span className="text-brand-primary">Top Picks</span></>
+                  ) : (
+                    <>Handpicked <span className="text-brand-primary">Stories</span></>
+                  )}
                 </h2>
                 <p className={`${themeClasses.text.secondary} text-base md:text-lg font-medium max-w-xl`}>
-                  Don't miss out on our most popular, insightful, and trending articles
+                  {brand.brandId === 'trendfiltered'
+                    ? 'Discover our thoroughly tested, reviewed, and top-rated recommendations'
+                    : "Don't miss out on our most popular, insightful, and trending articles"}
                 </p>
               </div>
               <Link
@@ -390,7 +416,7 @@ export default async function Blogs() {
                 apiEndpoint="/api/blogs?isFeaturedForHome=true"
                 isEmbedded={true}
                 layout="bento"
-                initialPosts={featuredBlogs}
+                initialPosts={displayFeaturedBlogs}
                 emptyStateMessage="No featured blogs found."
               />
             </div>

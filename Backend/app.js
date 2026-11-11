@@ -46,6 +46,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const blogCategoryRoutes = require('./routes/blogCategoryRoutes');
 const monitoringRoutes = require('./routes/monitoringRoutes');
+const adVisitRoutes = require('./routes/adVisitRoutes');
 
 // Create Express app
 const app = express();
@@ -160,6 +161,10 @@ app.get('/ping', async (req, res) => {
 // Brand Detection — attaches req.brand, req.db, and req.models for multi-brand support
 const brandDetection = require('./middlewares/brandDetection');
 app.use(brandDetection);
+
+// Dedicated Ad Click Fraud Monitoring & Visitor Evidence Endpoint
+// Mounted before generic body parsers to handle text/plain beacons and strict CORS
+app.use('/api/ad-visit', adVisitRoutes);
 
 app.use('/api', security.rateLimit());
 app.use(express.json({ limit: '50mb' }));

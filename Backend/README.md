@@ -23,6 +23,7 @@ This API provides a comprehensive backend solution for coupon and store manageme
 - **Password Management**: Secure password reset and update flows
 - **Optimized Database Queries**: Efficient MongoDB queries with proper indexing
 - **Performance Monitoring**: Built-in performance tracking and health checks
+- **Ad Click Fraud Detection & Monitoring**: Website-wide visitor tracking, bot detection, rotating proxy cluster identification, and evidence collection (See [README_CLICK_FRAUD.md](../README_CLICK_FRAUD.md))
 
 ## 🔧 Technologies
 

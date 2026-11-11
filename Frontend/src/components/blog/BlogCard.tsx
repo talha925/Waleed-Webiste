@@ -38,7 +38,7 @@ interface BlogCardProps {
 
 export default function BlogCard({ blog, variant, priority = false }: BlogCardProps) {
   const brand = useBrand();
-  const isSpecReveal = brand?.brandId === 'specreveal';
+  const isSpecReveal = brand?.brandId === 'specreveal' || brand?.brandId === 'trendfiltered' || brand?.cardStyle === 'neon-glass';
 
   /* ================================================================
    * SPEC REVEAL: Clean Modern Editorial Magazine Cards (Light Theme)
@@ -106,10 +106,10 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
 
     if (variant === 'horizontal') {
       return (
-        <Link href={`/blog/${blog.slug || blog._id}`} className="group block h-full">
-          <div className="relative h-full flex flex-col sm:flex-row bg-card border border-border/80 hover:border-brand-primary/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <Link href={`/blog/${blog.slug || blog._id}`} className="group block w-full">
+          <div className="relative w-full sm:h-[245px] lg:h-[255px] flex flex-col sm:flex-row bg-card border border-border/80 hover:border-brand-primary/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             {blog.image?.url && (
-              <div className="relative sm:w-2/5 aspect-[16/10] sm:aspect-auto overflow-hidden bg-slate-100 min-h-[160px]">
+              <div className="relative w-full sm:w-[42%] lg:w-[40%] h-48 sm:h-full overflow-hidden bg-slate-100 flex-shrink-0">
                 <SafeImage
                   src={blog.image.url}
                   alt={blog.image.alt || blog.title}
@@ -119,7 +119,7 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
                   className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   priority={priority}
                 />
-                {isFeatured && (
+                {(isFeatured || variant === 'horizontal') && (
                   <span className="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest text-white bg-brand-primary shadow-md">
                     <Sparkles className="w-3 h-3 text-white" />
                     Top Pick
@@ -128,7 +128,7 @@ export default function BlogCard({ blog, variant, priority = false }: BlogCardPr
               </div>
             )}
 
-            <div className="p-5 sm:p-6 sm:w-3/5 flex flex-col justify-between flex-grow space-y-2">
+            <div className="p-5 sm:p-6 flex-1 min-w-0 flex flex-col justify-between space-y-2">
               <div>
                 <div className="flex items-center justify-between text-xs text-foreground-secondary mb-2 font-medium">
                   {blog.category?.name ? (
