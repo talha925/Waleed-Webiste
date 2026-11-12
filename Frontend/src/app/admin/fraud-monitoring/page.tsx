@@ -8,7 +8,7 @@
  * sorting/filtering, and one-click CSV evidence exports.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
     ShieldAlert,
@@ -22,7 +22,9 @@ import {
     Activity,
     ExternalLink,
     X,
-    Eye
+    Eye,
+    Copy,
+    Check
 } from 'lucide-react';
 import AuthService from '@/services/AuthService';
 
@@ -123,6 +125,8 @@ export default function FraudMonitoringPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [selectedVisit, setSelectedVisit] = useState<VisitRecord | null>(null);
     const [isExporting, setIsExporting] = useState<boolean>(false);
+    const [showExclusionModal, setShowExclusionModal] = useState<boolean>(false);
+    const [copiedIps, setCopiedIps] = useState<boolean>(false);
 
     // API Base URL - Uses local proxy by default to prevent CORS & token mismatch
     const apiBase = '';
@@ -564,6 +568,7 @@ export default function FraudMonitoringPage() {
                                         <th className="px-4 py-3">Time</th>
                                         <th className="px-4 py-3">Brand</th>
                                         <th className="px-4 py-3">IP & Country</th>
+                                        <th className="px-4 py-3">Page / Path</th>
                                         <th className="px-4 py-3">Traffic Source</th>
                                         <th className="px-4 py-3">Risk & Score</th>
                                         <th className="px-4 py-3">Forensic Reasons</th>
@@ -616,6 +621,16 @@ export default function FraudMonitoringPage() {
                                                             <span>{visit.country || 'UNKNOWN'}</span>
                                                             {visit.asn && <span>• {visit.asn}</span>}
                                                         </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 whitespace-nowrap">
+                                                        <div className="text-xs font-medium text-gray-900 max-w-[150px] truncate" title={visit.path}>
+                                                            {visit.path || '/'}
+                                                        </div>
+                                                        {visit.landingPage && visit.landingPage !== visit.path && (
+                                                            <div className="text-[11px] text-gray-400 truncate max-w-[150px]" title={`Entry: ${visit.landingPage}`}>
+                                                                Entry: {visit.landingPage}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 whitespace-nowrap">
                                                         <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -809,20 +824,28 @@ export default function FraudMonitoringPage() {
                         </div>
 
                         {/* Top Summary */}
-                        <div className="grid grid-cols-3 gap-3 bg-gray-50 p-3 rounded-lg text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 p-3 rounded-lg text-xs">
                             <div>
                                 <span className="text-gray-400 block">Brand</span>
                                 <span className="font-bold text-gray-900">{selectedVisit.brandId}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 block">Current Page</span>
+                                <span className="font-bold text-gray-900 truncate block" title={selectedVisit.path}>
+                                    {selectedVisit.path || '/'}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 block">Landing / Entry</span>
+                                <span className="font-bold text-gray-900 truncate block" title={selectedVisit.landingPage}>
+                                    {selectedVisit.landingPage || '/'}
+                                </span>
                             </div>
                             <div>
                                 <span className="text-gray-400 block">Risk Level</span>
                                 <span className="font-bold text-red-600">
                                     {selectedVisit.risk} (Score: {selectedVisit.score})
                                 </span>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 block">Traffic Source</span>
-                                <span className="font-bold text-blue-600">{selectedVisit.trafficSource}</span>
                             </div>
                         </div>
 

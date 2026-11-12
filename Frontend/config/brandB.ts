@@ -44,6 +44,7 @@ const brandB: BrandConfig = {
     googleSiteVerification: 'BPO_05-y3girQJnOzN4k3xo6r07DPlcH1OFydF3S9eY',
     impactSiteVerification: '787d0258-0f9d-406f-b2b2-ec884ca8b45f',
     admitadVerification: '148f2795-d29c-4bb9-8351-b38851dcf0ff',
+    affilzaVerification: 'afz_9ce5372fd5fd3ef2644ae95e7f4a9e70b396ab38710eb138a4c7edd0b4ae31f6',
     gtagConversion: {
         sendTo: 'AW-17998192949/KletCK3N5pMcELXCmoZD',
         value: 1.0,

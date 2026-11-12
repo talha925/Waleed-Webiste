@@ -105,6 +105,7 @@ export default async function RootLayout({
     gtag('js', new Date());
     gtag('config', '${brand.gaId}');
     ${brand.googleAdsId ? `gtag('config', '${brand.googleAdsId}');` : ''}
+    ${brand.gtagConversion ? `gtag('event', 'conversion', {'send_to': '${brand.gtagConversion.sendTo}'});` : ''}
   `;
 
   return (
@@ -143,6 +144,9 @@ export default async function RootLayout({
         )}
                 {brand.admitadVerification && (
           <meta name="admitad-verification" content={brand.admitadVerification} />
+        )}
+        {brand.affilzaVerification && (
+          <meta name="affilza-site-verification" content={brand.affilzaVerification} />
         )}
 
         {/* 🔥 PERFORMANCE: Preconnect only to origins that are DEFINITELY used above-the-fold */}

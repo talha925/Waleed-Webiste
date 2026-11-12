@@ -42,7 +42,13 @@ const brandC: BrandConfig = {
 
   // ─── Analytics & Tracking ────────────────────────────────
   gaId: 'G-F97NME8DVE',
+  googleAdsId: 'AW-18469829637',
   googleSiteVerification: 'G5r3y4PDbWGqvd0x643AuVcEsahb28YBX4Y7gpfiqrc',
+  gtagConversion: {
+    sendTo: 'AW-18469829637/w8smCNa9sLcdEIX4jOdE',
+    value: 1.0,
+    currency: 'USD',
+  },
 
   // ─── Theme / Colors ──────────────────────────────────────
   isDarkMode: true,
